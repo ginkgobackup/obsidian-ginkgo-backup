@@ -14,7 +14,7 @@
 		"ginkgo"
 	],
 	"author": "Ginkgo Backup",
-	"license": "AGPL-3.0",
+	"license": "MIT",
 	"devDependencies": {
 		"@types/diff": "^7.0.2",
 		"@types/node": "^16.11.6",

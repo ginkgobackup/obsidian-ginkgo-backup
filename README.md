@@ -62,4 +62,4 @@ Triggers a complete vault scan and backup. Slower but ensures all files (includi
 
 ## License
 
-AGPL-3.0
+MIT
