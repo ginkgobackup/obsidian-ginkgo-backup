@@ -1,15 +1,21 @@
 import { ItemView, WorkspaceLeaf, Notice, setIcon } from "obsidian";
 import GinkgoBackupPlugin from "./main";
 import type { Snapshot, DirectoryEntry } from "./types";
-import { GinkgoBackupClient } from "./api";
 
 export const TIMELINE_VIEW_TYPE = "ginkgo-backup-timeline";
+
+interface DirectoryPage {
+	entries: DirectoryEntry[];
+	total: number;
+	has_more: boolean;
+}
 
 export class FileHistoryView extends ItemView {
 	plugin: GinkgoBackupPlugin;
 	snapshots: Snapshot[] = [];
 	selectedSnapshot: Snapshot | null = null;
 	snapshotFiles: DirectoryEntry[] = [];
+	snapshotHasMore: boolean = false;
 
 	constructor(leaf: WorkspaceLeaf, plugin: GinkgoBackupPlugin) {
 		super(leaf);
@@ -131,6 +137,15 @@ export class FileHistoryView extends ItemView {
 					});
 				}
 
+				const cardRight = cardEl.createEl("div", { cls: "ginkgo-card-right" });
+				if (this.selectedSnapshot?.id === snap.id) {
+					const chevron = cardRight.createEl("span", { cls: "ginkgo-card-chevron is-open" });
+					setIcon(chevron, "chevron-down");
+				} else {
+					const chevron = cardRight.createEl("span", { cls: "ginkgo-card-chevron" });
+					setIcon(chevron, "chevron-right");
+				}
+
 				if (snap.tags && snap.tags.length > 0) {
 					const tagsEl = cardEl.createEl("div", { cls: "ginkgo-card-tags" });
 					for (const tag of snap.tags) {
@@ -146,6 +161,11 @@ export class FileHistoryView extends ItemView {
 						text: snap.status,
 						cls: "ginkgo-badge-status",
 					});
+				}
+
+				if (this.selectedSnapshot?.id === snap.id) {
+					const detailEl = itemEl.createEl("div", { cls: "ginkgo-snapshot-detail" });
+					this.renderSnapshotDetailInline(detailEl, snap);
 				}
 			}
 		}
@@ -201,70 +221,145 @@ export class FileHistoryView extends ItemView {
 	}
 
 	private async selectSnapshot(snap: Snapshot) {
+		if (this.selectedSnapshot?.id === snap.id) {
+			this.selectedSnapshot = null;
+			this.snapshotFiles = [];
+			this.renderTimeline(this.containerEl.children[1] as HTMLElement);
+			return;
+		}
+
 		this.selectedSnapshot = snap;
+		this.snapshotFiles = [];
+		this.snapshotHasMore = false;
 		this.renderTimeline(this.containerEl.children[1] as HTMLElement);
 
 		const detailEl = this.containerEl.querySelector(".ginkgo-snapshot-detail") as HTMLElement;
-		if (detailEl) detailEl.remove();
+		if (!detailEl) return;
 
-		const detail = this.containerEl.children[1].createEl("div", { cls: "ginkgo-snapshot-detail" });
-		const loadingEl = detail.createEl("div", { cls: "ginkgo-loading" });
+		const loadingEl = detailEl.createEl("div", { cls: "ginkgo-detail-loading" });
+		const spinnerEl = loadingEl.createEl("div", { cls: "ginkgo-detail-spinner" });
+		setIcon(spinnerEl, "loader");
 		loadingEl.createEl("span", { text: "加载文件列表..." });
 
 		try {
 			const result = await this.plugin.client.browseDirectory(
 				this.plugin.vaultSourceId,
 				"",
-				snap.timestamp / 1000,
-				200,
+				snap.timestamp,
+				100,
 				0
-			);
-			this.snapshotFiles = (result as { items?: DirectoryEntry[] }).items ?? [];
+			) as DirectoryPage;
+			this.snapshotFiles = result.entries ?? [];
+			this.snapshotHasMore = result.has_more ?? false;
 			loadingEl.remove();
-			this.renderSnapshotDetail(detail, snap);
+			this.renderFileList(detailEl, snap);
 		} catch (err) {
 			loadingEl.remove();
 			const msg = err instanceof Error ? err.message : String(err);
-			detail.createEl("div", { cls: "ginkgo-error", text: `加载失败: ${msg}` });
+			detailEl.createEl("div", { cls: "ginkgo-error", text: `加载失败: ${msg}` });
 		}
 	}
 
-	private renderSnapshotDetail(container: HTMLElement, snap: Snapshot) {
-		const headerEl = container.createEl("div", { cls: "ginkgo-detail-header" });
+	private renderSnapshotDetailInline(container: HTMLElement, snap: Snapshot) {
+		const statsEl = container.createEl("div", { cls: "ginkgo-detail-stats" });
 		const time = new Date(snap.timestamp / 1000);
-		headerEl.createEl("span", { cls: "ginkgo-detail-title", text: `快照文件 — ${time.toLocaleString()}` });
-		const closeBtn = headerEl.createEl("button", { cls: "ginkgo-detail-close", text: "关闭" });
-		closeBtn.addEventListener("click", () => {
-			this.selectedSnapshot = null;
-			container.remove();
-			this.renderTimeline(this.containerEl.children[1] as HTMLElement);
-		});
 
+		const statItems = [
+			{ icon: "clock", text: time.toLocaleString() },
+			{ icon: "files", text: `${snap.file_count} 文件 · ${snap.dir_count} 目录` },
+			{ icon: "hard-drive", text: this.plugin.formatBytes(snap.total_size) },
+		];
+		if (snap.new_files > 0) {
+			statItems.push({ icon: "plus-circle", text: `${snap.new_files} 新增` });
+		}
+		if (snap.changed_files > 0) {
+			statItems.push({ icon: "refresh-cw", text: `${snap.changed_files} 修改` });
+		}
+		if (snap.deleted_count > 0) {
+			statItems.push({ icon: "minus-circle", text: `${snap.deleted_count} 删除` });
+		}
+		if (snap.duration_ms > 0) {
+			const sec = Math.round(snap.duration_ms / 1000);
+			statItems.push({ icon: "timer", text: `${sec}s` });
+		}
+
+		for (const item of statItems) {
+			const statEl = statsEl.createEl("div", { cls: "ginkgo-detail-stat" });
+			const iconSpan = statEl.createEl("span", { cls: "ginkgo-detail-stat-icon" });
+			setIcon(iconSpan, item.icon);
+			statEl.createEl("span", { text: item.text });
+		}
+	}
+
+	private renderFileList(container: HTMLElement, snap: Snapshot) {
 		if (this.snapshotFiles.length === 0) {
-			container.createEl("div", { cls: "ginkgo-empty", text: "此快照无文件记录" });
+			const emptyEl = container.createEl("div", { cls: "ginkgo-detail-empty" });
+			const iconEl = emptyEl.createEl("span", { cls: "ginkgo-detail-empty-icon" });
+			setIcon(iconEl, "folder-open");
+			emptyEl.createEl("span", { text: "根目录为空" });
 			return;
 		}
 
+		const dirs = this.snapshotFiles.filter(e => e.type === "dir");
+		const files = this.snapshotFiles.filter(e => e.type !== "dir");
+		const sorted = [...dirs, ...files];
+
 		const listEl = container.createEl("div", { cls: "ginkgo-detail-file-list" });
-		for (const entry of this.snapshotFiles) {
-			const fileEl = listEl.createEl("div", { cls: "ginkgo-detail-file" });
-			const iconCls = entry.type === "dir" ? "folder" : "file-text";
+
+		for (const entry of sorted) {
+			const fileEl = listEl.createEl("div", { cls: `ginkgo-detail-file ${entry.is_deleted ? "is-deleted" : ""}` });
+			const iconCls = entry.type === "dir" ? "folder" : this.getFileIcon(entry.name);
 			const iconEl = fileEl.createEl("span", { cls: "ginkgo-detail-file-icon" });
 			setIcon(iconEl, iconCls);
-			fileEl.createEl("span", { cls: "ginkgo-detail-file-name", text: entry.name });
-			if (entry.type !== "dir") {
-				fileEl.createEl("span", { cls: "ginkgo-detail-file-size", text: this.plugin.formatBytes(entry.size) });
-			}
+
+			const nameEl = fileEl.createEl("span", { cls: "ginkgo-detail-file-name", text: entry.name });
+
 			if (entry.is_deleted) {
-				fileEl.createEl("span", { cls: "ginkgo-detail-file-deleted", text: "已删除" });
+				nameEl.createEl("span", { cls: "ginkgo-detail-file-deleted-badge", text: "已删除" });
 			}
-			fileEl.addEventListener("click", () => {
-				if (entry.type !== "dir" && this.plugin.vaultSourceId > 0) {
-					const filePath = entry.path || entry.name;
-					this.plugin.showFileHistoryByPath(filePath);
-				}
-			});
+
+			const rightEl = fileEl.createEl("span", { cls: "ginkgo-detail-file-right" });
+			if (entry.type !== "dir") {
+				rightEl.createEl("span", { cls: "ginkgo-detail-file-size", text: this.plugin.formatBytes(entry.size) });
+			} else if (entry.file_count > 0 || entry.dir_count > 0) {
+				rightEl.createEl("span", { cls: "ginkgo-detail-file-count", text: `${entry.file_count} 文件` });
+			}
+
+			if (entry.type !== "dir") {
+				fileEl.addEventListener("click", () => {
+					if (this.plugin.vaultSourceId > 0) {
+						const filePath = entry.path || entry.name;
+						this.plugin.showFileHistoryByPath(filePath);
+					}
+				});
+			}
 		}
+
+		if (this.snapshotHasMore) {
+			const moreEl = container.createEl("div", { cls: "ginkgo-detail-more" });
+			moreEl.createEl("span", { text: "更多文件未显示..." });
+		}
+	}
+
+	private getFileIcon(name: string): string {
+		const ext = name.split(".").pop()?.toLowerCase() ?? "";
+		const iconMap: Record<string, string> = {
+			md: "file-text",
+			txt: "file-text",
+			json: "file-json",
+			css: "file-code",
+			js: "file-code",
+			ts: "file-code",
+			png: "image",
+			jpg: "image",
+			jpeg: "image",
+			gif: "image",
+			svg: "image",
+			webp: "image",
+			pdf: "file-text",
+			canvas: "layout-dashboard",
+		};
+		return iconMap[ext] ?? "file";
 	}
 
 	async onClose() {

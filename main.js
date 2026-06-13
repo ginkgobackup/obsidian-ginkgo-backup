@@ -1662,6 +1662,7 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
     this.snapshots = [];
     this.selectedSnapshot = null;
     this.snapshotFiles = [];
+    this.snapshotHasMore = false;
     this.plugin = plugin;
   }
   getViewType() {
@@ -1709,7 +1710,7 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
     }
   }
   renderTimeline(container) {
-    var _a;
+    var _a, _b, _c;
     container.findAll(".ginkgo-timeline-summary, .ginkgo-timeline-list, .ginkgo-empty-state").forEach((el) => el.remove());
     if (this.snapshots.length === 0) {
       const emptyEl = container.createEl("div", { cls: "ginkgo-empty-state" });
@@ -1756,6 +1757,14 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
             cls: "ginkgo-meta-changed"
           });
         }
+        const cardRight = cardEl.createEl("div", { cls: "ginkgo-card-right" });
+        if (((_b = this.selectedSnapshot) == null ? void 0 : _b.id) === snap.id) {
+          const chevron = cardRight.createEl("span", { cls: "ginkgo-card-chevron is-open" });
+          (0, import_obsidian3.setIcon)(chevron, "chevron-down");
+        } else {
+          const chevron = cardRight.createEl("span", { cls: "ginkgo-card-chevron" });
+          (0, import_obsidian3.setIcon)(chevron, "chevron-right");
+        }
         if (snap.tags && snap.tags.length > 0) {
           const tagsEl = cardEl.createEl("div", { cls: "ginkgo-card-tags" });
           for (const tag of snap.tags) {
@@ -1770,6 +1779,10 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
             text: snap.status,
             cls: "ginkgo-badge-status"
           });
+        }
+        if (((_c = this.selectedSnapshot) == null ? void 0 : _c.id) === snap.id) {
+          const detailEl = itemEl.createEl("div", { cls: "ginkgo-snapshot-detail" });
+          this.renderSnapshotDetailInline(detailEl, snap);
         }
       }
     }
@@ -1817,66 +1830,131 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
     return grouped;
   }
   async selectSnapshot(snap) {
-    var _a;
+    var _a, _b, _c;
+    if (((_a = this.selectedSnapshot) == null ? void 0 : _a.id) === snap.id) {
+      this.selectedSnapshot = null;
+      this.snapshotFiles = [];
+      this.renderTimeline(this.containerEl.children[1]);
+      return;
+    }
     this.selectedSnapshot = snap;
+    this.snapshotFiles = [];
+    this.snapshotHasMore = false;
     this.renderTimeline(this.containerEl.children[1]);
     const detailEl = this.containerEl.querySelector(".ginkgo-snapshot-detail");
-    if (detailEl)
-      detailEl.remove();
-    const detail = this.containerEl.children[1].createEl("div", { cls: "ginkgo-snapshot-detail" });
-    const loadingEl = detail.createEl("div", { cls: "ginkgo-loading" });
+    if (!detailEl)
+      return;
+    const loadingEl = detailEl.createEl("div", { cls: "ginkgo-detail-loading" });
+    const spinnerEl = loadingEl.createEl("div", { cls: "ginkgo-detail-spinner" });
+    (0, import_obsidian3.setIcon)(spinnerEl, "loader");
     loadingEl.createEl("span", { text: "\u52A0\u8F7D\u6587\u4EF6\u5217\u8868..." });
     try {
       const result = await this.plugin.client.browseDirectory(
         this.plugin.vaultSourceId,
         "",
-        snap.timestamp / 1e3,
-        200,
+        snap.timestamp,
+        100,
         0
       );
-      this.snapshotFiles = (_a = result.items) != null ? _a : [];
+      this.snapshotFiles = (_b = result.entries) != null ? _b : [];
+      this.snapshotHasMore = (_c = result.has_more) != null ? _c : false;
       loadingEl.remove();
-      this.renderSnapshotDetail(detail, snap);
+      this.renderFileList(detailEl, snap);
     } catch (err) {
       loadingEl.remove();
       const msg = err instanceof Error ? err.message : String(err);
-      detail.createEl("div", { cls: "ginkgo-error", text: `\u52A0\u8F7D\u5931\u8D25: ${msg}` });
+      detailEl.createEl("div", { cls: "ginkgo-error", text: `\u52A0\u8F7D\u5931\u8D25: ${msg}` });
     }
   }
-  renderSnapshotDetail(container, snap) {
-    const headerEl = container.createEl("div", { cls: "ginkgo-detail-header" });
+  renderSnapshotDetailInline(container, snap) {
+    const statsEl = container.createEl("div", { cls: "ginkgo-detail-stats" });
     const time = new Date(snap.timestamp / 1e3);
-    headerEl.createEl("span", { cls: "ginkgo-detail-title", text: `\u5FEB\u7167\u6587\u4EF6 \u2014 ${time.toLocaleString()}` });
-    const closeBtn = headerEl.createEl("button", { cls: "ginkgo-detail-close", text: "\u5173\u95ED" });
-    closeBtn.addEventListener("click", () => {
-      this.selectedSnapshot = null;
-      container.remove();
-      this.renderTimeline(this.containerEl.children[1]);
-    });
+    const statItems = [
+      { icon: "clock", text: time.toLocaleString() },
+      { icon: "files", text: `${snap.file_count} \u6587\u4EF6 \xB7 ${snap.dir_count} \u76EE\u5F55` },
+      { icon: "hard-drive", text: this.plugin.formatBytes(snap.total_size) }
+    ];
+    if (snap.new_files > 0) {
+      statItems.push({ icon: "plus-circle", text: `${snap.new_files} \u65B0\u589E` });
+    }
+    if (snap.changed_files > 0) {
+      statItems.push({ icon: "refresh-cw", text: `${snap.changed_files} \u4FEE\u6539` });
+    }
+    if (snap.deleted_count > 0) {
+      statItems.push({ icon: "minus-circle", text: `${snap.deleted_count} \u5220\u9664` });
+    }
+    if (snap.duration_ms > 0) {
+      const sec = Math.round(snap.duration_ms / 1e3);
+      statItems.push({ icon: "timer", text: `${sec}s` });
+    }
+    for (const item of statItems) {
+      const statEl = statsEl.createEl("div", { cls: "ginkgo-detail-stat" });
+      const iconSpan = statEl.createEl("span", { cls: "ginkgo-detail-stat-icon" });
+      (0, import_obsidian3.setIcon)(iconSpan, item.icon);
+      statEl.createEl("span", { text: item.text });
+    }
+  }
+  renderFileList(container, snap) {
     if (this.snapshotFiles.length === 0) {
-      container.createEl("div", { cls: "ginkgo-empty", text: "\u6B64\u5FEB\u7167\u65E0\u6587\u4EF6\u8BB0\u5F55" });
+      const emptyEl = container.createEl("div", { cls: "ginkgo-detail-empty" });
+      const iconEl = emptyEl.createEl("span", { cls: "ginkgo-detail-empty-icon" });
+      (0, import_obsidian3.setIcon)(iconEl, "folder-open");
+      emptyEl.createEl("span", { text: "\u6839\u76EE\u5F55\u4E3A\u7A7A" });
       return;
     }
+    const dirs = this.snapshotFiles.filter((e) => e.type === "dir");
+    const files = this.snapshotFiles.filter((e) => e.type !== "dir");
+    const sorted = [...dirs, ...files];
     const listEl = container.createEl("div", { cls: "ginkgo-detail-file-list" });
-    for (const entry of this.snapshotFiles) {
-      const fileEl = listEl.createEl("div", { cls: "ginkgo-detail-file" });
-      const iconCls = entry.type === "dir" ? "folder" : "file-text";
+    for (const entry of sorted) {
+      const fileEl = listEl.createEl("div", { cls: `ginkgo-detail-file ${entry.is_deleted ? "is-deleted" : ""}` });
+      const iconCls = entry.type === "dir" ? "folder" : this.getFileIcon(entry.name);
       const iconEl = fileEl.createEl("span", { cls: "ginkgo-detail-file-icon" });
       (0, import_obsidian3.setIcon)(iconEl, iconCls);
-      fileEl.createEl("span", { cls: "ginkgo-detail-file-name", text: entry.name });
-      if (entry.type !== "dir") {
-        fileEl.createEl("span", { cls: "ginkgo-detail-file-size", text: this.plugin.formatBytes(entry.size) });
-      }
+      const nameEl = fileEl.createEl("span", { cls: "ginkgo-detail-file-name", text: entry.name });
       if (entry.is_deleted) {
-        fileEl.createEl("span", { cls: "ginkgo-detail-file-deleted", text: "\u5DF2\u5220\u9664" });
+        nameEl.createEl("span", { cls: "ginkgo-detail-file-deleted-badge", text: "\u5DF2\u5220\u9664" });
       }
-      fileEl.addEventListener("click", () => {
-        if (entry.type !== "dir" && this.plugin.vaultSourceId > 0) {
-          const filePath = entry.path || entry.name;
-          this.plugin.showFileHistoryByPath(filePath);
-        }
-      });
+      const rightEl = fileEl.createEl("span", { cls: "ginkgo-detail-file-right" });
+      if (entry.type !== "dir") {
+        rightEl.createEl("span", { cls: "ginkgo-detail-file-size", text: this.plugin.formatBytes(entry.size) });
+      } else if (entry.file_count > 0 || entry.dir_count > 0) {
+        rightEl.createEl("span", { cls: "ginkgo-detail-file-count", text: `${entry.file_count} \u6587\u4EF6` });
+      }
+      if (entry.type !== "dir") {
+        fileEl.addEventListener("click", () => {
+          if (this.plugin.vaultSourceId > 0) {
+            const filePath = entry.path || entry.name;
+            this.plugin.showFileHistoryByPath(filePath);
+          }
+        });
+      }
     }
+    if (this.snapshotHasMore) {
+      const moreEl = container.createEl("div", { cls: "ginkgo-detail-more" });
+      moreEl.createEl("span", { text: "\u66F4\u591A\u6587\u4EF6\u672A\u663E\u793A..." });
+    }
+  }
+  getFileIcon(name) {
+    var _a, _b, _c;
+    const ext = (_b = (_a = name.split(".").pop()) == null ? void 0 : _a.toLowerCase()) != null ? _b : "";
+    const iconMap = {
+      md: "file-text",
+      txt: "file-text",
+      json: "file-json",
+      css: "file-code",
+      js: "file-code",
+      ts: "file-code",
+      png: "image",
+      jpg: "image",
+      jpeg: "image",
+      gif: "image",
+      svg: "image",
+      webp: "image",
+      pdf: "file-text",
+      canvas: "layout-dashboard"
+    };
+    return (_c = iconMap[ext]) != null ? _c : "file";
   }
   async onClose() {
   }
