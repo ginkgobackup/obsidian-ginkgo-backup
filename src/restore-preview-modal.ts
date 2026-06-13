@@ -109,7 +109,15 @@ export class RestorePreviewModal extends Modal {
 		restoreBtn.addEventListener("click", async () => {
 			restoreBtn.disabled = true;
 			restoreBtn.textContent = "恢复中...";
-			await this.onRestore();
+			try {
+				await this.onRestore();
+				this.close();
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				new Notice(`Ginkgo: 恢复失败 — ${msg}`);
+				restoreBtn.disabled = false;
+				restoreBtn.textContent = "确认恢复";
+			}
 		});
 
 		footerEl.createEl("button", { cls: "ginkgo-close-btn", text: "取消" })

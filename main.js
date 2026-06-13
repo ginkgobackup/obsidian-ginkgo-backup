@@ -108,7 +108,15 @@ var init_restore_preview_modal = __esm({
         restoreBtn.addEventListener("click", async () => {
           restoreBtn.disabled = true;
           restoreBtn.textContent = "\u6062\u590D\u4E2D...";
-          await this.onRestore();
+          try {
+            await this.onRestore();
+            this.close();
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            new import_obsidian4.Notice(`Ginkgo: \u6062\u590D\u5931\u8D25 \u2014 ${msg}`);
+            restoreBtn.disabled = false;
+            restoreBtn.textContent = "\u786E\u8BA4\u6062\u590D";
+          }
         });
         footerEl.createEl("button", { cls: "ginkgo-close-btn", text: "\u53D6\u6D88" }).addEventListener("click", () => this.close());
       }
