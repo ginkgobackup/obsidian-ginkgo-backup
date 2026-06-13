@@ -19,6 +19,8 @@ export interface GinkgoBackupSettings {
 	excludePaths: string[];
 	watchExtensions: string[];
 	vaultIdentifier: string;
+	language: "auto" | "zh-CN" | "en";
+	largeFileThresholdBytes: number;
 }
 
 export const DEFAULT_SETTINGS: GinkgoBackupSettings = {
@@ -34,6 +36,8 @@ export const DEFAULT_SETTINGS: GinkgoBackupSettings = {
 	excludePaths: [".obsidian", ".trash", ".DS_Store"],
 	watchExtensions: ["md", "canvas", "base", "json", "css"],
 	vaultIdentifier: "",
+	language: "auto",
+	largeFileThresholdBytes: 5 * 1024 * 1024,
 };
 
 export interface HealthResponse {

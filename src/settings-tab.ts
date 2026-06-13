@@ -1,5 +1,6 @@
 import { App, Modal, Notice, PluginSettingTab, Setting, setIcon } from "obsidian";
 import GinkgoBackupPlugin from "./main";
+import { t, setStoredLocale, setActiveLocale } from "./i18n";
 import type { Repository } from "./types";
 
 class RepoMultiSelectModal extends Modal {
@@ -27,8 +28,8 @@ class RepoMultiSelectModal extends Modal {
 		contentEl.addClass("ginkgo-repo-select-modal");
 
 		const headerEl = contentEl.createEl("div", { cls: "ginkgo-repo-header" });
-		headerEl.createEl("h2", { text: "配置备份源" });
-		this.countEl = headerEl.createEl("span", { cls: "ginkgo-repo-count", text: `已选 ${this.selected.size} 个` });
+		headerEl.createEl("h2", { text: t("setting.configureBackup") });
+		this.countEl = headerEl.createEl("span", { cls: "ginkgo-repo-count", text: t("setting.selectedCount", { count: this.selected.size }) });
 
 		this.listEl = contentEl.createEl("div", { cls: "ginkgo-repo-list" });
 		this.renderList();
@@ -36,7 +37,7 @@ class RepoMultiSelectModal extends Modal {
 		const footerEl = contentEl.createEl("div", { cls: "ginkgo-modal-footer" });
 		this.confirmBtn = footerEl.createEl("button", {
 			cls: "ginkgo-btn-restore",
-			text: "确认配置",
+			text: t("btn.confirm"),
 		});
 		this.confirmBtn.disabled = this.selected.size === 0;
 		this.confirmBtn.addEventListener("click", () => {
@@ -46,12 +47,12 @@ class RepoMultiSelectModal extends Modal {
 			this.close();
 		});
 
-		const cancelBtn = footerEl.createEl("button", { text: "取消", cls: "ginkgo-close-btn" });
+		const cancelBtn = footerEl.createEl("button", { text: t("btn.cancel"), cls: "ginkgo-close-btn" });
 		cancelBtn.addEventListener("click", () => this.close());
 	}
 
 	private updateSelection() {
-		this.countEl.setText(`已选 ${this.selected.size} 个`);
+		this.countEl.setText(t("setting.selectedCount", { count: this.selected.size }));
 		this.confirmBtn.disabled = this.selected.size === 0;
 	}
 
@@ -94,15 +95,15 @@ class RepoMultiSelectModal extends Modal {
 
 			const badgesEl = nameRow.createEl("span", { cls: "ginkgo-repo-badges" });
 			if (repo.type === "cloud" || repo.type === "s3") {
-				badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-cloud", text: "云端" });
+				badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-cloud", text: t("repo.cloud") });
 			} else if (repo.type === "webdav") {
-				badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-cloud", text: "WebDAV" });
+				badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-cloud", text: t("repo.webdav") });
 			} else {
-				badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-local", text: "本地" });
+				badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-local", text: t("repo.local") });
 			}
 
 			if (repo.encrypted) {
-				badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-encrypted", text: "加密" });
+				badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-encrypted", text: t("repo.encrypted") });
 			}
 
 			bodyEl.createEl("div", { cls: "ginkgo-repo-path", text: repo.path });
@@ -131,8 +132,8 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 		const iconEl = bannerLeft.createEl("span", { cls: "ginkgo-settings-banner-icon" });
 		setIcon(iconEl, "leaf");
 		const titleEl = bannerLeft.createEl("div", { cls: "ginkgo-settings-banner-text" });
-		titleEl.createEl("div", { cls: "ginkgo-settings-banner-title", text: "Ginkgo Backup" });
-		titleEl.createEl("div", { cls: "ginkgo-settings-banner-version", text: "银杏时光备份 · Obsidian 插件 v0.3.0" });
+		titleEl.createEl("div", { cls: "ginkgo-settings-banner-title", text: t("plugin.name") });
+		titleEl.createEl("div", { cls: "ginkgo-settings-banner-version", text: "Ginkgo Backup · Obsidian Plugin v0.3.0" });
 		const statusDot = bannerEl.createEl("div", { cls: "ginkgo-settings-banner-status" });
 		this.checkBannerStatus(statusDot);
 
@@ -144,17 +145,17 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 	}
 
 	private renderConnectionSection(containerEl: HTMLElement) {
-		containerEl.createEl("h3", { text: "连接" });
+		containerEl.createEl("h3", { text: t("setting.connection") });
 
 		const statusEl = containerEl.createEl("div", { cls: "ginkgo-settings-status" });
 		this.checkAndDisplayStatus(statusEl);
 
 		new Setting(containerEl)
-			.setName("API 主机")
-			.setDesc("支持 IP、域名或完整 URL（如 https://ginkgo.example.com）")
+			.setName(t("setting.serverUrl"))
+			.setDesc(t("setting.apiHostDesc"))
 			.addText((text) =>
 				text
-					.setPlaceholder("127.0.0.1 或 https://ginkgo.example.com")
+					.setPlaceholder("127.0.0.1 " + t("setting.apiHostDesc"))
 					.setValue(this.plugin.settings.apiHost)
 					.onChange(async (value) => {
 						this.plugin.settings.apiHost = value.trim();
@@ -163,8 +164,8 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("API 端口")
-			.setDesc("API 服务端口（默认 9275）")
+			.setName(t("setting.apiPort"))
+			.setDesc(t("setting.apiPortDesc"))
 			.addText((text) =>
 				text
 					.setPlaceholder("9275")
@@ -179,10 +180,10 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("API Token")
-			.setDesc("在 Ginkgo Backup 桌面应用的设置页面获取")
+			.setName(t("setting.apiToken"))
+			.setDesc(t("setting.apiTokenDesc2"))
 			.addText((text) => {
-				text.setPlaceholder("输入 API Token")
+				text.setPlaceholder(t("setting.apiToken"))
 					.setValue(this.plugin.settings.apiToken)
 					.onChange(async (value) => {
 						this.plugin.settings.apiToken = value;
@@ -192,11 +193,29 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Vault 标识符")
-			.setDesc("留空则自动检测。多设备同名 Vault 时需设置唯一标识（如 MyVault-iPhone），确保每个设备对应独立备份源")
+			.setName(t("setting.language"))
+			.setDesc(t("setting.language"))
+			.addDropdown((dropdown) => {
+				dropdown.addOption("auto", t("setting.languageAuto"));
+				dropdown.addOption("zh-CN", t("setting.languageZh"));
+				dropdown.addOption("en", t("setting.languageEn"));
+				dropdown.setValue(this.plugin.settings.language);
+				dropdown.onChange(async (value) => {
+					const locale = value as "auto" | "zh-CN" | "en";
+					this.plugin.settings.language = locale;
+					setStoredLocale(locale);
+					setActiveLocale(locale);
+					await this.plugin.saveSettings();
+					this.display();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName(t("setting.vaultIdentifier"))
+			.setDesc(t("setting.vaultIdentifierDesc"))
 			.addText((text) =>
 				text
-					.setPlaceholder("自动检测")
+					.setPlaceholder(t("setting.vaultIdentifier"))
 					.setValue(this.plugin.settings.vaultIdentifier)
 					.onChange(async (value) => {
 						this.plugin.settings.vaultIdentifier = value.trim();
@@ -205,11 +224,18 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 					})
 			);
 
+		const sourceDesc = this.plugin.settings.sourceId > 0
+			? t("setting.sourceConfigured", { id: this.plugin.settings.sourceId })
+			: t("setting.sourceNotConfigured");
+		const sourceBtnText = this.plugin.settings.sourceId > 0
+			? t("setting.reconfigure")
+			: t("setting.oneClickConfig");
+
 		new Setting(containerEl)
-			.setName("备份源")
-			.setDesc(this.plugin.settings.sourceId > 0 ? `已配置（ID: ${this.plugin.settings.sourceId}）` : "未配置，点击一键配置选择仓库")
+			.setName(t("setting.backupSource"))
+			.setDesc(sourceDesc)
 			.addButton((button) =>
-				button.setButtonText(this.plugin.settings.sourceId > 0 ? "重新配置" : "一键配置").setCta().onClick(async () => {
+				button.setButtonText(sourceBtnText).setCta().onClick(async () => {
 					await this.showRepoSelector();
 				})
 			)
@@ -229,11 +255,11 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 	}
 
 	private renderAutoBackupSection(containerEl: HTMLElement) {
-		containerEl.createEl("h3", { text: "备份策略" });
+		containerEl.createEl("h3", { text: t("setting.backupStrategy") });
 
 		new Setting(containerEl)
-			.setName("即时推送")
-			.setDesc("文件保存后自动推送到暂存区（推荐，即时完成，后台备份）")
+			.setName(t("setting.autoBackup"))
+			.setDesc(t("setting.stagingPushOnSaveDesc"))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.stagingPushOnSave)
@@ -248,8 +274,8 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("全量备份")
-			.setDesc("文件保存后触发全量备份（较慢，与即时推送互斥）")
+			.setName(t("setting.fullBackup"))
+			.setDesc(t("setting.fullBackupDesc"))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.autoBackupOnSave)
@@ -265,8 +291,8 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("防抖延迟")
-			.setDesc("文件保存后等待多久再触发推送（毫秒）")
+			.setName(t("setting.debounceDelay"))
+			.setDesc(t("setting.debounceDelayDesc"))
 			.addSlider((slider) =>
 				slider
 					.setLimits(5000, 120000, 5000)
@@ -279,8 +305,8 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("监控文件类型")
-			.setDesc("即时推送的文件扩展名，逗号或换行分隔（如 md, canvas, base）。其他文件由兜底备份覆盖")
+			.setName(t("setting.watchExtensions"))
+			.setDesc(t("setting.watchExtensionsDesc2"))
 			.addTextArea((text) =>
 				text
 					.setPlaceholder("md, canvas, base")
@@ -296,11 +322,11 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 	}
 
 	private renderFilterSection(containerEl: HTMLElement) {
-		containerEl.createEl("h3", { text: "过滤与显示" });
+		containerEl.createEl("h3", { text: t("setting.filterAndDisplay") });
 
 		new Setting(containerEl)
-			.setName("排除路径列表")
-			.setDesc("不备份的路径前缀，每行一个（如 .obsidian, .trash）")
+			.setName(t("setting.excludePaths"))
+			.setDesc(t("setting.excludePathsDesc2"))
 			.addTextArea((text) =>
 				text
 					.setPlaceholder(".obsidian\n.trash\n.DS_Store")
@@ -315,8 +341,8 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("显示状态栏")
-			.setDesc("在状态栏显示备份状态")
+			.setName(t("setting.showStatusBar"))
+			.setDesc(t("setting.showStatusBarDesc"))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.showStatusBar)
@@ -327,8 +353,8 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("刷新间隔")
-			.setDesc("状态栏刷新间隔（秒）")
+			.setName(t("setting.refreshInterval"))
+			.setDesc(t("setting.refreshIntervalDesc2"))
 			.addSlider((slider) =>
 				slider
 					.setLimits(10, 300, 10)
@@ -339,61 +365,69 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
+
+		new Setting(containerEl)
+			.setName(t("setting.largeFileThreshold"))
+			.setDesc(t("setting.largeFileThresholdDesc"))
+			.addSlider((slider) =>
+				slider
+					.setLimits(1, 50, 1)
+					.setValue(Math.round(this.plugin.settings.largeFileThresholdBytes / 1024 / 1024))
+					.setDynamicTooltip()
+					.onChange(async (value) => {
+						this.plugin.settings.largeFileThresholdBytes = value * 1024 * 1024;
+						await this.plugin.saveSettings();
+					})
+			);
 	}
 
 	private renderActionsSection(containerEl: HTMLElement) {
-		containerEl.createEl("h3", { text: "快捷操作" });
+		containerEl.createEl("h3", { text: t("setting.quickActions") });
 
 		new Setting(containerEl)
-			.setName("测试连接")
-			.setDesc("验证与 Ginkgo Backup 的连接")
+			.setName(t("setting.testConnection"))
+			.setDesc(t("setting.testConnectionDesc"))
 			.addButton((button) =>
-				button.setButtonText("测试").onClick(async () => {
+				button.setButtonText(t("setting.testConnection")).onClick(async () => {
 					button.setDisabled(true);
 					try {
 						const health = await this.plugin.client.health();
-						new Notice(`Ginkgo: 已连接 (v${health.version})`);
+						new Notice(t("status.connected") + ` (v${health.version})`);
 					} catch {
-						new Notice("Ginkgo: 连接失败，请检查主机、端口和 Token");
+						new Notice(t("error.getStatusFailed"));
 					}
 					button.setDisabled(false);
 				})
 			);
 
 		new Setting(containerEl)
-			.setName("立即备份")
-			.setDesc("触发全量备份")
+			.setName(t("btn.backupNow"))
+			.setDesc(t("setting.backupNowDesc"))
 			.addButton((button) =>
-				button.setButtonText("备份").onClick(() => this.plugin.backupVault())
+				button.setButtonText(t("btn.backupNow")).onClick(() => this.plugin.backupVault())
 			);
 
 		new Setting(containerEl)
-			.setName("打开应用")
-			.setDesc("在浏览器中打开 Ginkgo Backup")
+			.setName(t("menu.openApp"))
+			.setDesc(t("setting.openAppDesc"))
 			.addButton((button) =>
-				button.setButtonText("打开").onClick(() => this.plugin.openGinkgoApp())
+				button.setButtonText(t("menu.openApp")).onClick(() => this.plugin.openGinkgoApp())
 			);
 	}
 
 	private renderHelpSection(containerEl: HTMLElement) {
-		containerEl.createEl("h3", { text: "帮助" });
+		containerEl.createEl("h3", { text: t("setting.help") });
 		const helpEl = containerEl.createEl("div", { cls: "ginkgo-settings-help" });
-		helpEl.createEl("p", {
-			text: "确保 Ginkgo Backup 桌面应用正在运行，并且当前 Vault 已添加到备份源。",
-		});
-		helpEl.createEl("p", {
-			text: "使用命令面板（Ctrl/Cmd + P）搜索 Ginkgo 查看所有可用命令。",
-		});
-		helpEl.createEl("p", {
-			text: "即时推送模式：笔记保存后即时推送到暂存区，后台自动完成备份，不阻塞编辑。图片等附件由兜底备份覆盖。",
-		});
+		helpEl.createEl("p", { text: t("setting.helpLine1") });
+		helpEl.createEl("p", { text: t("setting.helpLine2") });
+		helpEl.createEl("p", { text: t("setting.helpLine3") });
 	}
 
 	private async showRepoSelector() {
 		try {
 			const repos = await this.plugin.client.getRepositories();
 			if (repos.length === 0) {
-				new Notice("Ginkgo: 没有可用的备份仓库，请先在 Ginkgo Backup 中创建仓库");
+				new Notice(t("notice.createSourceFailed"));
 				return;
 			}
 
@@ -402,22 +436,22 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 				try {
 					const source = await this.plugin.client.getSourceById(this.plugin.vaultSourceId);
 					if (source) preselectedPaths = source.repo_paths || [];
-				} catch {
-					// ignore
+				} catch (err) {
+					this.plugin.logError("load preselected repos failed", err);
 				}
 			}
 
 			const modal = new RepoMultiSelectModal(this.app, repos, preselectedPaths, async (selectedRepos) => {
 				const repoPaths = selectedRepos.map((r) => r.path);
 				const names = selectedRepos.map((r) => r.display_name || r.path).join(", ");
-				new Notice(`Ginkgo: 已选择仓库 ${names}`);
+				new Notice(t("setting.reposSelected", { names }));
 				await this.plugin.setupSource(repoPaths);
 				this.display();
 			});
 			modal.open();
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
-			new Notice(`Ginkgo: 获取仓库列表失败 — ${msg}`);
+			new Notice(t("setting.loadReposFailed", { message: msg }));
 		}
 	}
 
@@ -426,12 +460,13 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 			const connected = await this.plugin.client.isConnected();
 			if (connected) {
 				el.addClass("ginkgo-banner-connected");
-				el.setAttribute("aria-label", "已连接");
+				el.setAttribute("aria-label", t("status.connected"));
 			} else {
 				el.addClass("ginkgo-banner-disconnected");
-				el.setAttribute("aria-label", "未连接");
+				el.setAttribute("aria-label", t("status.disconnected"));
 			}
-		} catch {
+		} catch (err) {
+			this.plugin.logError("check banner status failed", err);
 			el.addClass("ginkgo-banner-disconnected");
 		}
 	}
@@ -444,7 +479,7 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 		try {
 			const connected = await this.plugin.client.isConnected();
 			if (!connected) {
-				el.setText("❌ 未连接到 Ginkgo Backup");
+				el.setText(t("setting.statusError"));
 				el.addClass("ginkgo-status-err");
 				return;
 			}
@@ -453,14 +488,15 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 			const source = vaultPath ? await this.plugin.client.findSourceByPath(vaultPath) : null;
 
 			if (source) {
-				el.setText("✅ 已连接 — 当前 Vault 已配置备份");
+				el.setText(t("setting.statusConnected"));
 				el.addClass("ginkgo-status-ok");
 			} else {
-				el.setText("⚠️ 已连接 — 当前 Vault 未配置备份");
+				el.setText(t("setting.statusNotConfigured"));
 				el.addClass("ginkgo-status-warn");
 			}
-		} catch {
-			el.setText("❌ 连接错误");
+		} catch (err) {
+			this.plugin.logError("check settings status failed", err);
+			el.setText(t("setting.statusError"));
 			el.addClass("ginkgo-status-err");
 		}
 	}

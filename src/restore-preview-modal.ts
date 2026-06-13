@@ -1,5 +1,7 @@
 import { App, Modal, Notice } from "obsidian";
 import { GinkgoBackupClient } from "./api";
+import { tryDecodeText } from "./encoding";
+import { t } from "./i18n";
 import type { FileHistoryEntry } from "./types";
 
 export class RestorePreviewModal extends Modal {
@@ -37,19 +39,19 @@ export class RestorePreviewModal extends Modal {
 		contentEl.addClass("ginkgo-restore-modal");
 
 		const headerEl = contentEl.createEl("div", { cls: "ginkgo-header" });
-		headerEl.createEl("span", { cls: "ginkgo-header-title", text: "恢复预览" });
+		headerEl.createEl("span", { cls: "ginkgo-header-title", text: t("restore.title") });
 
 		const infoEl = contentEl.createEl("div", { cls: "ginkgo-restore-info" });
-		infoEl.createEl("div", { text: `文件: ${this.filePath}`, cls: "ginkgo-restore-path" });
-		infoEl.createEl("div", { text: `版本: ${this.versionLabel}`, cls: "ginkgo-restore-version" });
-		infoEl.createEl("div", { text: `大小: ${this.formatBytes(this.version.size)}`, cls: "ginkgo-restore-size" });
+		infoEl.createEl("div", { text: t("restore.file", { path: this.filePath }), cls: "ginkgo-restore-path" });
+		infoEl.createEl("div", { text: t("restore.version", { version: this.versionLabel }), cls: "ginkgo-restore-version" });
+		infoEl.createEl("div", { text: t("restore.size", { size: this.formatBytes(this.version.size) }), cls: "ginkgo-restore-size" });
 
 		if (this.version.is_deleted) {
-			infoEl.createEl("div", { text: "⚠️ 此版本为删除状态", cls: "ginkgo-restore-deleted" });
+			infoEl.createEl("div", { text: t("restore.deleted"), cls: "ginkgo-restore-deleted" });
 		}
 
 		const loadingEl = contentEl.createEl("div", { cls: "ginkgo-loading" });
-		loadingEl.createEl("span", { text: "加载文件内容..." });
+		loadingEl.createEl("span", { text: t("restore.loading") });
 
 		let content = "";
 		try {
@@ -63,21 +65,18 @@ export class RestorePreviewModal extends Modal {
 				this.repoPath
 			);
 			if (resp.content) {
-				try {
-					content = decodeURIComponent(escape(atob(resp.content)));
-				} catch {
-					content = resp.content;
-				}
+				const decoded = tryDecodeText(resp.content);
+				content = decoded.ok ? decoded.text : resp.content;
 			}
 			if (resp.error) {
-				content = `(读取失败: ${resp.error})`;
+				content = t("restore.readFailed", { message: resp.error });
 			}
 			if (!content) {
-				content = "(空文件)";
+				content = t("restore.emptyFile");
 			}
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
-			content = `(无法获取内容: ${msg})`;
+			content = t("restore.readFailed", { message: msg });
 		}
 
 		loadingEl.remove();
@@ -93,34 +92,34 @@ export class RestorePreviewModal extends Modal {
 		if (lines.length > maxLines) {
 			previewEl.createEl("div", {
 				cls: "ginkgo-restore-truncated",
-				text: `... 共 ${lines.length} 行，仅显示前 ${maxLines} 行`,
+				text: t("restore.truncated", { total: lines.length, count: maxLines }),
 			});
 		}
 
 		const warningEl = contentEl.createEl("div", { cls: "ginkgo-restore-warning" });
-		warningEl.createEl("span", { text: "⚠️ 恢复将覆盖当前文件内容" });
+		warningEl.createEl("span", { text: t("restore.warning") });
 
 		const footerEl = contentEl.createEl("div", { cls: "ginkgo-modal-footer" });
 
 		const restoreBtn = footerEl.createEl("button", {
 			cls: "ginkgo-btn-restore",
-			text: "确认恢复",
+			text: t("restore.confirm"),
 		});
 		restoreBtn.addEventListener("click", async () => {
 			restoreBtn.disabled = true;
-			restoreBtn.textContent = "恢复中...";
+			restoreBtn.textContent = t("restore.restoring");
 			try {
 				await this.onRestore();
 				this.close();
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
-				new Notice(`Ginkgo: 恢复失败 — ${msg}`);
+				new Notice(t("restore.failed", { message: msg }));
 				restoreBtn.disabled = false;
-				restoreBtn.textContent = "确认恢复";
+				restoreBtn.textContent = t("restore.confirm");
 			}
 		});
 
-		footerEl.createEl("button", { cls: "ginkgo-close-btn", text: "取消" })
+		footerEl.createEl("button", { cls: "ginkgo-close-btn", text: t("btn.cancel") })
 			.addEventListener("click", () => this.close());
 	}
 

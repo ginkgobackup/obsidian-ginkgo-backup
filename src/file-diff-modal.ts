@@ -1,6 +1,8 @@
 import { App, Modal } from "obsidian";
 import { GinkgoBackupClient } from "./api";
-import type { HistoryDiff, FileHistoryEntry } from "./types";
+import { tryDecodeText } from "./encoding";
+import { t } from "./i18n";
+import type { HistoryDiff } from "./types";
 
 export class FileDiffModal extends Modal {
 	private client: GinkgoBackupClient;
@@ -8,9 +10,8 @@ export class FileDiffModal extends Modal {
 	private filePath: string;
 	private oldSnapshot: number;
 	private newSnapshot: number;
-	private oldLabel: string;
-	private newLabel: string;
-	private repoPath: string;
+	private repoPath?: string;
+	private diff: HistoryDiff;
 
 	constructor(
 		app: App,
@@ -19,9 +20,8 @@ export class FileDiffModal extends Modal {
 		filePath: string,
 		oldSnapshot: number,
 		newSnapshot: number,
-		oldLabel: string,
-		newLabel: string,
-		repoPath: string
+		diff: HistoryDiff,
+		repoPath?: string
 	) {
 		super(app);
 		this.client = client;
@@ -29,178 +29,75 @@ export class FileDiffModal extends Modal {
 		this.filePath = filePath;
 		this.oldSnapshot = oldSnapshot;
 		this.newSnapshot = newSnapshot;
-		this.oldLabel = oldLabel;
-		this.newLabel = newLabel;
+		this.diff = diff;
 		this.repoPath = repoPath;
 	}
 
 	async onOpen() {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.addClass("ginkgo-diff-modal");
+		contentEl.addClass("ginkgo-file-diff-modal");
 
-		const headerEl = contentEl.createEl("div", { cls: "ginkgo-header" });
-		headerEl.createEl("span", { cls: "ginkgo-header-title", text: "版本对比" });
-		headerEl.createEl("div", { cls: "ginkgo-header-path", text: this.filePath });
+		contentEl.createEl("h2", { text: t("modal.diffTitle", { path: this.filePath }) });
+		contentEl.createEl("div", {
+			cls: "ginkgo-diff-meta",
+			text: t("modal.diffSummary", { type: this.diff.diff_type, delta: this.diff.size_delta }),
+		});
 
-		const loadingEl = contentEl.createEl("div", { cls: "ginkgo-loading" });
-		loadingEl.createEl("span", { text: "加载中..." });
+		const loadingEl = contentEl.createEl("div", { cls: "ginkgo-diff-loading", text: t("history.loadingDiff") });
 
 		try {
-			const diff = await this.client.getFileDiff(
-				this.sourceId,
-				this.filePath,
-				this.oldSnapshot,
-				this.newSnapshot,
-				this.repoPath
-			);
-
 			let oldContent = "";
 			let newContent = "";
 
 			try {
 				const oldResp = await this.client.getFileContent(this.sourceId, this.filePath, this.oldSnapshot, this.repoPath);
 				if (oldResp.content) {
-					try {
-						oldContent = decodeURIComponent(escape(atob(oldResp.content)));
-					} catch {
-						oldContent = oldResp.content;
-					}
+					const decoded = tryDecodeText(oldResp.content);
+					oldContent = decoded.ok ? decoded.text : oldResp.content;
 				}
 			} catch {
-				oldContent = "(无法获取旧版本内容)";
+				oldContent = t("diff.unavailableOld");
 			}
 
 			try {
 				const newResp = await this.client.getFileContent(this.sourceId, this.filePath, this.newSnapshot, this.repoPath);
 				if (newResp.content) {
-					try {
-						newContent = decodeURIComponent(escape(atob(newResp.content)));
-					} catch {
-						newContent = newResp.content;
-					}
+					const decoded = tryDecodeText(newResp.content);
+					newContent = decoded.ok ? decoded.text : newResp.content;
 				}
 			} catch {
-				newContent = "(无法获取新版本内容)";
+				newContent = t("diff.unavailableNew");
 			}
 
 			loadingEl.remove();
-			this.renderDiff(contentEl, diff, oldContent, newContent);
+			this.renderDiff(contentEl, oldContent, newContent);
 		} catch (err) {
-			loadingEl.remove();
-			const msg = err instanceof Error ? err.message : String(err);
-			contentEl.createEl("div", { cls: "ginkgo-error", text: `加载失败: ${msg}` });
+			loadingEl.setText(t("history.loadFailed", { message: err instanceof Error ? err.message : String(err) }));
 		}
 	}
 
-	private renderDiff(contentEl: HTMLElement, diff: HistoryDiff, oldContent: string, newContent: string) {
-		const summaryEl = contentEl.createEl("div", { cls: "ginkgo-diff-summary" });
+	private renderDiff(container: HTMLElement, oldContent: string, newContent: string) {
+		const diffEl = container.createEl("div", { cls: "ginkgo-diff-viewer" });
 
-		const typeBadge = summaryEl.createEl("span", {
-			cls: `ginkgo-diff-type ginkgo-diff-type-${diff.diff_type}`,
-		});
-		switch (diff.diff_type) {
-			case "unchanged":
-				typeBadge.setText("无变化");
-				break;
-			case "modified":
-				typeBadge.setText("已修改");
-				break;
-			case "deleted":
-				typeBadge.setText("已删除");
-				break;
-			case "restored":
-				typeBadge.setText("已恢复");
-				break;
-		}
+		const contentEl = diffEl.createEl("div", { cls: "ginkgo-diff-content" });
 
-		if (diff.size_delta !== 0) {
-			const isPositive = diff.size_delta > 0;
-			summaryEl.createEl("span", {
-				cls: `ginkgo-diff-size ${isPositive ? "is-positive" : "is-negative"}`,
-				text: `${isPositive ? "+" : ""}${this.formatBytes(diff.size_delta)}`,
-			});
-		}
-
-		if (diff.diff_type === "unchanged") {
-			contentEl.createEl("div", { cls: "ginkgo-diff-unchanged", text: "两个版本内容相同" });
-			this.renderFooter(contentEl);
+		if (!oldContent && !newContent) {
+			contentEl.createEl("div", { cls: "ginkgo-diff-empty", text: t("modal.diffEmpty") });
 			return;
 		}
 
-		const diffContainer = contentEl.createEl("div", { cls: "ginkgo-diff-container" });
+		const grid = contentEl.createEl("div", { cls: "ginkgo-diff-grid" });
 
-		const oldPanel = diffContainer.createEl("div", { cls: "ginkgo-diff-panel" });
-		oldPanel.createEl("div", { cls: "ginkgo-diff-panel-header", text: this.oldLabel });
-		const oldCode = oldPanel.createEl("pre", { cls: "ginkgo-diff-code" });
-		oldCode.createEl("code", { text: oldContent });
+		const oldEl = grid.createEl("div", { cls: "ginkgo-diff-old" });
+		oldEl.createEl("div", { cls: "ginkgo-diff-header", text: t("modal.diffOldVersion") });
+		const oldPre = oldEl.createEl("pre");
+		oldPre.setText(oldContent || t("modal.diffEmpty"));
 
-		const newPanel = diffContainer.createEl("div", { cls: "ginkgo-diff-panel" });
-		newPanel.createEl("div", { cls: "ginkgo-diff-panel-header", text: this.newLabel });
-		const newCode = newPanel.createEl("pre", { cls: "ginkgo-diff-code" });
-		newCode.createEl("code", { text: newContent });
-
-		this.renderInlineDiff(diffContainer, oldContent, newContent);
-
-		this.renderFooter(contentEl);
-	}
-
-	private renderInlineDiff(container: HTMLElement, oldContent: string, newContent: string) {
-		const oldLines = oldContent.split("\n");
-		const newLines = newContent.split("\n");
-
-		const diffEl = container.createEl("div", { cls: "ginkgo-inline-diff" });
-		diffEl.createEl("div", { cls: "ginkgo-diff-section-title", text: "差异" });
-
-		const maxLen = Math.max(oldLines.length, newLines.length);
-		let hasDiff = false;
-
-		for (let i = 0; i < maxLen; i++) {
-			const oldLine = oldLines[i];
-			const newLine = newLines[i];
-
-			if (oldLine === undefined && newLine !== undefined) {
-				hasDiff = true;
-				const lineEl = diffEl.createEl("div", { cls: "ginkgo-diff-line ginkgo-diff-added" });
-				lineEl.createEl("span", { cls: "ginkgo-line-num", text: `+${i + 1}` });
-				lineEl.createEl("span", { cls: "ginkgo-line-content", text: newLine });
-			} else if (oldLine !== undefined && newLine === undefined) {
-				hasDiff = true;
-				const lineEl = diffEl.createEl("div", { cls: "ginkgo-diff-line ginkgo-diff-removed" });
-				lineEl.createEl("span", { cls: "ginkgo-line-num", text: `-${i + 1}` });
-				lineEl.createEl("span", { cls: "ginkgo-line-content", text: oldLine });
-			} else if (oldLine !== newLine) {
-				hasDiff = true;
-				const removedEl = diffEl.createEl("div", { cls: "ginkgo-diff-line ginkgo-diff-removed" });
-				removedEl.createEl("span", { cls: "ginkgo-line-num", text: `-${i + 1}` });
-				removedEl.createEl("span", { cls: "ginkgo-line-content", text: oldLine });
-
-				const addedEl = diffEl.createEl("div", { cls: "ginkgo-diff-line ginkgo-diff-added" });
-				addedEl.createEl("span", { cls: "ginkgo-line-num", text: `+${i + 1}` });
-				addedEl.createEl("span", { cls: "ginkgo-line-content", text: newLine });
-			}
-		}
-
-		if (!hasDiff) {
-			diffEl.createEl("div", { cls: "ginkgo-diff-unchanged", text: "内容相同" });
-		}
-	}
-
-	private renderFooter(contentEl: HTMLElement) {
-		const footerEl = contentEl.createEl("div", { cls: "ginkgo-modal-footer" });
-		footerEl.createEl("button", { cls: "ginkgo-close-btn", text: "关闭" })
-			.addEventListener("click", () => this.close());
-	}
-
-	private formatBytes(bytes: number): string {
-		if (!bytes || isNaN(bytes)) return "0 B";
-		const sign = bytes < 0 ? "-" : "";
-		bytes = Math.abs(bytes);
-		if (bytes === 0) return "0 B";
-		const k = 1024;
-		const sizes = ["B", "KB", "MB", "GB"];
-		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return sign + parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[Math.min(i, sizes.length - 1)];
+		const newEl = grid.createEl("div", { cls: "ginkgo-diff-new" });
+		newEl.createEl("div", { cls: "ginkgo-diff-header", text: t("modal.diffNewVersion") });
+		const newPre = newEl.createEl("pre");
+		newPre.setText(newContent || t("modal.diffEmpty"));
 	}
 
 	onClose() {

@@ -1,5 +1,7 @@
 import { App, Modal, Notice, TFile, setIcon } from "obsidian";
 import { GinkgoBackupClient } from "./api";
+import { encodeText, tryDecodeText } from "./encoding";
+import { t } from "./i18n";
 import type { FileHistoryEntry } from "./types";
 
 interface DiffLine {
@@ -119,7 +121,7 @@ export class FileHistoryModal extends Modal {
 		this.renderHeader(contentEl);
 
 		const loadingEl = contentEl.createEl("div", { cls: "ginkgo-loading" });
-		loadingEl.createEl("span", { text: "加载中..." });
+		loadingEl.createEl("span", { text: t("history.loading") });
 
 		try {
 			const [versions, currentContent] = await Promise.all([
@@ -131,7 +133,7 @@ export class FileHistoryModal extends Modal {
 			loadingEl.remove();
 
 			if (this.versions.length === 0) {
-				contentEl.createEl("div", { cls: "ginkgo-empty", text: "暂无备份历史" });
+				contentEl.createEl("div", { cls: "ginkgo-empty", text: t("history.noHistory") });
 				return;
 			}
 
@@ -139,13 +141,13 @@ export class FileHistoryModal extends Modal {
 		} catch (err) {
 			loadingEl.remove();
 			const msg = err instanceof Error ? err.message : String(err);
-			contentEl.createEl("div", { cls: "ginkgo-error", text: `加载失败: ${msg}` });
+			contentEl.createEl("div", { cls: "ginkgo-error", text: t("history.loadFailed", { message: msg }) });
 		}
 	}
 
 	private renderHeader(contentEl: HTMLElement) {
 		const headerEl = contentEl.createEl("div", { cls: "ginkgo-fh-header" });
-		headerEl.createEl("span", { cls: "ginkgo-fh-title", text: "版本历史" });
+		headerEl.createEl("span", { cls: "ginkgo-fh-title", text: t("history.title") });
 		headerEl.createEl("span", { cls: "ginkgo-fh-filename", text: this.getFileName() });
 	}
 
@@ -153,24 +155,24 @@ export class FileHistoryModal extends Modal {
 		const bodyEl = contentEl.createEl("div", { cls: "ginkgo-fh-body" });
 
 		const leftEl = bodyEl.createEl("div", { cls: "ginkgo-fh-versions" });
-		leftEl.createEl("div", { cls: "ginkgo-fh-section-label", text: `共 ${this.versions.length} 个版本 · 点击选择，再点击另一版本的「对比」` });
+		leftEl.createEl("div", { cls: "ginkgo-fh-section-label", text: t("history.versionCount", { count: this.versions.length }) });
 		this.listEl = leftEl.createEl("div", { cls: "ginkgo-fh-list" });
 		this.renderVersionList();
 
 		const rightEl = bodyEl.createEl("div", { cls: "ginkgo-fh-preview" });
-		const diffHeaderEl = rightEl.createEl("div", { cls: "ginkgo-fh-section-label", text: "差异" });
+		rightEl.createEl("div", { cls: "ginkgo-fh-section-label", text: t("history.diffTitle") });
 		this.diffEl = rightEl.createEl("div", { cls: "ginkgo-fh-diff" });
-		this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: "点击左侧版本查看与当前文件的差异" });
+		this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: t("history.diffHint") });
 
 		const footerEl = contentEl.createEl("div", { cls: "ginkgo-fh-footer" });
 		this.restoreBtn = footerEl.createEl("button", {
 			cls: "ginkgo-btn-restore",
-			text: "恢复此版本",
+			text: t("history.restoreThisVersion"),
 		});
 		this.restoreBtn.disabled = true;
 		this.restoreBtn.addEventListener("click", () => this.restoreSelectedVersion());
 
-		footerEl.createEl("button", { cls: "ginkgo-close-btn", text: "关闭" })
+		footerEl.createEl("button", { cls: "ginkgo-close-btn", text: t("history.close") })
 			.addEventListener("click", () => this.close());
 	}
 
@@ -221,7 +223,7 @@ export class FileHistoryModal extends Modal {
 
 			const timeEl = infoEl.createEl("div", { cls: "ginkgo-fh-time" });
 			if (isCurrent) {
-				timeEl.createEl("span", { cls: "ginkgo-fh-reltime", text: "当前版本" });
+				timeEl.createEl("span", { cls: "ginkgo-fh-reltime", text: t("history.currentVersion") });
 				timeEl.createEl("span", { cls: "ginkgo-fh-abstime", text: this.formatTime(version.first_seen) });
 			} else {
 				timeEl.createEl("span", { cls: "ginkgo-fh-reltime", text: this.relativeTime(version.last_seen) });
@@ -232,9 +234,9 @@ export class FileHistoryModal extends Modal {
 			metaEl.createEl("span", { cls: "ginkgo-fh-size", text: this.formatBytes(version.size) });
 
 			if (isLatest && !isCurrent) {
-				metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-latest", text: "最新" });
+				metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-latest", text: t("history.latest") });
 			} else if (isFirst) {
-				metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-first", text: "首次" });
+				metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-first", text: t("history.first") });
 			} else if (i < this.versions.length - 1) {
 				const prevSize = this.versions[i + 1].size;
 				const delta = version.size - prevSize;
@@ -248,7 +250,7 @@ export class FileHistoryModal extends Modal {
 			}
 
 			if (version.is_deleted) {
-				metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-deleted", text: "已删除" });
+				metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-deleted", text: t("history.deleted") });
 			}
 
 			if (isSelected) {
@@ -261,7 +263,7 @@ export class FileHistoryModal extends Modal {
 			if (this.selectedIdx !== null && i !== this.selectedIdx) {
 				const compareBtn = itemEl.createEl("button", {
 					cls: `ginkgo-fh-compare-btn ${isComparing ? "is-active" : ""}`,
-					text: isComparing ? "取消" : "对比",
+					text: isComparing ? t("history.cancelCompare") : t("history.compare"),
 				});
 				compareBtn.addEventListener("click", (e: MouseEvent) => {
 					e.stopPropagation();
@@ -287,7 +289,7 @@ export class FileHistoryModal extends Modal {
 			this.loadCurrentDiff();
 		} else {
 			this.diffEl.empty();
-			this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: "点击左侧版本查看差异" });
+			this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: t("history.diffHint") });
 		}
 	}
 
@@ -311,11 +313,11 @@ export class FileHistoryModal extends Modal {
 		const version = this.versions[this.selectedIdx];
 
 		this.diffEl.empty();
-		this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-loading", text: "加载差异..." });
+		this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-loading", text: t("history.loadingDiff") });
 
 		try {
 			if (this.isSentinelTs(version.last_seen)) {
-				this.renderDiff(this.diffEl, this.currentContent, this.currentContent, "当前版本", "当前版本");
+				this.renderDiff(this.diffEl, this.currentContent, this.currentContent, t("history.currentVersion"), t("history.currentVersion"));
 				return;
 			}
 
@@ -323,18 +325,19 @@ export class FileHistoryModal extends Modal {
 			const resp = await this.client.getFileContent(this.sourceId, this.filePath, snapshotTime, this.repoPath);
 			let versionContent = "";
 			if (resp.content) {
-				try { versionContent = decodeURIComponent(escape(atob(resp.content))); } catch { versionContent = resp.content; }
+				const decoded = tryDecodeText(resp.content);
+				versionContent = decoded.ok ? decoded.text : resp.content;
 			}
 			if (resp.error) {
 				this.diffEl.empty();
-				this.diffEl.createEl("div", { cls: "ginkgo-error", text: `内容读取失败: ${resp.error}` });
+				this.diffEl.createEl("div", { cls: "ginkgo-error", text: t("history.contentFailed", { message: resp.error }) });
 				return;
 			}
-			this.renderDiff(this.diffEl, versionContent, this.currentContent, this.formatTime(version.first_seen), "当前文件");
+			this.renderDiff(this.diffEl, versionContent, this.currentContent, this.formatTime(version.first_seen), t("modal.diffOldVersion"));
 		} catch (err) {
 			this.diffEl.empty();
 			const msg = err instanceof Error ? err.message : String(err);
-			this.diffEl.createEl("div", { cls: "ginkgo-error", text: `加载失败: ${msg}` });
+			this.diffEl.createEl("div", { cls: "ginkgo-error", text: t("history.loadFailed", { message: msg }) });
 		}
 	}
 
@@ -345,31 +348,37 @@ export class FileHistoryModal extends Modal {
 		const bVersion = this.versions[this.selectedIdx];
 
 		this.diffEl.empty();
-		this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-loading", text: "加载两个版本..." });
+		this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-loading", text: t("history.loadingTwoVersions") });
 
 		try {
 			const [aResp, bResp] = await Promise.all([
 				this.isSentinelTs(aVersion.last_seen)
-					? { content: btoa(unescape(encodeURIComponent(this.currentContent))), error: "" }
+					? { content: encodeText(this.currentContent), error: "" }
 					: this.client.getFileContent(this.sourceId, this.filePath, this.effectiveTs(aVersion), this.repoPath),
 				this.isSentinelTs(bVersion.last_seen)
-					? { content: btoa(unescape(encodeURIComponent(this.currentContent))), error: "" }
+					? { content: encodeText(this.currentContent), error: "" }
 					: this.client.getFileContent(this.sourceId, this.filePath, this.effectiveTs(bVersion), this.repoPath),
 			]);
 
 			let aContent = "";
 			let bContent = "";
-			if (aResp.content) { try { aContent = decodeURIComponent(escape(atob(aResp.content))); } catch { aContent = aResp.content; } }
-			if (bResp.content) { try { bContent = decodeURIComponent(escape(atob(bResp.content))); } catch { bContent = bResp.content; } }
+			if (aResp.content) {
+				const aDecoded = tryDecodeText(aResp.content);
+				aContent = aDecoded.ok ? aDecoded.text : aResp.content;
+			}
+			if (bResp.content) {
+				const bDecoded = tryDecodeText(bResp.content);
+				bContent = bDecoded.ok ? bDecoded.text : bResp.content;
+			}
 
-			const aLabel = this.isSentinelTs(aVersion.last_seen) ? "当前版本" : this.formatTime(aVersion.first_seen);
-			const bLabel = this.isSentinelTs(bVersion.last_seen) ? "当前版本" : this.formatTime(bVersion.first_seen);
+			const aLabel = this.isSentinelTs(aVersion.last_seen) ? t("history.currentVersion") : this.formatTime(aVersion.first_seen);
+			const bLabel = this.isSentinelTs(bVersion.last_seen) ? t("history.currentVersion") : this.formatTime(bVersion.first_seen);
 
 			this.renderDiff(this.diffEl, aContent, bContent, aLabel, bLabel);
 		} catch (err) {
 			this.diffEl.empty();
 			const msg = err instanceof Error ? err.message : String(err);
-			this.diffEl.createEl("div", { cls: "ginkgo-error", text: `加载失败: ${msg}` });
+			this.diffEl.createEl("div", { cls: "ginkgo-error", text: t("history.loadFailed", { message: msg }) });
 		}
 	}
 
@@ -401,7 +410,7 @@ export class FileHistoryModal extends Modal {
 		labelEl.createEl("span", { cls: "ginkgo-fh-diff-label-b", text: `B: ${newLabel}` });
 
 		if (added === 0 && removed === 0) {
-			headerEl.createEl("span", { cls: "ginkgo-fh-diff-identical", text: "内容相同" });
+			headerEl.createEl("span", { cls: "ginkgo-fh-diff-identical", text: t("history.identical") });
 			return;
 		}
 
@@ -434,7 +443,7 @@ export class FileHistoryModal extends Modal {
 
 		const snapshotTime = this.effectiveTs(version);
 		const versionLabel = this.isSentinelTs(version.last_seen)
-			? "当前版本"
+			? t("history.currentVersion")
 			: this.formatTime(version.last_seen);
 
 		const { RestorePreviewModal } = await import("./restore-preview-modal");
@@ -445,7 +454,8 @@ export class FileHistoryModal extends Modal {
 					const resp = await this.client.getFileContent(this.sourceId, this.filePath, snapshotTime, this.repoPath);
 					let versionContent = "";
 					if (resp.content) {
-						try { versionContent = decodeURIComponent(escape(atob(resp.content))); } catch { versionContent = resp.content; }
+						const decoded = tryDecodeText(resp.content);
+						versionContent = decoded.ok ? decoded.text : resp.content;
 					}
 
 					let file = this.app.vault.getAbstractFileByPath(this.filePath);
@@ -459,16 +469,16 @@ export class FileHistoryModal extends Modal {
 						await this.app.vault.modify(file, versionContent);
 					} else {
 						const dirPath = this.filePath.includes("/") ? this.filePath.substring(0, this.filePath.lastIndexOf("/")) : "";
-						if (dirPath) await this.app.vault.createFolder(dirPath).catch(() => {});
+						if (dirPath) await this.app.vault.createFolder(dirPath).catch((err) => this.logError("create folder failed", err));
 						await this.app.vault.create(this.filePath, versionContent);
 					}
 
 					this.currentContent = versionContent;
-					new Notice("Ginkgo: 文件已恢复");
+					new Notice(t("history.restored"));
 					this.close();
 				} catch (err) {
 					const msg = err instanceof Error ? err.message : String(err);
-					new Notice(`Ginkgo: 恢复失败 — ${msg}`);
+					new Notice(t("restore.failed", { message: msg }));
 				}
 			}
 		);
@@ -485,7 +495,10 @@ export class FileHistoryModal extends Modal {
 			}
 			if (!file || !(file instanceof TFile)) return "";
 			return await this.app.vault.read(file);
-		} catch { return ""; }
+		} catch (err) {
+			this.logError("read current file failed", err);
+			return "";
+		}
 	}
 
 	private getFileName(): string {
@@ -503,18 +516,18 @@ export class FileHistoryModal extends Modal {
 		const diffHour = Math.floor(diffMin / 60);
 		const diffDay = Math.floor(diffHour / 24);
 
-		if (diffSec < 60) return "刚刚";
-		if (diffMin < 60) return `${diffMin} 分钟前`;
-		if (diffHour < 24) return `${diffHour} 小时前`;
+		if (diffSec < 60) return t("time.justNow");
+		if (diffMin < 60) return t("time.minutesAgo", { count: diffMin });
+		if (diffHour < 24) return t("time.hoursAgo", { count: diffHour });
 
 		const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 		const targetDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 		const dayDiff = Math.floor((today.getTime() - targetDay.getTime()) / 86400000);
 
-		if (dayDiff === 0) return "今天";
-		if (dayDiff === 1) return "昨天";
-		if (dayDiff < 7) return `${dayDiff} 天前`;
-		if (dayDiff < 30) return `${Math.floor(dayDiff / 7)} 周前`;
+		if (dayDiff === 0) return t("time.today");
+		if (dayDiff === 1) return t("time.yesterday");
+		if (dayDiff < 7) return t("time.daysAgo", { count: dayDiff });
+		if (dayDiff < 30) return t("time.weeksAgo", { count: Math.floor(dayDiff / 7) });
 
 		const m = String(date.getMonth() + 1).padStart(2, "0");
 		const d = String(date.getDate()).padStart(2, "0");
@@ -536,6 +549,11 @@ export class FileHistoryModal extends Modal {
 		const sizes = ["B", "KB", "MB", "GB"];
 		const i = Math.floor(Math.log(bytes) / Math.log(k));
 		return sign + parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[Math.min(i, sizes.length - 1)];
+	}
+
+	private logError(context: string, err: unknown) {
+		const msg = err instanceof Error ? err.message : String(err);
+		console.error(`[Ginkgo Backup] ${context}: ${msg}`, err);
 	}
 
 	onClose() {

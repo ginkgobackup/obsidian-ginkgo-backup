@@ -1,5 +1,6 @@
 import { ItemView, WorkspaceLeaf, Modal, Notice, setIcon } from "obsidian";
 import GinkgoBackupPlugin from "./main";
+import { t } from "./i18n";
 import type { Snapshot, DirectoryEntry } from "./types";
 
 export const TIMELINE_VIEW_TYPE = "ginkgo-backup-timeline";
@@ -24,7 +25,7 @@ export class FileHistoryView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return "备份时间线";
+		return t("timeline.title");
 	}
 
 	getIcon(): string {
@@ -41,25 +42,25 @@ export class FileHistoryView extends ItemView {
 		const iconSpan = h3.createSpan({ cls: "ginkgo-timeline-icon" });
 		setIcon(iconSpan, "hard-drive");
 		iconSpan.style.marginRight = "8px";
-		h3.createSpan({ text: "备份时间线" });
+		h3.createSpan({ text: t("timeline.title") });
 
-		const refreshBtn = headerEl.createEl("button", { text: "刷新", cls: "ginkgo-refresh-btn" });
+		const refreshBtn = headerEl.createEl("button", { text: t("timeline.refresh"), cls: "ginkgo-refresh-btn" });
 		refreshBtn.addEventListener("click", () => this.onOpen());
 
-		const backupBtn = headerEl.createEl("button", { text: "立即备份", cls: "ginkgo-backup-btn" });
+		const backupBtn = headerEl.createEl("button", { text: t("timeline.backupNow"), cls: "ginkgo-backup-btn" });
 		backupBtn.addEventListener("click", () => this.plugin.backupVault());
 
 		if (this.plugin.vaultSourceId === 0) {
 			const emptyEl = container.createEl("div", { cls: "ginkgo-empty-state" });
 			const iconEl = emptyEl.createEl("div", { cls: "ginkgo-empty-icon" });
 			setIcon(iconEl, "hard-drive");
-			emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: "尚未配置备份源" });
-			emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: "使用命令 Ginkgo: 配置备份源 来开始" });
+			emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: t("timeline.notConfigured") });
+			emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: t("timeline.configureHint") });
 			return;
 		}
 
 		const loadingEl = container.createEl("div", { cls: "ginkgo-loading" });
-		loadingEl.createEl("span", { text: "加载中..." });
+		loadingEl.createEl("span", { text: t("timeline.loading") });
 
 		try {
 			const result = await this.plugin.client.getSnapshots(this.plugin.vaultSourceId, 50);
@@ -69,7 +70,7 @@ export class FileHistoryView extends ItemView {
 		} catch (err) {
 			loadingEl.remove();
 			const msg = err instanceof Error ? err.message : String(err);
-			container.createEl("p", { text: `加载失败: ${msg}`, cls: "ginkgo-error" });
+			container.createEl("p", { text: t("timeline.loadFailed", { message: msg }), cls: "ginkgo-error" });
 		}
 	}
 
@@ -80,8 +81,8 @@ export class FileHistoryView extends ItemView {
 			const emptyEl = container.createEl("div", { cls: "ginkgo-empty-state" });
 			const iconEl = emptyEl.createEl("div", { cls: "ginkgo-empty-icon" });
 			setIcon(iconEl, "archive");
-			emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: "暂无备份记录" });
-			emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: "点击「立即备份」创建第一个快照" });
+			emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: t("timeline.noRecords") });
+			emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: t("timeline.firstBackupHint") });
 			return;
 		}
 
@@ -111,7 +112,7 @@ export class FileHistoryView extends ItemView {
 				});
 
 				const metaEl = cardEl.createEl("div", { cls: "ginkgo-card-meta" });
-				metaEl.createEl("span", { text: `${snap.file_count} 文件` });
+				metaEl.createEl("span", { text: `${snap.file_count} ${t("timeline.files")}` });
 				metaEl.createEl("span", { text: this.plugin.formatBytes(snap.total_size) });
 
 				if (snap.new_files > 0) {
@@ -158,9 +159,9 @@ export class FileHistoryView extends ItemView {
 			: "-";
 
 		const items = [
-			{ value: String(this.snapshots.length), label: "快照" },
-			{ value: this.plugin.formatBytes(totalSize), label: "总大小" },
-			{ value: lastTime, label: "最近备份" },
+			{ value: String(this.snapshots.length), label: t("timeline.snapshots") },
+			{ value: this.plugin.formatBytes(totalSize), label: t("timeline.totalSize") },
+			{ value: lastTime, label: t("timeline.lastBackup") },
 		];
 
 		for (const item of items) {
@@ -224,25 +225,25 @@ class SnapshotDetailModal extends Modal {
 		const titleEl = headerEl.createEl("div", { cls: "ginkgo-snap-title" });
 		const iconSpan = titleEl.createSpan({ cls: "ginkgo-snap-title-icon" });
 		setIcon(iconSpan, "camera");
-		titleEl.createSpan({ text: `快照 ${time.toLocaleString()}` });
+		titleEl.createEl("span", { text: `${t("timeline.snapshots")} ${time.toLocaleString()}` });
 
 		const statsEl = contentEl.createEl("div", { cls: "ginkgo-snap-stats" });
 		const statItems: { icon: string; label: string; value: string; cls?: string }[] = [
-			{ icon: "files", label: "文件", value: `${this.snap.file_count} 文件 · ${this.snap.dir_count} 目录` },
-			{ icon: "hard-drive", label: "大小", value: this.plugin.formatBytes(this.snap.total_size) },
+			{ icon: "files", label: t("snapshot.files"), value: `${this.snap.file_count} ${t("timeline.files")} · ${this.snap.dir_count} ${t("snapshot.dirs")}` },
+			{ icon: "hard-drive", label: t("snapshot.size"), value: this.plugin.formatBytes(this.snap.total_size) },
 		];
 		if (this.snap.new_files > 0) {
-			statItems.push({ icon: "plus-circle", label: "新增", value: `${this.snap.new_files} 文件`, cls: "ginkgo-stat-new" });
+			statItems.push({ icon: "plus-circle", label: t("snapshot.new"), value: `${this.snap.new_files} ${t("timeline.files")}`, cls: "ginkgo-stat-new" });
 		}
 		if (this.snap.changed_files > 0) {
-			statItems.push({ icon: "refresh-cw", label: "修改", value: `${this.snap.changed_files} 文件`, cls: "ginkgo-stat-changed" });
+			statItems.push({ icon: "refresh-cw", label: t("snapshot.changed"), value: `${this.snap.changed_files} ${t("timeline.files")}`, cls: "ginkgo-stat-changed" });
 		}
 		if (this.snap.deleted_count > 0) {
-			statItems.push({ icon: "minus-circle", label: "删除", value: `${this.snap.deleted_count} 文件`, cls: "ginkgo-stat-deleted" });
+			statItems.push({ icon: "minus-circle", label: t("snapshot.deleted"), value: `${this.snap.deleted_count} ${t("timeline.files")}`, cls: "ginkgo-stat-deleted" });
 		}
 		if (this.snap.duration_ms > 0) {
 			const sec = Math.round(this.snap.duration_ms / 1000);
-			statItems.push({ icon: "timer", label: "耗时", value: sec >= 60 ? `${Math.floor(sec / 60)}m${sec % 60}s` : `${sec}s` });
+			statItems.push({ icon: "timer", label: t("snapshot.duration"), value: sec >= 60 ? `${Math.floor(sec / 60)}m${sec % 60}s` : `${sec}s` });
 		}
 
 		for (const item of statItems) {
@@ -256,8 +257,8 @@ class SnapshotDetailModal extends Modal {
 
 		const fileSectionEl = contentEl.createEl("div", { cls: "ginkgo-snap-file-section" });
 		const fileHeaderEl = fileSectionEl.createEl("div", { cls: "ginkgo-snap-file-header" });
-		fileHeaderEl.createEl("span", { text: "文件列表" });
-		const loadingEl = fileHeaderEl.createEl("span", { cls: "ginkgo-snap-loading", text: "加载中..." });
+		fileHeaderEl.createEl("span", { text: t("timeline.fileList") });
+		const loadingEl = fileHeaderEl.createEl("span", { cls: "ginkgo-snap-loading", text: t("timeline.loadingFiles") });
 
 		const fileListEl = fileSectionEl.createEl("div", { cls: "ginkgo-snap-file-list" });
 
@@ -278,7 +279,7 @@ class SnapshotDetailModal extends Modal {
 			const entries = result.entries ?? [];
 
 			if (entries.length === 0) {
-				listEl.createEl("div", { cls: "ginkgo-snap-empty", text: "此快照无文件" });
+				listEl.createEl("div", { cls: "ginkgo-snap-empty", text: t("timeline.noFiles") });
 				return;
 			}
 
@@ -298,14 +299,14 @@ class SnapshotDetailModal extends Modal {
 				rowEl.createEl("span", { cls: "ginkgo-snap-file-name", text: entry.name });
 
 				if (entry.is_deleted) {
-					rowEl.createEl("span", { cls: "ginkgo-snap-file-deleted", text: "已删除" });
+					rowEl.createEl("span", { cls: "ginkgo-snap-file-deleted", text: t("timeline.deleted") });
 				}
 
 				const rightEl = rowEl.createEl("span", { cls: "ginkgo-snap-file-right" });
 				if (entry.type !== "dir") {
 					rightEl.createEl("span", { cls: "ginkgo-snap-file-size", text: this.plugin.formatBytes(entry.size) });
 				} else if (entry.file_count > 0) {
-					rightEl.createEl("span", { cls: "ginkgo-snap-file-count", text: `${entry.file_count} 文件` });
+					rightEl.createEl("span", { cls: "ginkgo-snap-file-count", text: `${entry.file_count} ${t("timeline.files")}` });
 				}
 
 				if (entry.type !== "dir") {
@@ -320,12 +321,12 @@ class SnapshotDetailModal extends Modal {
 			}
 
 			if (result.has_more) {
-				listEl.createEl("div", { cls: "ginkgo-snap-file-more", text: `还有更多文件（共 ${result.total} 项）` });
+				listEl.createEl("div", { cls: "ginkgo-snap-file-more", text: t("timeline.moreFiles", { count: result.total }) });
 			}
 		} catch (err) {
 			loadingEl.remove();
 			const msg = err instanceof Error ? err.message : String(err);
-			listEl.createEl("div", { cls: "ginkgo-error", text: `加载失败: ${msg}` });
+			listEl.createEl("div", { cls: "ginkgo-error", text: t("timeline.loadFailed", { message: msg }) });
 		}
 	}
 

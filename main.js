@@ -24,16 +24,558 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// src/i18n.ts
+function getStoredLocale() {
+  var _a;
+  return (_a = localStorage.getItem("ginkgo-locale")) != null ? _a : "auto";
+}
+function setStoredLocale(locale) {
+  localStorage.setItem("ginkgo-locale", locale);
+  currentLocale = null;
+}
+function resolveLocale(preference) {
+  if (preference !== "auto")
+    return preference;
+  const nav = navigator.language.toLowerCase();
+  return nav.startsWith("zh") ? "zh-CN" : "en";
+}
+function setActiveLocale(preference) {
+  currentLocale = resolveLocale(preference);
+}
+function getLocale() {
+  if (currentLocale)
+    return currentLocale;
+  currentLocale = resolveLocale(getStoredLocale());
+  return currentLocale;
+}
+function t(key, placeholders) {
+  var _a, _b;
+  const locale = getLocale();
+  let text = (_b = (_a = translations[locale][key]) != null ? _a : translations.en[key]) != null ? _b : key;
+  if (placeholders) {
+    for (const [k, v] of Object.entries(placeholders)) {
+      text = text.replace(new RegExp(`\\{\\{${k}\\}\\}`, "g"), String(v));
+    }
+  }
+  return text;
+}
+var translations, currentLocale;
+var init_i18n = __esm({
+  "src/i18n.ts"() {
+    translations = {
+      "zh-CN": {
+        "plugin.name": "Ginkgo Backup",
+        "command.backupNow": "\u7ACB\u5373\u5907\u4EFD",
+        "command.openTimeline": "\u6253\u5F00\u5907\u4EFD\u65F6\u95F4\u7EBF",
+        "command.pushPending": "\u63A8\u9001\u5F85\u5907\u4EFD\u6587\u4EF6",
+        "command.pushCurrentFile": "\u63A8\u9001\u5F53\u524D\u6587\u4EF6\u53D8\u66F4",
+        "command.checkStatus": "\u68C0\u67E5\u5907\u4EFD\u72B6\u6001",
+        "command.setupSource": "\u914D\u7F6E\u5907\u4EFD\u6E90",
+        "command.fileHistory": "\u67E5\u770B\u5F53\u524D\u6587\u4EF6\u5386\u53F2\u7248\u672C",
+        "command.openApp": "\u6253\u5F00 Ginkgo Backup \u5E94\u7528",
+        "command.cancelBackup": "\u53D6\u6D88\u5F53\u524D\u5907\u4EFD",
+        "command.openSettings": "\u6253\u5F00 Ginkgo \u8BBE\u7F6E",
+        "notice.notConnected": "Ginkgo: \u672A\u8FDE\u63A5",
+        "notice.noVaultPath": "Ginkgo: \u65E0\u6CD5\u786E\u5B9A Vault \u8DEF\u5F84",
+        "notice.sourceNotConfigured": "Ginkgo: \u5F53\u524D Vault \u672A\u914D\u7F6E\u5907\u4EFD\u6E90",
+        "notice.selectRepoFirst": "Ginkgo: \u8BF7\u5148\u9009\u62E9\u5907\u4EFD\u4ED3\u5E93",
+        "notice.configuringSource": "Ginkgo: \u6B63\u5728\u914D\u7F6E\u5907\u4EFD\u6E90...",
+        "notice.sourceConfigured": "Ginkgo: {{name}} \u5DF2\u914D\u7F6E\uFF08\u4ED3\u5E93: {{repos}}\uFF09",
+        "notice.createSourceFailed": "Ginkgo: \u521B\u5EFA\u5907\u4EFD\u6E90\u5931\u8D25",
+        "notice.pushFailed": "Ginkgo: \u63A8\u9001\u5931\u8D25 \u2014 {{message}}",
+        "notice.pushSuccess": "Ginkgo: \u5DF2\u63A8\u9001 {{count}} \u4E2A\u6587\u4EF6 ({{names}})",
+        "notice.pushSkipped": "Ginkgo: \u6587\u4EF6\u5185\u5BB9\u672A\u53D8\u5316\uFF0C\u8DF3\u8FC7\u63A8\u9001",
+        "notice.pushFileSuccess": "Ginkgo: \u5DF2\u63A8\u9001 {{name}} (session: {{session}})",
+        "notice.backupStarted": "Ginkgo: \u5F00\u59CB\u5168\u91CF\u5907\u4EFD",
+        "notice.backupComplete": "Ginkgo: \u5907\u4EFD\u5B8C\u6210",
+        "notice.backupError": "Ginkgo: \u5907\u4EFD\u51FA\u9519",
+        "notice.backupFailed": "Ginkgo: \u5907\u4EFD\u5931\u8D25 \u2014 {{message}}",
+        "notice.backupCancelled": "Ginkgo: \u5907\u4EFD\u5DF2\u53D6\u6D88",
+        "notice.cancelNoBackup": "Ginkgo: \u5F53\u524D\u6CA1\u6709\u8FD0\u884C\u4E2D\u7684\u5907\u4EFD",
+        "notice.cancelRequested": "Ginkgo: \u5DF2\u8BF7\u6C42\u53D6\u6D88\u5907\u4EFD",
+        "notice.pendingPushed": "Ginkgo: \u5DF2\u63A8\u9001 {{count}} \u4E2A\u5F85\u5907\u4EFD\u6587\u4EF6",
+        "notice.pendingFailed": "Ginkgo: \u5F85\u5907\u4EFD\u63A8\u9001\u5931\u8D25 \u2014 {{message}}",
+        "notice.pendingRestored": "Ginkgo: \u6062\u590D {{count}} \u4E2A\u5F85\u63A8\u9001\u6587\u4EF6",
+        "notice.autoBackupPaused": "Ginkgo: \u672A\u8FDE\u63A5\uFF0C\u81EA\u52A8\u5907\u4EFD\u5DF2\u6682\u505C",
+        "notice.largeFileSkipped": "Ginkgo: {{name}} \u8D85\u8FC7 {{size}}\uFF0C\u8DF3\u8FC7\u5373\u65F6\u63A8\u9001\uFF0C\u5C06\u7531\u5168\u91CF\u5907\u4EFD\u5904\u7406",
+        "status.never": "\u4ECE\u672A",
+        "status.disconnected": "\u672A\u8FDE\u63A5",
+        "status.connected": "\u5DF2\u8FDE\u63A5",
+        "status.connectedAria": "Ginkgo Backup \u5DF2\u8FDE\u63A5",
+        "status.disconnectedAria": "Ginkgo Backup \u672A\u8FDE\u63A5",
+        "status.backingUp": "\u5907\u4EFD\u4E2D",
+        "status.backingUpAria": "\u6B63\u5728\u5907\u4EFD",
+        "status.error": "\u9519\u8BEF",
+        "status.errorAria": "\u5907\u4EFD\u51FA\u9519",
+        "status.connecting": "\u8FDE\u63A5\u4E2D",
+        "status.fileCount": "{{count}} \u6587\u4EF6 | {{time}}",
+        "status.idle": "\u7A7A\u95F2",
+        "status.sources": "\u5907\u4EFD\u6E90: {{count}} \u4E2A",
+        "status.snapshots": "\u5FEB\u7167: {{count}} \u4E2A",
+        "status.storage": "\u5B58\u50A8: {{size}}",
+        "status.state": "\u72B6\u6001: {{state}}",
+        "status.notice": "Ginkgo \u72B6\u6001\n{{lines}}",
+        "menu.backupNow": "\u7ACB\u5373\u5907\u4EFD",
+        "menu.pushPending": "\u63A8\u9001\u5F85\u5907\u4EFD\u6587\u4EF6",
+        "menu.pushCurrentFile": "\u63A8\u9001\u5F53\u524D\u6587\u4EF6",
+        "menu.openTimeline": "\u67E5\u770B\u65F6\u95F4\u7EBF",
+        "menu.cancelBackup": "\u53D6\u6D88\u5907\u4EFD",
+        "menu.configureBackup": "\u914D\u7F6E\u5907\u4EFD",
+        "menu.checkStatus": "\u68C0\u67E5\u72B6\u6001",
+        "menu.openApp": "\u6253\u5F00\u5E94\u7528",
+        "menu.openSettings": "\u6253\u5F00\u8BBE\u7F6E",
+        "menu.fileHistory": "\u5386\u53F2\u7248\u672C",
+        "setting.title": "Ginkgo Backup \u8BBE\u7F6E",
+        "setting.language": "\u754C\u9762\u8BED\u8A00",
+        "setting.languageAuto": "\u81EA\u52A8",
+        "setting.languageZh": "\u4E2D\u6587",
+        "setting.languageEn": "English",
+        "setting.serverUrl": "Ginkgo \u670D\u52A1\u5668\u5730\u5740",
+        "setting.serverUrlDesc": "\u4F8B\u5982 http://127.0.0.1:9275",
+        "setting.apiToken": "API Token",
+        "setting.apiTokenDesc": "\u5728 Ginkgo Web UI \u7684\u201C\u8BBE\u7F6E \u203A API Token\u201D\u4E2D\u751F\u6210",
+        "setting.refreshInterval": "\u72B6\u6001\u5237\u65B0\u95F4\u9694\uFF08\u79D2\uFF09",
+        "setting.refreshIntervalDesc": "\u72B6\u6001\u680F\u5237\u65B0\u9891\u7387",
+        "setting.stagingPushOnSave": "\u4FDD\u5B58\u65F6\u81EA\u52A8\u63A8\u9001",
+        "setting.stagingPushOnSaveDesc": "\u6587\u4EF6\u4FDD\u5B58\u540E\u7ACB\u5373\u63A8\u9001\u5230 Ginkgo staging",
+        "setting.watchExtensions": "\u76D1\u542C\u6269\u5C55\u540D",
+        "setting.watchExtensionsDesc": "\u4EE5\u9017\u53F7\u5206\u9694\uFF0C\u4F8B\u5982 md,txt,png",
+        "setting.excludePaths": "\u6392\u9664\u8DEF\u5F84",
+        "setting.excludePathsDesc": "\u4EE5\u9017\u53F7\u5206\u9694\u7684\u76F8\u5BF9\u8DEF\u5F84\u7247\u6BB5",
+        "setting.showStatusBar": "\u663E\u793A\u72B6\u6001\u680F",
+        "setting.showStatusBarDesc": "\u5728 Obsidian \u5E95\u90E8\u663E\u793A Ginkgo \u8FDE\u63A5\u72B6\u6001",
+        "setting.connectionStatus": "\u8FDE\u63A5\u72B6\u6001",
+        "setting.statusConnected": "\u5DF2\u8FDE\u63A5 \u2014 \u5F53\u524D Vault \u5DF2\u914D\u7F6E\u5907\u4EFD",
+        "setting.statusConfigured": "\u5DF2\u8FDE\u63A5",
+        "setting.statusNotConfigured": "\u5DF2\u8FDE\u63A5 \u2014 \u5F53\u524D Vault \u672A\u914D\u7F6E\u5907\u4EFD",
+        "setting.statusError": "\u672A\u8FDE\u63A5",
+        "setting.configureBackup": "\u914D\u7F6E\u5F53\u524D Vault \u7684\u5907\u4EFD",
+        "setting.selectRepos": "\u9009\u62E9\u5907\u4EFD\u4ED3\u5E93",
+        "setting.reposSelected": "\u5DF2\u9009\u62E9\u4ED3\u5E93 {{names}}",
+        "setting.loadReposFailed": "\u83B7\u53D6\u4ED3\u5E93\u5217\u8868\u5931\u8D25 \u2014 {{message}}",
+        "setting.selectedCount": "\u5DF2\u9009\u62E9 {{count}} \u4E2A",
+        "setting.connection": "\u8FDE\u63A5",
+        "setting.backupStrategy": "\u5907\u4EFD\u7B56\u7565",
+        "setting.filterAndDisplay": "\u8FC7\u6EE4\u4E0E\u663E\u793A",
+        "setting.quickActions": "\u5FEB\u6377\u64CD\u4F5C",
+        "setting.help": "\u5E2E\u52A9",
+        "setting.apiHost": "API \u4E3B\u673A",
+        "setting.apiHostDesc": "\u652F\u6301 IP\u3001\u57DF\u540D\u6216\u5B8C\u6574 URL\uFF08\u5982 https://ginkgo.example.com\uFF09",
+        "setting.apiPort": "API \u7AEF\u53E3",
+        "setting.apiPortDesc": "API \u670D\u52A1\u7AEF\u53E3\uFF08\u9ED8\u8BA4 9275\uFF09",
+        "setting.apiTokenDesc2": "\u5728 Ginkgo Backup \u684C\u9762\u5E94\u7528\u7684\u8BBE\u7F6E\u9875\u9762\u83B7\u53D6",
+        "setting.vaultIdentifier": "Vault \u6807\u8BC6\u7B26",
+        "setting.vaultIdentifierDesc": "\u7559\u7A7A\u5219\u81EA\u52A8\u68C0\u6D4B\u3002\u591A\u8BBE\u5907\u540C\u540D Vault \u65F6\u9700\u8BBE\u7F6E\u552F\u4E00\u6807\u8BC6\uFF08\u5982 MyVault-iPhone\uFF09\uFF0C\u786E\u4FDD\u6BCF\u4E2A\u8BBE\u5907\u5BF9\u5E94\u72EC\u7ACB\u5907\u4EFD\u6E90",
+        "setting.backupSource": "\u5907\u4EFD\u6E90",
+        "setting.sourceConfigured": "\u5DF2\u914D\u7F6E\uFF08ID: {{id}}\uFF09",
+        "setting.sourceNotConfigured": "\u672A\u914D\u7F6E\uFF0C\u70B9\u51FB\u4E00\u952E\u914D\u7F6E\u9009\u62E9\u4ED3\u5E93",
+        "setting.reconfigure": "\u91CD\u65B0\u914D\u7F6E",
+        "setting.oneClickConfig": "\u4E00\u952E\u914D\u7F6E",
+        "setting.autoBackup": "\u5373\u65F6\u63A8\u9001",
+        "setting.fullBackup": "\u5168\u91CF\u5907\u4EFD",
+        "setting.fullBackupDesc": "\u6587\u4EF6\u4FDD\u5B58\u540E\u89E6\u53D1\u5168\u91CF\u5907\u4EFD\uFF08\u8F83\u6162\uFF0C\u4E0E\u5373\u65F6\u63A8\u9001\u4E92\u65A5\uFF09",
+        "setting.debounceDelay": "\u9632\u6296\u5EF6\u8FDF",
+        "setting.debounceDelayDesc": "\u6587\u4EF6\u4FDD\u5B58\u540E\u7B49\u5F85\u591A\u4E45\u518D\u89E6\u53D1\u63A8\u9001\uFF08\u6BEB\u79D2\uFF09",
+        "setting.watchExtensionsDesc2": "\u5373\u65F6\u63A8\u9001\u7684\u6587\u4EF6\u6269\u5C55\u540D\uFF0C\u9017\u53F7\u6216\u6362\u884C\u5206\u9694\uFF08\u5982 md, canvas, base\uFF09\u3002\u5176\u4ED6\u6587\u4EF6\u7531\u515C\u5E95\u5907\u4EFD\u8986\u76D6",
+        "setting.excludePathsDesc2": "\u4E0D\u5907\u4EFD\u7684\u8DEF\u5F84\u524D\u7F00\uFF0C\u6BCF\u884C\u4E00\u4E2A\uFF08\u5982 .obsidian, .trash\uFF09",
+        "setting.refreshIntervalDesc2": "\u72B6\u6001\u680F\u5237\u65B0\u95F4\u9694\uFF08\u79D2\uFF09",
+        "setting.testConnection": "\u6D4B\u8BD5\u8FDE\u63A5",
+        "setting.testConnectionDesc": "\u9A8C\u8BC1\u4E0E Ginkgo Backup \u7684\u8FDE\u63A5",
+        "setting.backupNowDesc": "\u89E6\u53D1\u5168\u91CF\u5907\u4EFD",
+        "setting.openAppDesc": "\u5728\u6D4F\u89C8\u5668\u4E2D\u6253\u5F00 Ginkgo Backup",
+        "setting.helpLine1": "\u786E\u4FDD Ginkgo Backup \u684C\u9762\u5E94\u7528\u6B63\u5728\u8FD0\u884C\uFF0C\u5E76\u4E14\u5F53\u524D Vault \u5DF2\u6DFB\u52A0\u5230\u5907\u4EFD\u6E90\u3002",
+        "setting.helpLine2": "\u4F7F\u7528\u547D\u4EE4\u9762\u677F\uFF08Ctrl/Cmd + P\uFF09\u641C\u7D22 Ginkgo \u67E5\u770B\u6240\u6709\u53EF\u7528\u547D\u4EE4\u3002",
+        "setting.helpLine3": "\u5373\u65F6\u63A8\u9001\u6A21\u5F0F\uFF1A\u7B14\u8BB0\u4FDD\u5B58\u540E\u5373\u65F6\u63A8\u9001\u5230\u6682\u5B58\u533A\uFF0C\u540E\u53F0\u81EA\u52A8\u5B8C\u6210\u5907\u4EFD\uFF0C\u4E0D\u963B\u585E\u7F16\u8F91\u3002\u56FE\u7247\u7B49\u9644\u4EF6\u7531\u515C\u5E95\u5907\u4EFD\u8986\u76D6\u3002",
+        "setting.largeFileThreshold": "\u5927\u6587\u4EF6\u9608\u503C\uFF08MB\uFF09",
+        "setting.largeFileThresholdDesc": "\u8D85\u8FC7\u6B64\u5927\u5C0F\u7684\u6587\u4EF6\u4E0D\u6267\u884C\u5373\u65F6\u63A8\u9001\uFF0C\u907F\u514D\u5361\u987F\uFF0C\u7531\u5168\u91CF\u5907\u4EFD\u5904\u7406",
+        "btn.save": "\u4FDD\u5B58",
+        "btn.backupNow": "\u7ACB\u5373\u5907\u4EFD",
+        "btn.pushPending": "\u63A8\u9001\u5F85\u5907\u4EFD",
+        "btn.selectRepos": "\u9009\u62E9\u4ED3\u5E93",
+        "btn.compare": "\u5BF9\u6BD4",
+        "btn.restore": "\u6062\u590D",
+        "btn.cancel": "\u53D6\u6D88",
+        "btn.confirm": "\u786E\u8BA4",
+        "repo.cloud": "\u4E91\u7AEF",
+        "repo.local": "\u672C\u5730",
+        "repo.webdav": "WebDAV",
+        "repo.encrypted": "\u52A0\u5BC6",
+        "modal.restoreTitle": "\u6062\u590D\u9884\u89C8",
+        "modal.restoreDesc": "\u5373\u5C06\u628A\u4EE5\u4E0B\u6587\u4EF6\u6062\u590D\u5230 {{path}}",
+        "modal.restoreConfirm": "\u786E\u8BA4\u8986\u76D6\u5F53\u524D\u6587\u4EF6\uFF1F",
+        "modal.diffTitle": "\u6587\u4EF6\u5BF9\u6BD4: {{path}}",
+        "modal.diffOldVersion": "\u65E7\u7248\u672C",
+        "modal.diffNewVersion": "\u65B0\u7248\u672C",
+        "modal.diffEmpty": "\u65E0\u5185\u5BB9\u53EF\u5BF9\u6BD4",
+        "modal.diffSummary": "\u5DEE\u5F02\u7C7B\u578B: {{type}} | \u5927\u5C0F\u53D8\u5316: {{delta}} \u5B57\u8282",
+        "diff.unavailableOld": "(\u65E0\u6CD5\u83B7\u53D6\u65E7\u7248\u672C\u5185\u5BB9)",
+        "diff.unavailableNew": "(\u65E0\u6CD5\u83B7\u53D6\u65B0\u7248\u672C\u5185\u5BB9)",
+        "modal.historyTitle": "\u5386\u53F2\u7248\u672C: {{path}}",
+        "modal.historyEmpty": "\u6682\u65E0\u5386\u53F2\u7248\u672C",
+        "modal.historyCurrent": "\u5F53\u524D\u7248\u672C",
+        "modal.timelineTitle": "\u5907\u4EFD\u65F6\u95F4\u7EBF",
+        "modal.timelineEmpty": "\u6682\u65E0\u5907\u4EFD\u8BB0\u5F55",
+        "history.loading": "\u52A0\u8F7D\u4E2D...",
+        "history.noHistory": "\u6682\u65E0\u5907\u4EFD\u5386\u53F2",
+        "history.loadFailed": "\u52A0\u8F7D\u5931\u8D25: {{message}}",
+        "history.title": "\u7248\u672C\u5386\u53F2",
+        "history.versionCount": "\u5171 {{count}} \u4E2A\u7248\u672C \xB7 \u70B9\u51FB\u9009\u62E9\uFF0C\u518D\u70B9\u51FB\u53E6\u4E00\u7248\u672C\u7684\u300C\u5BF9\u6BD4\u300D",
+        "history.diffTitle": "\u5DEE\u5F02",
+        "history.diffHint": "\u70B9\u51FB\u5DE6\u4FA7\u7248\u672C\u67E5\u770B\u4E0E\u5F53\u524D\u6587\u4EF6\u7684\u5DEE\u5F02",
+        "history.restoreThisVersion": "\u6062\u590D\u6B64\u7248\u672C",
+        "history.close": "\u5173\u95ED",
+        "history.currentVersion": "\u5F53\u524D\u7248\u672C",
+        "history.latest": "\u6700\u65B0",
+        "history.first": "\u9996\u6B21",
+        "history.deleted": "\u5DF2\u5220\u9664",
+        "history.compare": "\u5BF9\u6BD4",
+        "history.cancelCompare": "\u53D6\u6D88",
+        "history.loadingDiff": "\u52A0\u8F7D\u5DEE\u5F02...",
+        "history.contentFailed": "\u5185\u5BB9\u8BFB\u53D6\u5931\u8D25: {{message}}",
+        "history.loadingTwoVersions": "\u52A0\u8F7D\u4E24\u4E2A\u7248\u672C...",
+        "history.identical": "\u5185\u5BB9\u76F8\u540C",
+        "history.restored": "\u6587\u4EF6\u5DF2\u6062\u590D",
+        "timeline.title": "\u5907\u4EFD\u65F6\u95F4\u7EBF",
+        "timeline.refresh": "\u5237\u65B0",
+        "timeline.backupNow": "\u7ACB\u5373\u5907\u4EFD",
+        "timeline.notConfigured": "\u5C1A\u672A\u914D\u7F6E\u5907\u4EFD\u6E90",
+        "timeline.configureHint": "\u4F7F\u7528\u547D\u4EE4 Ginkgo: \u914D\u7F6E\u5907\u4EFD\u6E90 \u6765\u5F00\u59CB",
+        "timeline.loading": "\u52A0\u8F7D\u4E2D...",
+        "timeline.loadFailed": "\u52A0\u8F7D\u5931\u8D25: {{message}}",
+        "timeline.noRecords": "\u6682\u65E0\u5907\u4EFD\u8BB0\u5F55",
+        "timeline.firstBackupHint": "\u70B9\u51FB\u300C\u7ACB\u5373\u5907\u4EFD\u300D\u521B\u5EFA\u7B2C\u4E00\u4E2A\u5FEB\u7167",
+        "timeline.snapshots": "\u5FEB\u7167",
+        "timeline.totalSize": "\u603B\u5927\u5C0F",
+        "timeline.lastBackup": "\u6700\u8FD1\u5907\u4EFD",
+        "timeline.files": "\u6587\u4EF6",
+        "timeline.newFiles": "\u65B0\u589E",
+        "timeline.changedFiles": "\u4FEE\u6539",
+        "timeline.fileList": "\u6587\u4EF6\u5217\u8868",
+        "timeline.loadingFiles": "\u52A0\u8F7D\u4E2D...",
+        "timeline.noFiles": "\u6B64\u5FEB\u7167\u65E0\u6587\u4EF6",
+        "timeline.deleted": "\u5DF2\u5220\u9664",
+        "timeline.moreFiles": "\u8FD8\u6709\u66F4\u591A\u6587\u4EF6\uFF08\u5171 {{count}} \u9879\uFF09",
+        "snapshot.files": "\u6587\u4EF6",
+        "snapshot.dirs": "\u76EE\u5F55",
+        "snapshot.size": "\u5927\u5C0F",
+        "snapshot.new": "\u65B0\u589E",
+        "snapshot.changed": "\u4FEE\u6539",
+        "snapshot.deleted": "\u5220\u9664",
+        "snapshot.duration": "\u8017\u65F6",
+        "restore.title": "\u6062\u590D\u9884\u89C8",
+        "restore.file": "\u6587\u4EF6: {{path}}",
+        "restore.version": "\u7248\u672C: {{version}}",
+        "restore.size": "\u5927\u5C0F: {{size}}",
+        "restore.deleted": "\u26A0\uFE0F \u6B64\u7248\u672C\u4E3A\u5220\u9664\u72B6\u6001",
+        "restore.loading": "\u52A0\u8F7D\u6587\u4EF6\u5185\u5BB9...",
+        "restore.emptyFile": "(\u7A7A\u6587\u4EF6)",
+        "restore.readFailed": "(\u8BFB\u53D6\u5931\u8D25: {{message}})",
+        "restore.truncated": "... \u5171 {{total}} \u884C\uFF0C\u4EC5\u663E\u793A\u524D {{count}} \u884C",
+        "restore.warning": "\u26A0\uFE0F \u6062\u590D\u5C06\u8986\u76D6\u5F53\u524D\u6587\u4EF6\u5185\u5BB9",
+        "restore.confirm": "\u786E\u8BA4\u6062\u590D",
+        "restore.restoring": "\u6062\u590D\u4E2D...",
+        "restore.failed": "\u6062\u590D\u5931\u8D25 \u2014 {{message}}",
+        "time.justNow": "\u521A\u521A",
+        "time.minutesAgo": "{{count}}\u5206\u949F\u524D",
+        "time.hoursAgo": "{{count}}\u5C0F\u65F6\u524D",
+        "time.daysAgo": "{{count}}\u5929\u524D",
+        "time.today": "\u4ECA\u5929",
+        "time.yesterday": "\u6628\u5929",
+        "time.weeksAgo": "{{count}}\u5468\u524D",
+        "error.unknown": "\u672A\u77E5\u9519\u8BEF",
+        "error.loadFailed": "\u52A0\u8F7D\u5931\u8D25: {{message}}",
+        "error.pushFailed": "\u63A8\u9001\u5931\u8D25",
+        "error.backupFailed": "\u5907\u4EFD\u5931\u8D25",
+        "error.cancelBackupFailed": "\u53D6\u6D88\u5907\u4EFD\u5931\u8D25",
+        "error.configureSourceFailed": "\u914D\u7F6E\u5907\u4EFD\u6E90\u5931\u8D25",
+        "error.getStatusFailed": "\u83B7\u53D6\u72B6\u6001\u5931\u8D25"
+      },
+      en: {
+        "plugin.name": "Ginkgo Backup",
+        "command.backupNow": "Backup now",
+        "command.openTimeline": "Open backup timeline",
+        "command.pushPending": "Push pending files",
+        "command.pushCurrentFile": "Push current file changes",
+        "command.checkStatus": "Check backup status",
+        "command.setupSource": "Configure backup source",
+        "command.fileHistory": "View current file history",
+        "command.openApp": "Open Ginkgo Backup app",
+        "command.cancelBackup": "Cancel current backup",
+        "command.openSettings": "Open Ginkgo settings",
+        "notice.notConnected": "Ginkgo: not connected",
+        "notice.noVaultPath": "Ginkgo: unable to determine vault path",
+        "notice.sourceNotConfigured": "Ginkgo: current vault is not configured for backup",
+        "notice.selectRepoFirst": "Ginkgo: please select backup repositories first",
+        "notice.configuringSource": "Ginkgo: configuring backup source...",
+        "notice.sourceConfigured": "Ginkgo: {{name}} configured (repos: {{repos}})",
+        "notice.createSourceFailed": "Ginkgo: failed to create backup source",
+        "notice.pushFailed": "Ginkgo: push failed \u2014 {{message}}",
+        "notice.pushSuccess": "Ginkgo: pushed {{count}} file(s) ({{names}})",
+        "notice.pushSkipped": "Ginkgo: file unchanged, skipped",
+        "notice.pushFileSuccess": "Ginkgo: pushed {{name}} (session: {{session}})",
+        "notice.backupStarted": "Ginkgo: starting full backup",
+        "notice.backupComplete": "Ginkgo: backup complete",
+        "notice.backupError": "Ginkgo: backup error",
+        "notice.backupFailed": "Ginkgo: backup failed \u2014 {{message}}",
+        "notice.backupCancelled": "Ginkgo: backup cancelled",
+        "notice.cancelNoBackup": "Ginkgo: no backup is currently running",
+        "notice.cancelRequested": "Ginkgo: backup cancel requested",
+        "notice.pendingPushed": "Ginkgo: pushed {{count}} pending file(s)",
+        "notice.pendingFailed": "Ginkgo: pending push failed \u2014 {{message}}",
+        "notice.pendingRestored": "Ginkgo: restored {{count}} pending file(s)",
+        "notice.autoBackupPaused": "Ginkgo: disconnected, auto backup paused",
+        "notice.largeFileSkipped": "Ginkgo: {{name}} exceeds {{size}}, skipped instant push; will be handled by full backup",
+        "status.never": "never",
+        "status.disconnected": "disconnected",
+        "status.connected": "connected",
+        "status.connectedAria": "Ginkgo Backup connected",
+        "status.disconnectedAria": "Ginkgo Backup disconnected",
+        "status.backingUp": "backing up",
+        "status.backingUpAria": "Backing up",
+        "status.error": "error",
+        "status.errorAria": "Backup error",
+        "status.connecting": "connecting",
+        "status.fileCount": "{{count}} files | {{time}}",
+        "status.idle": "idle",
+        "status.sources": "Sources: {{count}}",
+        "status.snapshots": "Snapshots: {{count}}",
+        "status.storage": "Storage: {{size}}",
+        "status.state": "State: {{state}}",
+        "status.notice": "Ginkgo Status\n{{lines}}",
+        "menu.backupNow": "Backup now",
+        "menu.pushPending": "Push pending files",
+        "menu.pushCurrentFile": "Push current file",
+        "menu.openTimeline": "Open timeline",
+        "menu.cancelBackup": "Cancel backup",
+        "menu.configureBackup": "Configure backup",
+        "menu.checkStatus": "Check status",
+        "menu.openApp": "Open app",
+        "menu.openSettings": "Open settings",
+        "menu.fileHistory": "History",
+        "setting.title": "Ginkgo Backup Settings",
+        "setting.language": "Interface language",
+        "setting.languageAuto": "Auto",
+        "setting.languageZh": "\u4E2D\u6587",
+        "setting.languageEn": "English",
+        "setting.serverUrl": "Ginkgo server URL",
+        "setting.serverUrlDesc": "e.g. http://127.0.0.1:9275",
+        "setting.apiToken": "API Token",
+        "setting.apiTokenDesc": "Generate it in Ginkgo Web UI: Settings \u203A API Token",
+        "setting.refreshInterval": "Status refresh interval (seconds)",
+        "setting.refreshIntervalDesc": "How often the status bar refreshes",
+        "setting.stagingPushOnSave": "Push on save",
+        "setting.stagingPushOnSaveDesc": "Push files to Ginkgo staging immediately after save",
+        "setting.watchExtensions": "Watched extensions",
+        "setting.watchExtensionsDesc": "Comma-separated, e.g. md,txt,png",
+        "setting.excludePaths": "Excluded paths",
+        "setting.excludePathsDesc": "Comma-separated relative path fragments",
+        "setting.showStatusBar": "Show status bar",
+        "setting.showStatusBarDesc": "Show Ginkgo connection status in the Obsidian status bar",
+        "setting.connectionStatus": "Connection status",
+        "setting.statusConnected": "Connected \u2014 current vault is configured for backup",
+        "setting.statusConfigured": "Connected",
+        "setting.statusNotConfigured": "Connected \u2014 current vault is not configured for backup",
+        "setting.statusError": "Not connected",
+        "setting.configureBackup": "Configure backup for current vault",
+        "setting.selectRepos": "Select backup repositories",
+        "setting.reposSelected": "Selected repositories: {{names}}",
+        "setting.loadReposFailed": "Failed to load repository list \u2014 {{message}}",
+        "setting.selectedCount": "{{count}} selected",
+        "setting.connection": "Connection",
+        "setting.backupStrategy": "Backup strategy",
+        "setting.filterAndDisplay": "Filter & display",
+        "setting.quickActions": "Quick actions",
+        "setting.help": "Help",
+        "setting.apiHost": "API host",
+        "setting.apiHostDesc": "Supports IP, domain or full URL (e.g. https://ginkgo.example.com)",
+        "setting.apiPort": "API port",
+        "setting.apiPortDesc": "API service port (default 9275)",
+        "setting.apiTokenDesc2": "Get it from the Ginkgo Backup app settings page",
+        "setting.vaultIdentifier": "Vault identifier",
+        "setting.vaultIdentifierDesc": "Leave empty to auto-detect. Set a unique identifier for same-name vaults across devices (e.g. MyVault-iPhone)",
+        "setting.backupSource": "Backup source",
+        "setting.sourceConfigured": "Configured (ID: {{id}})",
+        "setting.sourceNotConfigured": "Not configured, click one-click config to select repositories",
+        "setting.reconfigure": "Reconfigure",
+        "setting.oneClickConfig": "One-click config",
+        "setting.autoBackup": "Instant push",
+        "setting.fullBackup": "Full backup",
+        "setting.fullBackupDesc": "Trigger a full backup after save (slower, mutually exclusive with instant push)",
+        "setting.debounceDelay": "Debounce delay",
+        "setting.debounceDelayDesc": "How long to wait after save before pushing (milliseconds)",
+        "setting.watchExtensionsDesc2": "Extensions for instant push, comma or newline separated (e.g. md, canvas, base). Other files are covered by periodic full backup",
+        "setting.excludePathsDesc2": "Path prefixes to exclude, one per line (e.g. .obsidian, .trash)",
+        "setting.refreshIntervalDesc2": "Status bar refresh interval (seconds)",
+        "setting.testConnection": "Test connection",
+        "setting.testConnectionDesc": "Verify connection to Ginkgo Backup",
+        "setting.backupNowDesc": "Trigger a full backup",
+        "setting.openAppDesc": "Open Ginkgo Backup in browser",
+        "setting.helpLine1": "Make sure Ginkgo Backup is running and the current vault is added as a backup source.",
+        "setting.helpLine2": "Use the command palette (Ctrl/Cmd + P) and search for Ginkgo to see all available commands.",
+        "setting.helpLine3": "Instant push mode: notes are pushed to staging immediately after save and backed up in the background without blocking editing. Images and attachments are covered by periodic full backup.",
+        "setting.largeFileThreshold": "Large file threshold (MB)",
+        "setting.largeFileThresholdDesc": "Files larger than this are not pushed instantly to avoid lag; they are handled by full backup",
+        "btn.save": "Save",
+        "btn.backupNow": "Backup now",
+        "btn.pushPending": "Push pending",
+        "btn.selectRepos": "Select repos",
+        "btn.compare": "Compare",
+        "btn.restore": "Restore",
+        "btn.cancel": "Cancel",
+        "btn.confirm": "Confirm",
+        "repo.cloud": "Cloud",
+        "repo.local": "Local",
+        "repo.webdav": "WebDAV",
+        "repo.encrypted": "Encrypted",
+        "modal.restoreTitle": "Restore preview",
+        "modal.restoreDesc": "About to restore the following file to {{path}}",
+        "modal.restoreConfirm": "Overwrite current file?",
+        "modal.diffTitle": "File diff: {{path}}",
+        "modal.diffOldVersion": "Old version",
+        "modal.diffNewVersion": "New version",
+        "modal.diffEmpty": "No content to compare",
+        "modal.diffSummary": "Diff type: {{type}} | Size delta: {{delta}} bytes",
+        "diff.unavailableOld": "(Unable to load old version)",
+        "diff.unavailableNew": "(Unable to load new version)",
+        "modal.historyTitle": "History: {{path}}",
+        "modal.historyEmpty": "No history versions",
+        "modal.historyCurrent": "Current version",
+        "modal.timelineTitle": "Backup timeline",
+        "modal.timelineEmpty": "No backup records",
+        "history.loading": "Loading...",
+        "history.noHistory": "No backup history",
+        "history.loadFailed": "Load failed: {{message}}",
+        "history.title": "Version history",
+        "history.versionCount": "{{count}} versions \xB7 click to select, then click Compare on another version",
+        "history.diffTitle": "Diff",
+        "history.diffHint": "Click a version on the left to view diff with current file",
+        "history.restoreThisVersion": "Restore this version",
+        "history.close": "Close",
+        "history.currentVersion": "Current version",
+        "history.latest": "Latest",
+        "history.first": "First",
+        "history.deleted": "Deleted",
+        "history.compare": "Compare",
+        "history.cancelCompare": "Cancel",
+        "history.loadingDiff": "Loading diff...",
+        "history.contentFailed": "Failed to read content: {{message}}",
+        "history.loadingTwoVersions": "Loading two versions...",
+        "history.identical": "Identical",
+        "history.restored": "File restored",
+        "timeline.title": "Backup timeline",
+        "timeline.refresh": "Refresh",
+        "timeline.backupNow": "Backup now",
+        "timeline.notConfigured": "Backup source not configured",
+        "timeline.configureHint": "Use the command Ginkgo: Configure backup source to start",
+        "timeline.loading": "Loading...",
+        "timeline.loadFailed": "Load failed: {{message}}",
+        "timeline.noRecords": "No backup records",
+        "timeline.firstBackupHint": "Click Backup now to create the first snapshot",
+        "timeline.snapshots": "Snapshots",
+        "timeline.totalSize": "Total size",
+        "timeline.lastBackup": "Last backup",
+        "timeline.files": "files",
+        "timeline.newFiles": "new",
+        "timeline.changedFiles": "changed",
+        "timeline.fileList": "File list",
+        "timeline.loadingFiles": "Loading...",
+        "timeline.noFiles": "No files in this snapshot",
+        "timeline.deleted": "deleted",
+        "timeline.moreFiles": "More files ({{count}} total)",
+        "snapshot.files": "Files",
+        "snapshot.dirs": "Dirs",
+        "snapshot.size": "Size",
+        "snapshot.new": "New",
+        "snapshot.changed": "Changed",
+        "snapshot.deleted": "Deleted",
+        "snapshot.duration": "Duration",
+        "restore.title": "Restore preview",
+        "restore.file": "File: {{path}}",
+        "restore.version": "Version: {{version}}",
+        "restore.size": "Size: {{size}}",
+        "restore.deleted": "\u26A0\uFE0F This version is deleted",
+        "restore.loading": "Loading file content...",
+        "restore.emptyFile": "(Empty file)",
+        "restore.readFailed": "(Read failed: {{message}})",
+        "restore.truncated": "... {{total}} lines total, showing first {{count}}",
+        "restore.warning": "\u26A0\uFE0F Restore will overwrite current file content",
+        "restore.confirm": "Confirm restore",
+        "restore.restoring": "Restoring...",
+        "restore.failed": "Restore failed \u2014 {{message}}",
+        "time.justNow": "just now",
+        "time.minutesAgo": "{{count}} minutes ago",
+        "time.hoursAgo": "{{count}} hours ago",
+        "time.daysAgo": "{{count}} days ago",
+        "time.today": "today",
+        "time.yesterday": "yesterday",
+        "time.weeksAgo": "{{count}} weeks ago",
+        "error.unknown": "Unknown error",
+        "error.loadFailed": "Load failed: {{message}}",
+        "error.pushFailed": "Push failed",
+        "error.backupFailed": "Backup failed",
+        "error.cancelBackupFailed": "Cancel backup failed",
+        "error.configureSourceFailed": "Configure source failed",
+        "error.getStatusFailed": "Get status failed"
+      }
+    };
+    currentLocale = null;
+  }
+});
+
+// src/encoding.ts
+function uint8ToBase64(bytes) {
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  return btoa(binary);
+}
+function base64ToUint8(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+function encodeText(text) {
+  const bytes = new TextEncoder().encode(text);
+  return uint8ToBase64(bytes);
+}
+function decodeText(base64) {
+  const bytes = base64ToUint8(base64);
+  return new TextDecoder().decode(bytes);
+}
+function encodeBinary(buffer) {
+  return uint8ToBase64(buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : buffer);
+}
+function tryDecodeText(base64) {
+  try {
+    return { text: decodeText(base64), ok: true };
+  } catch (e) {
+    return { text: "", ok: false };
+  }
+}
+var CHUNK_SIZE;
+var init_encoding = __esm({
+  "src/encoding.ts"() {
+    CHUNK_SIZE = 32768;
+  }
+});
+
 // src/restore-preview-modal.ts
 var restore_preview_modal_exports = {};
 __export(restore_preview_modal_exports, {
   RestorePreviewModal: () => RestorePreviewModal
 });
-var import_obsidian4, RestorePreviewModal;
+var import_obsidian6, RestorePreviewModal;
 var init_restore_preview_modal = __esm({
   "src/restore-preview-modal.ts"() {
-    import_obsidian4 = require("obsidian");
-    RestorePreviewModal = class extends import_obsidian4.Modal {
+    import_obsidian6 = require("obsidian");
+    init_encoding();
+    init_i18n();
+    RestorePreviewModal = class extends import_obsidian6.Modal {
       constructor(app, client, sourceId, filePath, version, versionLabel, repoPath, onRestore) {
         super(app);
         this.client = client;
@@ -49,16 +591,16 @@ var init_restore_preview_modal = __esm({
         contentEl.empty();
         contentEl.addClass("ginkgo-restore-modal");
         const headerEl = contentEl.createEl("div", { cls: "ginkgo-header" });
-        headerEl.createEl("span", { cls: "ginkgo-header-title", text: "\u6062\u590D\u9884\u89C8" });
+        headerEl.createEl("span", { cls: "ginkgo-header-title", text: t("restore.title") });
         const infoEl = contentEl.createEl("div", { cls: "ginkgo-restore-info" });
-        infoEl.createEl("div", { text: `\u6587\u4EF6: ${this.filePath}`, cls: "ginkgo-restore-path" });
-        infoEl.createEl("div", { text: `\u7248\u672C: ${this.versionLabel}`, cls: "ginkgo-restore-version" });
-        infoEl.createEl("div", { text: `\u5927\u5C0F: ${this.formatBytes(this.version.size)}`, cls: "ginkgo-restore-size" });
+        infoEl.createEl("div", { text: t("restore.file", { path: this.filePath }), cls: "ginkgo-restore-path" });
+        infoEl.createEl("div", { text: t("restore.version", { version: this.versionLabel }), cls: "ginkgo-restore-version" });
+        infoEl.createEl("div", { text: t("restore.size", { size: this.formatBytes(this.version.size) }), cls: "ginkgo-restore-size" });
         if (this.version.is_deleted) {
-          infoEl.createEl("div", { text: "\u26A0\uFE0F \u6B64\u7248\u672C\u4E3A\u5220\u9664\u72B6\u6001", cls: "ginkgo-restore-deleted" });
+          infoEl.createEl("div", { text: t("restore.deleted"), cls: "ginkgo-restore-deleted" });
         }
         const loadingEl = contentEl.createEl("div", { cls: "ginkgo-loading" });
-        loadingEl.createEl("span", { text: "\u52A0\u8F7D\u6587\u4EF6\u5185\u5BB9..." });
+        loadingEl.createEl("span", { text: t("restore.loading") });
         let content = "";
         try {
           const snapshotTime = this.version.last_seen > 9e12 ? this.version.first_seen : this.version.last_seen;
@@ -69,21 +611,18 @@ var init_restore_preview_modal = __esm({
             this.repoPath
           );
           if (resp.content) {
-            try {
-              content = decodeURIComponent(escape(atob(resp.content)));
-            } catch (e) {
-              content = resp.content;
-            }
+            const decoded = tryDecodeText(resp.content);
+            content = decoded.ok ? decoded.text : resp.content;
           }
           if (resp.error) {
-            content = `(\u8BFB\u53D6\u5931\u8D25: ${resp.error})`;
+            content = t("restore.readFailed", { message: resp.error });
           }
           if (!content) {
-            content = "(\u7A7A\u6587\u4EF6)";
+            content = t("restore.emptyFile");
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          content = `(\u65E0\u6CD5\u83B7\u53D6\u5185\u5BB9: ${msg})`;
+          content = t("restore.readFailed", { message: msg });
         }
         loadingEl.remove();
         const previewEl = contentEl.createEl("div", { cls: "ginkgo-restore-preview" });
@@ -95,30 +634,30 @@ var init_restore_preview_modal = __esm({
         if (lines.length > maxLines) {
           previewEl.createEl("div", {
             cls: "ginkgo-restore-truncated",
-            text: `... \u5171 ${lines.length} \u884C\uFF0C\u4EC5\u663E\u793A\u524D ${maxLines} \u884C`
+            text: t("restore.truncated", { total: lines.length, count: maxLines })
           });
         }
         const warningEl = contentEl.createEl("div", { cls: "ginkgo-restore-warning" });
-        warningEl.createEl("span", { text: "\u26A0\uFE0F \u6062\u590D\u5C06\u8986\u76D6\u5F53\u524D\u6587\u4EF6\u5185\u5BB9" });
+        warningEl.createEl("span", { text: t("restore.warning") });
         const footerEl = contentEl.createEl("div", { cls: "ginkgo-modal-footer" });
         const restoreBtn = footerEl.createEl("button", {
           cls: "ginkgo-btn-restore",
-          text: "\u786E\u8BA4\u6062\u590D"
+          text: t("restore.confirm")
         });
         restoreBtn.addEventListener("click", async () => {
           restoreBtn.disabled = true;
-          restoreBtn.textContent = "\u6062\u590D\u4E2D...";
+          restoreBtn.textContent = t("restore.restoring");
           try {
             await this.onRestore();
             this.close();
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
-            new import_obsidian4.Notice(`Ginkgo: \u6062\u590D\u5931\u8D25 \u2014 ${msg}`);
+            new import_obsidian6.Notice(t("restore.failed", { message: msg }));
             restoreBtn.disabled = false;
-            restoreBtn.textContent = "\u786E\u8BA4\u6062\u590D";
+            restoreBtn.textContent = t("restore.confirm");
           }
         });
-        footerEl.createEl("button", { cls: "ginkgo-close-btn", text: "\u53D6\u6D88" }).addEventListener("click", () => this.close());
+        footerEl.createEl("button", { cls: "ginkgo-close-btn", text: t("btn.cancel") }).addEventListener("click", () => this.close());
       }
       formatBytes(bytes) {
         if (!bytes || isNaN(bytes))
@@ -220,11 +759,13 @@ function extractDiffOnly(lines, contextLines) {
   }
   return result;
 }
-var import_obsidian5, FileHistoryModal;
+var import_obsidian7, FileHistoryModal;
 var init_file_history_modal = __esm({
   "src/file-history-modal.ts"() {
-    import_obsidian5 = require("obsidian");
-    FileHistoryModal = class extends import_obsidian5.Modal {
+    import_obsidian7 = require("obsidian");
+    init_encoding();
+    init_i18n();
+    FileHistoryModal = class extends import_obsidian7.Modal {
       constructor(app, client, sourceId, filePath, repoPath) {
         super(app);
         this.versions = [];
@@ -247,7 +788,7 @@ var init_file_history_modal = __esm({
         }
         this.renderHeader(contentEl);
         const loadingEl = contentEl.createEl("div", { cls: "ginkgo-loading" });
-        loadingEl.createEl("span", { text: "\u52A0\u8F7D\u4E2D..." });
+        loadingEl.createEl("span", { text: t("history.loading") });
         try {
           const [versions, currentContent] = await Promise.all([
             this.client.getFileHistory(this.sourceId, this.filePath, this.repoPath),
@@ -257,39 +798,39 @@ var init_file_history_modal = __esm({
           this.currentContent = currentContent;
           loadingEl.remove();
           if (this.versions.length === 0) {
-            contentEl.createEl("div", { cls: "ginkgo-empty", text: "\u6682\u65E0\u5907\u4EFD\u5386\u53F2" });
+            contentEl.createEl("div", { cls: "ginkgo-empty", text: t("history.noHistory") });
             return;
           }
           this.renderBody(contentEl);
         } catch (err) {
           loadingEl.remove();
           const msg = err instanceof Error ? err.message : String(err);
-          contentEl.createEl("div", { cls: "ginkgo-error", text: `\u52A0\u8F7D\u5931\u8D25: ${msg}` });
+          contentEl.createEl("div", { cls: "ginkgo-error", text: t("history.loadFailed", { message: msg }) });
         }
       }
       renderHeader(contentEl) {
         const headerEl = contentEl.createEl("div", { cls: "ginkgo-fh-header" });
-        headerEl.createEl("span", { cls: "ginkgo-fh-title", text: "\u7248\u672C\u5386\u53F2" });
+        headerEl.createEl("span", { cls: "ginkgo-fh-title", text: t("history.title") });
         headerEl.createEl("span", { cls: "ginkgo-fh-filename", text: this.getFileName() });
       }
       renderBody(contentEl) {
         const bodyEl = contentEl.createEl("div", { cls: "ginkgo-fh-body" });
         const leftEl = bodyEl.createEl("div", { cls: "ginkgo-fh-versions" });
-        leftEl.createEl("div", { cls: "ginkgo-fh-section-label", text: `\u5171 ${this.versions.length} \u4E2A\u7248\u672C \xB7 \u70B9\u51FB\u9009\u62E9\uFF0C\u518D\u70B9\u51FB\u53E6\u4E00\u7248\u672C\u7684\u300C\u5BF9\u6BD4\u300D` });
+        leftEl.createEl("div", { cls: "ginkgo-fh-section-label", text: t("history.versionCount", { count: this.versions.length }) });
         this.listEl = leftEl.createEl("div", { cls: "ginkgo-fh-list" });
         this.renderVersionList();
         const rightEl = bodyEl.createEl("div", { cls: "ginkgo-fh-preview" });
-        const diffHeaderEl = rightEl.createEl("div", { cls: "ginkgo-fh-section-label", text: "\u5DEE\u5F02" });
+        rightEl.createEl("div", { cls: "ginkgo-fh-section-label", text: t("history.diffTitle") });
         this.diffEl = rightEl.createEl("div", { cls: "ginkgo-fh-diff" });
-        this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: "\u70B9\u51FB\u5DE6\u4FA7\u7248\u672C\u67E5\u770B\u4E0E\u5F53\u524D\u6587\u4EF6\u7684\u5DEE\u5F02" });
+        this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: t("history.diffHint") });
         const footerEl = contentEl.createEl("div", { cls: "ginkgo-fh-footer" });
         this.restoreBtn = footerEl.createEl("button", {
           cls: "ginkgo-btn-restore",
-          text: "\u6062\u590D\u6B64\u7248\u672C"
+          text: t("history.restoreThisVersion")
         });
         this.restoreBtn.disabled = true;
         this.restoreBtn.addEventListener("click", () => this.restoreSelectedVersion());
-        footerEl.createEl("button", { cls: "ginkgo-close-btn", text: "\u5173\u95ED" }).addEventListener("click", () => this.close());
+        footerEl.createEl("button", { cls: "ginkgo-close-btn", text: t("history.close") }).addEventListener("click", () => this.close());
       }
       isSentinelTs(ts) {
         return ts > 9e12;
@@ -320,10 +861,10 @@ var init_file_history_modal = __esm({
           const trackEl = itemEl.createEl("div", { cls: "ginkgo-fh-track" });
           if (isComparing) {
             const markerEl = trackEl.createEl("div", { cls: "ginkgo-fh-compare-marker" });
-            (0, import_obsidian5.setIcon)(markerEl, "git-branch");
+            (0, import_obsidian7.setIcon)(markerEl, "git-branch");
           } else if (isSelected) {
             const checkEl = trackEl.createEl("div", { cls: "ginkgo-fh-check" });
-            (0, import_obsidian5.setIcon)(checkEl, "check");
+            (0, import_obsidian7.setIcon)(checkEl, "check");
           } else {
             trackEl.createEl("div", { cls: `ginkgo-fh-dot ${isLatest ? "is-latest" : ""} ${isCurrent ? "is-current" : ""}` });
           }
@@ -331,7 +872,7 @@ var init_file_history_modal = __esm({
           infoEl.addEventListener("click", () => this.handleSelect(i));
           const timeEl = infoEl.createEl("div", { cls: "ginkgo-fh-time" });
           if (isCurrent) {
-            timeEl.createEl("span", { cls: "ginkgo-fh-reltime", text: "\u5F53\u524D\u7248\u672C" });
+            timeEl.createEl("span", { cls: "ginkgo-fh-reltime", text: t("history.currentVersion") });
             timeEl.createEl("span", { cls: "ginkgo-fh-abstime", text: this.formatTime(version.first_seen) });
           } else {
             timeEl.createEl("span", { cls: "ginkgo-fh-reltime", text: this.relativeTime(version.last_seen) });
@@ -340,9 +881,9 @@ var init_file_history_modal = __esm({
           const metaEl = infoEl.createEl("div", { cls: "ginkgo-fh-meta" });
           metaEl.createEl("span", { cls: "ginkgo-fh-size", text: this.formatBytes(version.size) });
           if (isLatest && !isCurrent) {
-            metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-latest", text: "\u6700\u65B0" });
+            metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-latest", text: t("history.latest") });
           } else if (isFirst) {
-            metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-first", text: "\u9996\u6B21" });
+            metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-first", text: t("history.first") });
           } else if (i < this.versions.length - 1) {
             const prevSize = this.versions[i + 1].size;
             const delta = version.size - prevSize;
@@ -355,7 +896,7 @@ var init_file_history_modal = __esm({
             }
           }
           if (version.is_deleted) {
-            metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-deleted", text: "\u5DF2\u5220\u9664" });
+            metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-deleted", text: t("history.deleted") });
           }
           if (isSelected) {
             metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-b", text: "B" });
@@ -366,7 +907,7 @@ var init_file_history_modal = __esm({
           if (this.selectedIdx !== null && i !== this.selectedIdx) {
             const compareBtn = itemEl.createEl("button", {
               cls: `ginkgo-fh-compare-btn ${isComparing ? "is-active" : ""}`,
-              text: isComparing ? "\u53D6\u6D88" : "\u5BF9\u6BD4"
+              text: isComparing ? t("history.cancelCompare") : t("history.compare")
             });
             compareBtn.addEventListener("click", (e) => {
               e.stopPropagation();
@@ -390,7 +931,7 @@ var init_file_history_modal = __esm({
           this.loadCurrentDiff();
         } else {
           this.diffEl.empty();
-          this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: "\u70B9\u51FB\u5DE6\u4FA7\u7248\u672C\u67E5\u770B\u5DEE\u5F02" });
+          this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: t("history.diffHint") });
         }
       }
       handleCompare(idx) {
@@ -411,32 +952,29 @@ var init_file_history_modal = __esm({
           return;
         const version = this.versions[this.selectedIdx];
         this.diffEl.empty();
-        this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-loading", text: "\u52A0\u8F7D\u5DEE\u5F02..." });
+        this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-loading", text: t("history.loadingDiff") });
         try {
           if (this.isSentinelTs(version.last_seen)) {
-            this.renderDiff(this.diffEl, this.currentContent, this.currentContent, "\u5F53\u524D\u7248\u672C", "\u5F53\u524D\u7248\u672C");
+            this.renderDiff(this.diffEl, this.currentContent, this.currentContent, t("history.currentVersion"), t("history.currentVersion"));
             return;
           }
           const snapshotTime = this.effectiveTs(version);
           const resp = await this.client.getFileContent(this.sourceId, this.filePath, snapshotTime, this.repoPath);
           let versionContent = "";
           if (resp.content) {
-            try {
-              versionContent = decodeURIComponent(escape(atob(resp.content)));
-            } catch (e) {
-              versionContent = resp.content;
-            }
+            const decoded = tryDecodeText(resp.content);
+            versionContent = decoded.ok ? decoded.text : resp.content;
           }
           if (resp.error) {
             this.diffEl.empty();
-            this.diffEl.createEl("div", { cls: "ginkgo-error", text: `\u5185\u5BB9\u8BFB\u53D6\u5931\u8D25: ${resp.error}` });
+            this.diffEl.createEl("div", { cls: "ginkgo-error", text: t("history.contentFailed", { message: resp.error }) });
             return;
           }
-          this.renderDiff(this.diffEl, versionContent, this.currentContent, this.formatTime(version.first_seen), "\u5F53\u524D\u6587\u4EF6");
+          this.renderDiff(this.diffEl, versionContent, this.currentContent, this.formatTime(version.first_seen), t("modal.diffOldVersion"));
         } catch (err) {
           this.diffEl.empty();
           const msg = err instanceof Error ? err.message : String(err);
-          this.diffEl.createEl("div", { cls: "ginkgo-error", text: `\u52A0\u8F7D\u5931\u8D25: ${msg}` });
+          this.diffEl.createEl("div", { cls: "ginkgo-error", text: t("history.loadFailed", { message: msg }) });
         }
       }
       async loadCompareDiff() {
@@ -445,35 +983,29 @@ var init_file_history_modal = __esm({
         const aVersion = this.versions[this.compareIdx];
         const bVersion = this.versions[this.selectedIdx];
         this.diffEl.empty();
-        this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-loading", text: "\u52A0\u8F7D\u4E24\u4E2A\u7248\u672C..." });
+        this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-loading", text: t("history.loadingTwoVersions") });
         try {
           const [aResp, bResp] = await Promise.all([
-            this.isSentinelTs(aVersion.last_seen) ? { content: btoa(unescape(encodeURIComponent(this.currentContent))), error: "" } : this.client.getFileContent(this.sourceId, this.filePath, this.effectiveTs(aVersion), this.repoPath),
-            this.isSentinelTs(bVersion.last_seen) ? { content: btoa(unescape(encodeURIComponent(this.currentContent))), error: "" } : this.client.getFileContent(this.sourceId, this.filePath, this.effectiveTs(bVersion), this.repoPath)
+            this.isSentinelTs(aVersion.last_seen) ? { content: encodeText(this.currentContent), error: "" } : this.client.getFileContent(this.sourceId, this.filePath, this.effectiveTs(aVersion), this.repoPath),
+            this.isSentinelTs(bVersion.last_seen) ? { content: encodeText(this.currentContent), error: "" } : this.client.getFileContent(this.sourceId, this.filePath, this.effectiveTs(bVersion), this.repoPath)
           ]);
           let aContent = "";
           let bContent = "";
           if (aResp.content) {
-            try {
-              aContent = decodeURIComponent(escape(atob(aResp.content)));
-            } catch (e) {
-              aContent = aResp.content;
-            }
+            const aDecoded = tryDecodeText(aResp.content);
+            aContent = aDecoded.ok ? aDecoded.text : aResp.content;
           }
           if (bResp.content) {
-            try {
-              bContent = decodeURIComponent(escape(atob(bResp.content)));
-            } catch (e) {
-              bContent = bResp.content;
-            }
+            const bDecoded = tryDecodeText(bResp.content);
+            bContent = bDecoded.ok ? bDecoded.text : bResp.content;
           }
-          const aLabel = this.isSentinelTs(aVersion.last_seen) ? "\u5F53\u524D\u7248\u672C" : this.formatTime(aVersion.first_seen);
-          const bLabel = this.isSentinelTs(bVersion.last_seen) ? "\u5F53\u524D\u7248\u672C" : this.formatTime(bVersion.first_seen);
+          const aLabel = this.isSentinelTs(aVersion.last_seen) ? t("history.currentVersion") : this.formatTime(aVersion.first_seen);
+          const bLabel = this.isSentinelTs(bVersion.last_seen) ? t("history.currentVersion") : this.formatTime(bVersion.first_seen);
           this.renderDiff(this.diffEl, aContent, bContent, aLabel, bLabel);
         } catch (err) {
           this.diffEl.empty();
           const msg = err instanceof Error ? err.message : String(err);
-          this.diffEl.createEl("div", { cls: "ginkgo-error", text: `\u52A0\u8F7D\u5931\u8D25: ${msg}` });
+          this.diffEl.createEl("div", { cls: "ginkgo-error", text: t("history.loadFailed", { message: msg }) });
         }
       }
       renderDiff(container, oldContent, newContent, oldLabel, newLabel) {
@@ -499,10 +1031,10 @@ var init_file_history_modal = __esm({
         const labelEl = headerEl.createEl("div", { cls: "ginkgo-fh-diff-labels" });
         labelEl.createEl("span", { cls: "ginkgo-fh-diff-label-a", text: `A: ${oldLabel}` });
         const arrowEl = labelEl.createEl("span", { cls: "ginkgo-fh-diff-arrow" });
-        (0, import_obsidian5.setIcon)(arrowEl, "arrow-right");
+        (0, import_obsidian7.setIcon)(arrowEl, "arrow-right");
         labelEl.createEl("span", { cls: "ginkgo-fh-diff-label-b", text: `B: ${newLabel}` });
         if (added === 0 && removed === 0) {
-          headerEl.createEl("span", { cls: "ginkgo-fh-diff-identical", text: "\u5185\u5BB9\u76F8\u540C" });
+          headerEl.createEl("span", { cls: "ginkgo-fh-diff-identical", text: t("history.identical") });
           return;
         }
         const statsEl = headerEl.createEl("div", { cls: "ginkgo-fh-diff-stats" });
@@ -530,7 +1062,7 @@ var init_file_history_modal = __esm({
           return;
         const version = this.versions[this.selectedIdx];
         const snapshotTime = this.effectiveTs(version);
-        const versionLabel = this.isSentinelTs(version.last_seen) ? "\u5F53\u524D\u7248\u672C" : this.formatTime(version.last_seen);
+        const versionLabel = this.isSentinelTs(version.last_seen) ? t("history.currentVersion") : this.formatTime(version.last_seen);
         const { RestorePreviewModal: RestorePreviewModal2 } = await Promise.resolve().then(() => (init_restore_preview_modal(), restore_preview_modal_exports));
         const modal = new RestorePreviewModal2(
           this.app,
@@ -545,11 +1077,8 @@ var init_file_history_modal = __esm({
               const resp = await this.client.getFileContent(this.sourceId, this.filePath, snapshotTime, this.repoPath);
               let versionContent = "";
               if (resp.content) {
-                try {
-                  versionContent = decodeURIComponent(escape(atob(resp.content)));
-                } catch (e) {
-                  versionContent = resp.content;
-                }
+                const decoded = tryDecodeText(resp.content);
+                versionContent = decoded.ok ? decoded.text : resp.content;
               }
               let file = this.app.vault.getAbstractFileByPath(this.filePath);
               if (!file) {
@@ -558,21 +1087,20 @@ var init_file_history_modal = __esm({
                 if (matches.length > 0)
                   file = matches[0];
               }
-              if (file instanceof import_obsidian5.TFile) {
+              if (file instanceof import_obsidian7.TFile) {
                 await this.app.vault.modify(file, versionContent);
               } else {
                 const dirPath = this.filePath.includes("/") ? this.filePath.substring(0, this.filePath.lastIndexOf("/")) : "";
                 if (dirPath)
-                  await this.app.vault.createFolder(dirPath).catch(() => {
-                  });
+                  await this.app.vault.createFolder(dirPath).catch((err) => this.logError("create folder failed", err));
                 await this.app.vault.create(this.filePath, versionContent);
               }
               this.currentContent = versionContent;
-              new import_obsidian5.Notice("Ginkgo: \u6587\u4EF6\u5DF2\u6062\u590D");
+              new import_obsidian7.Notice(t("history.restored"));
               this.close();
             } catch (err) {
               const msg = err instanceof Error ? err.message : String(err);
-              new import_obsidian5.Notice(`Ginkgo: \u6062\u590D\u5931\u8D25 \u2014 ${msg}`);
+              new import_obsidian7.Notice(t("restore.failed", { message: msg }));
             }
           }
         );
@@ -587,10 +1115,11 @@ var init_file_history_modal = __esm({
             if (matches.length > 0)
               file = matches[0];
           }
-          if (!file || !(file instanceof import_obsidian5.TFile))
+          if (!file || !(file instanceof import_obsidian7.TFile))
             return "";
           return await this.app.vault.read(file);
-        } catch (e) {
+        } catch (err) {
+          this.logError("read current file failed", err);
           return "";
         }
       }
@@ -609,22 +1138,22 @@ var init_file_history_modal = __esm({
         const diffHour = Math.floor(diffMin / 60);
         const diffDay = Math.floor(diffHour / 24);
         if (diffSec < 60)
-          return "\u521A\u521A";
+          return t("time.justNow");
         if (diffMin < 60)
-          return `${diffMin} \u5206\u949F\u524D`;
+          return t("time.minutesAgo", { count: diffMin });
         if (diffHour < 24)
-          return `${diffHour} \u5C0F\u65F6\u524D`;
+          return t("time.hoursAgo", { count: diffHour });
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const targetDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const dayDiff = Math.floor((today.getTime() - targetDay.getTime()) / 864e5);
         if (dayDiff === 0)
-          return "\u4ECA\u5929";
+          return t("time.today");
         if (dayDiff === 1)
-          return "\u6628\u5929";
+          return t("time.yesterday");
         if (dayDiff < 7)
-          return `${dayDiff} \u5929\u524D`;
+          return t("time.daysAgo", { count: dayDiff });
         if (dayDiff < 30)
-          return `${Math.floor(dayDiff / 7)} \u5468\u524D`;
+          return t("time.weeksAgo", { count: Math.floor(dayDiff / 7) });
         const m = String(date.getMonth() + 1).padStart(2, "0");
         const d = String(date.getDate()).padStart(2, "0");
         return `${date.getFullYear()}-${m}-${d}`;
@@ -647,6 +1176,10 @@ var init_file_history_modal = __esm({
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return sign + parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[Math.min(i, sizes.length - 1)];
       }
+      logError(context, err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[Ginkgo Backup] ${context}: ${msg}`, err);
+      }
       onClose() {
         this.contentEl.empty();
       }
@@ -660,7 +1193,7 @@ __export(main_exports, {
   default: () => GinkgoBackupPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian6 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 
 // src/api.ts
 var import_obsidian = require("obsidian");
@@ -678,7 +1211,9 @@ var DEFAULT_SETTINGS = {
   sourceId: 0,
   excludePaths: [".obsidian", ".trash", ".DS_Store"],
   watchExtensions: ["md", "canvas", "base", "json", "css"],
-  vaultIdentifier: ""
+  vaultIdentifier: "",
+  language: "auto",
+  largeFileThresholdBytes: 5 * 1024 * 1024
 };
 var GinkgoApiError = class extends Error {
   constructor(type, message, statusCode = 0, code = "") {
@@ -927,6 +1462,7 @@ var GinkgoBackupClient = class {
 
 // src/settings-tab.ts
 var import_obsidian2 = require("obsidian");
+init_i18n();
 var RepoMultiSelectModal = class extends import_obsidian2.Modal {
   constructor(app, repos, preselectedPaths, onConfirm) {
     super(app);
@@ -944,14 +1480,14 @@ var RepoMultiSelectModal = class extends import_obsidian2.Modal {
     contentEl.empty();
     contentEl.addClass("ginkgo-repo-select-modal");
     const headerEl = contentEl.createEl("div", { cls: "ginkgo-repo-header" });
-    headerEl.createEl("h2", { text: "\u914D\u7F6E\u5907\u4EFD\u6E90" });
-    this.countEl = headerEl.createEl("span", { cls: "ginkgo-repo-count", text: `\u5DF2\u9009 ${this.selected.size} \u4E2A` });
+    headerEl.createEl("h2", { text: t("setting.configureBackup") });
+    this.countEl = headerEl.createEl("span", { cls: "ginkgo-repo-count", text: t("setting.selectedCount", { count: this.selected.size }) });
     this.listEl = contentEl.createEl("div", { cls: "ginkgo-repo-list" });
     this.renderList();
     const footerEl = contentEl.createEl("div", { cls: "ginkgo-modal-footer" });
     this.confirmBtn = footerEl.createEl("button", {
       cls: "ginkgo-btn-restore",
-      text: "\u786E\u8BA4\u914D\u7F6E"
+      text: t("btn.confirm")
     });
     this.confirmBtn.disabled = this.selected.size === 0;
     this.confirmBtn.addEventListener("click", () => {
@@ -961,11 +1497,11 @@ var RepoMultiSelectModal = class extends import_obsidian2.Modal {
       this.onConfirm(selectedRepos);
       this.close();
     });
-    const cancelBtn = footerEl.createEl("button", { text: "\u53D6\u6D88", cls: "ginkgo-close-btn" });
+    const cancelBtn = footerEl.createEl("button", { text: t("btn.cancel"), cls: "ginkgo-close-btn" });
     cancelBtn.addEventListener("click", () => this.close());
   }
   updateSelection() {
-    this.countEl.setText(`\u5DF2\u9009 ${this.selected.size} \u4E2A`);
+    this.countEl.setText(t("setting.selectedCount", { count: this.selected.size }));
     this.confirmBtn.disabled = this.selected.size === 0;
   }
   renderList() {
@@ -1002,14 +1538,14 @@ var RepoMultiSelectModal = class extends import_obsidian2.Modal {
       nameRow.createEl("span", { cls: "ginkgo-repo-name", text: repo.display_name || repo.path });
       const badgesEl = nameRow.createEl("span", { cls: "ginkgo-repo-badges" });
       if (repo.type === "cloud" || repo.type === "s3") {
-        badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-cloud", text: "\u4E91\u7AEF" });
+        badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-cloud", text: t("repo.cloud") });
       } else if (repo.type === "webdav") {
-        badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-cloud", text: "WebDAV" });
+        badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-cloud", text: t("repo.webdav") });
       } else {
-        badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-local", text: "\u672C\u5730" });
+        badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-local", text: t("repo.local") });
       }
       if (repo.encrypted) {
-        badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-encrypted", text: "\u52A0\u5BC6" });
+        badgesEl.createEl("span", { cls: "ginkgo-repo-badge ginkgo-badge-encrypted", text: t("repo.encrypted") });
       }
       bodyEl.createEl("div", { cls: "ginkgo-repo-path", text: repo.path });
     }
@@ -1031,8 +1567,8 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
     const iconEl = bannerLeft.createEl("span", { cls: "ginkgo-settings-banner-icon" });
     (0, import_obsidian2.setIcon)(iconEl, "leaf");
     const titleEl = bannerLeft.createEl("div", { cls: "ginkgo-settings-banner-text" });
-    titleEl.createEl("div", { cls: "ginkgo-settings-banner-title", text: "Ginkgo Backup" });
-    titleEl.createEl("div", { cls: "ginkgo-settings-banner-version", text: "\u94F6\u674F\u65F6\u5149\u5907\u4EFD \xB7 Obsidian \u63D2\u4EF6 v0.3.0" });
+    titleEl.createEl("div", { cls: "ginkgo-settings-banner-title", text: t("plugin.name") });
+    titleEl.createEl("div", { cls: "ginkgo-settings-banner-version", text: "Ginkgo Backup \xB7 Obsidian Plugin v0.3.0" });
     const statusDot = bannerEl.createEl("div", { cls: "ginkgo-settings-banner-status" });
     this.checkBannerStatus(statusDot);
     this.renderConnectionSection(containerEl);
@@ -1042,16 +1578,16 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
     this.renderHelpSection(containerEl);
   }
   renderConnectionSection(containerEl) {
-    containerEl.createEl("h3", { text: "\u8FDE\u63A5" });
+    containerEl.createEl("h3", { text: t("setting.connection") });
     const statusEl = containerEl.createEl("div", { cls: "ginkgo-settings-status" });
     this.checkAndDisplayStatus(statusEl);
-    new import_obsidian2.Setting(containerEl).setName("API \u4E3B\u673A").setDesc("\u652F\u6301 IP\u3001\u57DF\u540D\u6216\u5B8C\u6574 URL\uFF08\u5982 https://ginkgo.example.com\uFF09").addText(
-      (text) => text.setPlaceholder("127.0.0.1 \u6216 https://ginkgo.example.com").setValue(this.plugin.settings.apiHost).onChange(async (value) => {
+    new import_obsidian2.Setting(containerEl).setName(t("setting.serverUrl")).setDesc(t("setting.apiHostDesc")).addText(
+      (text) => text.setPlaceholder("127.0.0.1 " + t("setting.apiHostDesc")).setValue(this.plugin.settings.apiHost).onChange(async (value) => {
         this.plugin.settings.apiHost = value.trim();
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian2.Setting(containerEl).setName("API \u7AEF\u53E3").setDesc("API \u670D\u52A1\u7AEF\u53E3\uFF08\u9ED8\u8BA4 9275\uFF09").addText(
+    new import_obsidian2.Setting(containerEl).setName(t("setting.apiPort")).setDesc(t("setting.apiPortDesc")).addText(
       (text) => text.setPlaceholder("9275").setValue(String(this.plugin.settings.apiPort)).onChange(async (value) => {
         const port = parseInt(value, 10);
         if (!isNaN(port) && port > 0 && port < 65536) {
@@ -1060,22 +1596,38 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
         }
       })
     );
-    new import_obsidian2.Setting(containerEl).setName("API Token").setDesc("\u5728 Ginkgo Backup \u684C\u9762\u5E94\u7528\u7684\u8BBE\u7F6E\u9875\u9762\u83B7\u53D6").addText((text) => {
-      text.setPlaceholder("\u8F93\u5165 API Token").setValue(this.plugin.settings.apiToken).onChange(async (value) => {
+    new import_obsidian2.Setting(containerEl).setName(t("setting.apiToken")).setDesc(t("setting.apiTokenDesc2")).addText((text) => {
+      text.setPlaceholder(t("setting.apiToken")).setValue(this.plugin.settings.apiToken).onChange(async (value) => {
         this.plugin.settings.apiToken = value;
         await this.plugin.saveSettings();
       });
       text.inputEl.type = "password";
     });
-    new import_obsidian2.Setting(containerEl).setName("Vault \u6807\u8BC6\u7B26").setDesc("\u7559\u7A7A\u5219\u81EA\u52A8\u68C0\u6D4B\u3002\u591A\u8BBE\u5907\u540C\u540D Vault \u65F6\u9700\u8BBE\u7F6E\u552F\u4E00\u6807\u8BC6\uFF08\u5982 MyVault-iPhone\uFF09\uFF0C\u786E\u4FDD\u6BCF\u4E2A\u8BBE\u5907\u5BF9\u5E94\u72EC\u7ACB\u5907\u4EFD\u6E90").addText(
-      (text) => text.setPlaceholder("\u81EA\u52A8\u68C0\u6D4B").setValue(this.plugin.settings.vaultIdentifier).onChange(async (value) => {
+    new import_obsidian2.Setting(containerEl).setName(t("setting.language")).setDesc(t("setting.language")).addDropdown((dropdown) => {
+      dropdown.addOption("auto", t("setting.languageAuto"));
+      dropdown.addOption("zh-CN", t("setting.languageZh"));
+      dropdown.addOption("en", t("setting.languageEn"));
+      dropdown.setValue(this.plugin.settings.language);
+      dropdown.onChange(async (value) => {
+        const locale = value;
+        this.plugin.settings.language = locale;
+        setStoredLocale(locale);
+        setActiveLocale(locale);
+        await this.plugin.saveSettings();
+        this.display();
+      });
+    });
+    new import_obsidian2.Setting(containerEl).setName(t("setting.vaultIdentifier")).setDesc(t("setting.vaultIdentifierDesc")).addText(
+      (text) => text.setPlaceholder(t("setting.vaultIdentifier")).setValue(this.plugin.settings.vaultIdentifier).onChange(async (value) => {
         this.plugin.settings.vaultIdentifier = value.trim();
         this.plugin.vaultPath = "";
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian2.Setting(containerEl).setName("\u5907\u4EFD\u6E90").setDesc(this.plugin.settings.sourceId > 0 ? `\u5DF2\u914D\u7F6E\uFF08ID: ${this.plugin.settings.sourceId}\uFF09` : "\u672A\u914D\u7F6E\uFF0C\u70B9\u51FB\u4E00\u952E\u914D\u7F6E\u9009\u62E9\u4ED3\u5E93").addButton(
-      (button) => button.setButtonText(this.plugin.settings.sourceId > 0 ? "\u91CD\u65B0\u914D\u7F6E" : "\u4E00\u952E\u914D\u7F6E").setCta().onClick(async () => {
+    const sourceDesc = this.plugin.settings.sourceId > 0 ? t("setting.sourceConfigured", { id: this.plugin.settings.sourceId }) : t("setting.sourceNotConfigured");
+    const sourceBtnText = this.plugin.settings.sourceId > 0 ? t("setting.reconfigure") : t("setting.oneClickConfig");
+    new import_obsidian2.Setting(containerEl).setName(t("setting.backupSource")).setDesc(sourceDesc).addButton(
+      (button) => button.setButtonText(sourceBtnText).setCta().onClick(async () => {
         await this.showRepoSelector();
       })
     ).addText(
@@ -1090,8 +1642,8 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
     );
   }
   renderAutoBackupSection(containerEl) {
-    containerEl.createEl("h3", { text: "\u5907\u4EFD\u7B56\u7565" });
-    new import_obsidian2.Setting(containerEl).setName("\u5373\u65F6\u63A8\u9001").setDesc("\u6587\u4EF6\u4FDD\u5B58\u540E\u81EA\u52A8\u63A8\u9001\u5230\u6682\u5B58\u533A\uFF08\u63A8\u8350\uFF0C\u5373\u65F6\u5B8C\u6210\uFF0C\u540E\u53F0\u5907\u4EFD\uFF09").addToggle(
+    containerEl.createEl("h3", { text: t("setting.backupStrategy") });
+    new import_obsidian2.Setting(containerEl).setName(t("setting.autoBackup")).setDesc(t("setting.stagingPushOnSaveDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.stagingPushOnSave).onChange(async (value) => {
         this.plugin.settings.stagingPushOnSave = value;
         if (value) {
@@ -1101,7 +1653,7 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
         this.display();
       })
     );
-    new import_obsidian2.Setting(containerEl).setName("\u5168\u91CF\u5907\u4EFD").setDesc("\u6587\u4EF6\u4FDD\u5B58\u540E\u89E6\u53D1\u5168\u91CF\u5907\u4EFD\uFF08\u8F83\u6162\uFF0C\u4E0E\u5373\u65F6\u63A8\u9001\u4E92\u65A5\uFF09").addToggle(
+    new import_obsidian2.Setting(containerEl).setName(t("setting.fullBackup")).setDesc(t("setting.fullBackupDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.autoBackupOnSave).setDisabled(this.plugin.settings.stagingPushOnSave).onChange(async (value) => {
         this.plugin.settings.autoBackupOnSave = value;
         if (value) {
@@ -1111,13 +1663,13 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
         this.display();
       })
     );
-    new import_obsidian2.Setting(containerEl).setName("\u9632\u6296\u5EF6\u8FDF").setDesc("\u6587\u4EF6\u4FDD\u5B58\u540E\u7B49\u5F85\u591A\u4E45\u518D\u89E6\u53D1\u63A8\u9001\uFF08\u6BEB\u79D2\uFF09").addSlider(
+    new import_obsidian2.Setting(containerEl).setName(t("setting.debounceDelay")).setDesc(t("setting.debounceDelayDesc")).addSlider(
       (slider) => slider.setLimits(5e3, 12e4, 5e3).setValue(this.plugin.settings.autoBackupDebounceMs).setDynamicTooltip().onChange(async (value) => {
         this.plugin.settings.autoBackupDebounceMs = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian2.Setting(containerEl).setName("\u76D1\u63A7\u6587\u4EF6\u7C7B\u578B").setDesc("\u5373\u65F6\u63A8\u9001\u7684\u6587\u4EF6\u6269\u5C55\u540D\uFF0C\u9017\u53F7\u6216\u6362\u884C\u5206\u9694\uFF08\u5982 md, canvas, base\uFF09\u3002\u5176\u4ED6\u6587\u4EF6\u7531\u515C\u5E95\u5907\u4EFD\u8986\u76D6").addTextArea(
+    new import_obsidian2.Setting(containerEl).setName(t("setting.watchExtensions")).setDesc(t("setting.watchExtensionsDesc2")).addTextArea(
       (text) => text.setPlaceholder("md, canvas, base").setValue(this.plugin.settings.watchExtensions.join(", ")).onChange(async (value) => {
         this.plugin.settings.watchExtensions = value.split(/[,\n]/).map((s) => s.trim().replace(/^\./, "")).filter((s) => s.length > 0);
         await this.plugin.saveSettings();
@@ -1125,65 +1677,65 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
     );
   }
   renderFilterSection(containerEl) {
-    containerEl.createEl("h3", { text: "\u8FC7\u6EE4\u4E0E\u663E\u793A" });
-    new import_obsidian2.Setting(containerEl).setName("\u6392\u9664\u8DEF\u5F84\u5217\u8868").setDesc("\u4E0D\u5907\u4EFD\u7684\u8DEF\u5F84\u524D\u7F00\uFF0C\u6BCF\u884C\u4E00\u4E2A\uFF08\u5982 .obsidian, .trash\uFF09").addTextArea(
+    containerEl.createEl("h3", { text: t("setting.filterAndDisplay") });
+    new import_obsidian2.Setting(containerEl).setName(t("setting.excludePaths")).setDesc(t("setting.excludePathsDesc2")).addTextArea(
       (text) => text.setPlaceholder(".obsidian\n.trash\n.DS_Store").setValue(this.plugin.settings.excludePaths.join("\n")).onChange(async (value) => {
         this.plugin.settings.excludePaths = value.split("\n").map((s) => s.trim()).filter((s) => s.length > 0);
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian2.Setting(containerEl).setName("\u663E\u793A\u72B6\u6001\u680F").setDesc("\u5728\u72B6\u6001\u680F\u663E\u793A\u5907\u4EFD\u72B6\u6001").addToggle(
+    new import_obsidian2.Setting(containerEl).setName(t("setting.showStatusBar")).setDesc(t("setting.showStatusBarDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.showStatusBar).onChange(async (value) => {
         this.plugin.settings.showStatusBar = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian2.Setting(containerEl).setName("\u5237\u65B0\u95F4\u9694").setDesc("\u72B6\u6001\u680F\u5237\u65B0\u95F4\u9694\uFF08\u79D2\uFF09").addSlider(
+    new import_obsidian2.Setting(containerEl).setName(t("setting.refreshInterval")).setDesc(t("setting.refreshIntervalDesc2")).addSlider(
       (slider) => slider.setLimits(10, 300, 10).setValue(this.plugin.settings.refreshInterval).setDynamicTooltip().onChange(async (value) => {
         this.plugin.settings.refreshInterval = value;
         await this.plugin.saveSettings();
       })
     );
+    new import_obsidian2.Setting(containerEl).setName(t("setting.largeFileThreshold")).setDesc(t("setting.largeFileThresholdDesc")).addSlider(
+      (slider) => slider.setLimits(1, 50, 1).setValue(Math.round(this.plugin.settings.largeFileThresholdBytes / 1024 / 1024)).setDynamicTooltip().onChange(async (value) => {
+        this.plugin.settings.largeFileThresholdBytes = value * 1024 * 1024;
+        await this.plugin.saveSettings();
+      })
+    );
   }
   renderActionsSection(containerEl) {
-    containerEl.createEl("h3", { text: "\u5FEB\u6377\u64CD\u4F5C" });
-    new import_obsidian2.Setting(containerEl).setName("\u6D4B\u8BD5\u8FDE\u63A5").setDesc("\u9A8C\u8BC1\u4E0E Ginkgo Backup \u7684\u8FDE\u63A5").addButton(
-      (button) => button.setButtonText("\u6D4B\u8BD5").onClick(async () => {
+    containerEl.createEl("h3", { text: t("setting.quickActions") });
+    new import_obsidian2.Setting(containerEl).setName(t("setting.testConnection")).setDesc(t("setting.testConnectionDesc")).addButton(
+      (button) => button.setButtonText(t("setting.testConnection")).onClick(async () => {
         button.setDisabled(true);
         try {
           const health = await this.plugin.client.health();
-          new import_obsidian2.Notice(`Ginkgo: \u5DF2\u8FDE\u63A5 (v${health.version})`);
+          new import_obsidian2.Notice(t("status.connected") + ` (v${health.version})`);
         } catch (e) {
-          new import_obsidian2.Notice("Ginkgo: \u8FDE\u63A5\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u4E3B\u673A\u3001\u7AEF\u53E3\u548C Token");
+          new import_obsidian2.Notice(t("error.getStatusFailed"));
         }
         button.setDisabled(false);
       })
     );
-    new import_obsidian2.Setting(containerEl).setName("\u7ACB\u5373\u5907\u4EFD").setDesc("\u89E6\u53D1\u5168\u91CF\u5907\u4EFD").addButton(
-      (button) => button.setButtonText("\u5907\u4EFD").onClick(() => this.plugin.backupVault())
+    new import_obsidian2.Setting(containerEl).setName(t("btn.backupNow")).setDesc(t("setting.backupNowDesc")).addButton(
+      (button) => button.setButtonText(t("btn.backupNow")).onClick(() => this.plugin.backupVault())
     );
-    new import_obsidian2.Setting(containerEl).setName("\u6253\u5F00\u5E94\u7528").setDesc("\u5728\u6D4F\u89C8\u5668\u4E2D\u6253\u5F00 Ginkgo Backup").addButton(
-      (button) => button.setButtonText("\u6253\u5F00").onClick(() => this.plugin.openGinkgoApp())
+    new import_obsidian2.Setting(containerEl).setName(t("menu.openApp")).setDesc(t("setting.openAppDesc")).addButton(
+      (button) => button.setButtonText(t("menu.openApp")).onClick(() => this.plugin.openGinkgoApp())
     );
   }
   renderHelpSection(containerEl) {
-    containerEl.createEl("h3", { text: "\u5E2E\u52A9" });
+    containerEl.createEl("h3", { text: t("setting.help") });
     const helpEl = containerEl.createEl("div", { cls: "ginkgo-settings-help" });
-    helpEl.createEl("p", {
-      text: "\u786E\u4FDD Ginkgo Backup \u684C\u9762\u5E94\u7528\u6B63\u5728\u8FD0\u884C\uFF0C\u5E76\u4E14\u5F53\u524D Vault \u5DF2\u6DFB\u52A0\u5230\u5907\u4EFD\u6E90\u3002"
-    });
-    helpEl.createEl("p", {
-      text: "\u4F7F\u7528\u547D\u4EE4\u9762\u677F\uFF08Ctrl/Cmd + P\uFF09\u641C\u7D22 Ginkgo \u67E5\u770B\u6240\u6709\u53EF\u7528\u547D\u4EE4\u3002"
-    });
-    helpEl.createEl("p", {
-      text: "\u5373\u65F6\u63A8\u9001\u6A21\u5F0F\uFF1A\u7B14\u8BB0\u4FDD\u5B58\u540E\u5373\u65F6\u63A8\u9001\u5230\u6682\u5B58\u533A\uFF0C\u540E\u53F0\u81EA\u52A8\u5B8C\u6210\u5907\u4EFD\uFF0C\u4E0D\u963B\u585E\u7F16\u8F91\u3002\u56FE\u7247\u7B49\u9644\u4EF6\u7531\u515C\u5E95\u5907\u4EFD\u8986\u76D6\u3002"
-    });
+    helpEl.createEl("p", { text: t("setting.helpLine1") });
+    helpEl.createEl("p", { text: t("setting.helpLine2") });
+    helpEl.createEl("p", { text: t("setting.helpLine3") });
   }
   async showRepoSelector() {
     try {
       const repos = await this.plugin.client.getRepositories();
       if (repos.length === 0) {
-        new import_obsidian2.Notice("Ginkgo: \u6CA1\u6709\u53EF\u7528\u7684\u5907\u4EFD\u4ED3\u5E93\uFF0C\u8BF7\u5148\u5728 Ginkgo Backup \u4E2D\u521B\u5EFA\u4ED3\u5E93");
+        new import_obsidian2.Notice(t("notice.createSourceFailed"));
         return;
       }
       let preselectedPaths = [];
@@ -1192,20 +1744,21 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
           const source = await this.plugin.client.getSourceById(this.plugin.vaultSourceId);
           if (source)
             preselectedPaths = source.repo_paths || [];
-        } catch (e) {
+        } catch (err) {
+          this.plugin.logError("load preselected repos failed", err);
         }
       }
       const modal = new RepoMultiSelectModal(this.app, repos, preselectedPaths, async (selectedRepos) => {
         const repoPaths = selectedRepos.map((r) => r.path);
         const names = selectedRepos.map((r) => r.display_name || r.path).join(", ");
-        new import_obsidian2.Notice(`Ginkgo: \u5DF2\u9009\u62E9\u4ED3\u5E93 ${names}`);
+        new import_obsidian2.Notice(t("setting.reposSelected", { names }));
         await this.plugin.setupSource(repoPaths);
         this.display();
       });
       modal.open();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      new import_obsidian2.Notice(`Ginkgo: \u83B7\u53D6\u4ED3\u5E93\u5217\u8868\u5931\u8D25 \u2014 ${msg}`);
+      new import_obsidian2.Notice(t("setting.loadReposFailed", { message: msg }));
     }
   }
   async checkBannerStatus(el) {
@@ -1213,12 +1766,13 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
       const connected = await this.plugin.client.isConnected();
       if (connected) {
         el.addClass("ginkgo-banner-connected");
-        el.setAttribute("aria-label", "\u5DF2\u8FDE\u63A5");
+        el.setAttribute("aria-label", t("status.connected"));
       } else {
         el.addClass("ginkgo-banner-disconnected");
-        el.setAttribute("aria-label", "\u672A\u8FDE\u63A5");
+        el.setAttribute("aria-label", t("status.disconnected"));
       }
-    } catch (e) {
+    } catch (err) {
+      this.plugin.logError("check banner status failed", err);
       el.addClass("ginkgo-banner-disconnected");
     }
   }
@@ -1230,21 +1784,22 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
     try {
       const connected = await this.plugin.client.isConnected();
       if (!connected) {
-        el.setText("\u274C \u672A\u8FDE\u63A5\u5230 Ginkgo Backup");
+        el.setText(t("setting.statusError"));
         el.addClass("ginkgo-status-err");
         return;
       }
       const vaultPath = this.plugin.getVaultPath();
       const source = vaultPath ? await this.plugin.client.findSourceByPath(vaultPath) : null;
       if (source) {
-        el.setText("\u2705 \u5DF2\u8FDE\u63A5 \u2014 \u5F53\u524D Vault \u5DF2\u914D\u7F6E\u5907\u4EFD");
+        el.setText(t("setting.statusConnected"));
         el.addClass("ginkgo-status-ok");
       } else {
-        el.setText("\u26A0\uFE0F \u5DF2\u8FDE\u63A5 \u2014 \u5F53\u524D Vault \u672A\u914D\u7F6E\u5907\u4EFD");
+        el.setText(t("setting.statusNotConfigured"));
         el.addClass("ginkgo-status-warn");
       }
-    } catch (e) {
-      el.setText("\u274C \u8FDE\u63A5\u9519\u8BEF");
+    } catch (err) {
+      this.plugin.logError("check settings status failed", err);
+      el.setText(t("setting.statusError"));
       el.addClass("ginkgo-status-err");
     }
   }
@@ -1252,6 +1807,7 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
 
 // src/timeline-view.ts
 var import_obsidian3 = require("obsidian");
+init_i18n();
 var TIMELINE_VIEW_TYPE = "ginkgo-backup-timeline";
 var FileHistoryView = class extends import_obsidian3.ItemView {
   constructor(leaf, plugin) {
@@ -1263,7 +1819,7 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
     return TIMELINE_VIEW_TYPE;
   }
   getDisplayText() {
-    return "\u5907\u4EFD\u65F6\u95F4\u7EBF";
+    return t("timeline.title");
   }
   getIcon() {
     return "hard-drive";
@@ -1277,21 +1833,21 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
     const iconSpan = h3.createSpan({ cls: "ginkgo-timeline-icon" });
     (0, import_obsidian3.setIcon)(iconSpan, "hard-drive");
     iconSpan.style.marginRight = "8px";
-    h3.createSpan({ text: "\u5907\u4EFD\u65F6\u95F4\u7EBF" });
-    const refreshBtn = headerEl.createEl("button", { text: "\u5237\u65B0", cls: "ginkgo-refresh-btn" });
+    h3.createSpan({ text: t("timeline.title") });
+    const refreshBtn = headerEl.createEl("button", { text: t("timeline.refresh"), cls: "ginkgo-refresh-btn" });
     refreshBtn.addEventListener("click", () => this.onOpen());
-    const backupBtn = headerEl.createEl("button", { text: "\u7ACB\u5373\u5907\u4EFD", cls: "ginkgo-backup-btn" });
+    const backupBtn = headerEl.createEl("button", { text: t("timeline.backupNow"), cls: "ginkgo-backup-btn" });
     backupBtn.addEventListener("click", () => this.plugin.backupVault());
     if (this.plugin.vaultSourceId === 0) {
       const emptyEl = container.createEl("div", { cls: "ginkgo-empty-state" });
       const iconEl = emptyEl.createEl("div", { cls: "ginkgo-empty-icon" });
       (0, import_obsidian3.setIcon)(iconEl, "hard-drive");
-      emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: "\u5C1A\u672A\u914D\u7F6E\u5907\u4EFD\u6E90" });
-      emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: "\u4F7F\u7528\u547D\u4EE4 Ginkgo: \u914D\u7F6E\u5907\u4EFD\u6E90 \u6765\u5F00\u59CB" });
+      emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: t("timeline.notConfigured") });
+      emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: t("timeline.configureHint") });
       return;
     }
     const loadingEl = container.createEl("div", { cls: "ginkgo-loading" });
-    loadingEl.createEl("span", { text: "\u52A0\u8F7D\u4E2D..." });
+    loadingEl.createEl("span", { text: t("timeline.loading") });
     try {
       const result = await this.plugin.client.getSnapshots(this.plugin.vaultSourceId, 50);
       this.snapshots = result.items;
@@ -1300,7 +1856,7 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
     } catch (err) {
       loadingEl.remove();
       const msg = err instanceof Error ? err.message : String(err);
-      container.createEl("p", { text: `\u52A0\u8F7D\u5931\u8D25: ${msg}`, cls: "ginkgo-error" });
+      container.createEl("p", { text: t("timeline.loadFailed", { message: msg }), cls: "ginkgo-error" });
     }
   }
   renderTimeline(container) {
@@ -1309,8 +1865,8 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
       const emptyEl = container.createEl("div", { cls: "ginkgo-empty-state" });
       const iconEl = emptyEl.createEl("div", { cls: "ginkgo-empty-icon" });
       (0, import_obsidian3.setIcon)(iconEl, "archive");
-      emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: "\u6682\u65E0\u5907\u4EFD\u8BB0\u5F55" });
-      emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: "\u70B9\u51FB\u300C\u7ACB\u5373\u5907\u4EFD\u300D\u521B\u5EFA\u7B2C\u4E00\u4E2A\u5FEB\u7167" });
+      emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: t("timeline.noRecords") });
+      emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: t("timeline.firstBackupHint") });
       return;
     }
     this.renderSummary(container);
@@ -1332,7 +1888,7 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
           text: time.toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" })
         });
         const metaEl = cardEl.createEl("div", { cls: "ginkgo-card-meta" });
-        metaEl.createEl("span", { text: `${snap.file_count} \u6587\u4EF6` });
+        metaEl.createEl("span", { text: `${snap.file_count} ${t("timeline.files")}` });
         metaEl.createEl("span", { text: this.plugin.formatBytes(snap.total_size) });
         if (snap.new_files > 0) {
           metaEl.createEl("span", {
@@ -1370,9 +1926,9 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
     const latestSnap = this.snapshots[0];
     const lastTime = latestSnap ? new Date(latestSnap.timestamp / 1e3).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" }) : "-";
     const items = [
-      { value: String(this.snapshots.length), label: "\u5FEB\u7167" },
-      { value: this.plugin.formatBytes(totalSize), label: "\u603B\u5927\u5C0F" },
-      { value: lastTime, label: "\u6700\u8FD1\u5907\u4EFD" }
+      { value: String(this.snapshots.length), label: t("timeline.snapshots") },
+      { value: this.plugin.formatBytes(totalSize), label: t("timeline.totalSize") },
+      { value: lastTime, label: t("timeline.lastBackup") }
     ];
     for (const item of items) {
       const itemEl = summaryEl.createEl("div", { cls: "ginkgo-summary-item" });
@@ -1426,24 +1982,24 @@ var SnapshotDetailModal = class extends import_obsidian3.Modal {
     const titleEl = headerEl.createEl("div", { cls: "ginkgo-snap-title" });
     const iconSpan = titleEl.createSpan({ cls: "ginkgo-snap-title-icon" });
     (0, import_obsidian3.setIcon)(iconSpan, "camera");
-    titleEl.createSpan({ text: `\u5FEB\u7167 ${time.toLocaleString()}` });
+    titleEl.createEl("span", { text: `${t("timeline.snapshots")} ${time.toLocaleString()}` });
     const statsEl = contentEl.createEl("div", { cls: "ginkgo-snap-stats" });
     const statItems = [
-      { icon: "files", label: "\u6587\u4EF6", value: `${this.snap.file_count} \u6587\u4EF6 \xB7 ${this.snap.dir_count} \u76EE\u5F55` },
-      { icon: "hard-drive", label: "\u5927\u5C0F", value: this.plugin.formatBytes(this.snap.total_size) }
+      { icon: "files", label: t("snapshot.files"), value: `${this.snap.file_count} ${t("timeline.files")} \xB7 ${this.snap.dir_count} ${t("snapshot.dirs")}` },
+      { icon: "hard-drive", label: t("snapshot.size"), value: this.plugin.formatBytes(this.snap.total_size) }
     ];
     if (this.snap.new_files > 0) {
-      statItems.push({ icon: "plus-circle", label: "\u65B0\u589E", value: `${this.snap.new_files} \u6587\u4EF6`, cls: "ginkgo-stat-new" });
+      statItems.push({ icon: "plus-circle", label: t("snapshot.new"), value: `${this.snap.new_files} ${t("timeline.files")}`, cls: "ginkgo-stat-new" });
     }
     if (this.snap.changed_files > 0) {
-      statItems.push({ icon: "refresh-cw", label: "\u4FEE\u6539", value: `${this.snap.changed_files} \u6587\u4EF6`, cls: "ginkgo-stat-changed" });
+      statItems.push({ icon: "refresh-cw", label: t("snapshot.changed"), value: `${this.snap.changed_files} ${t("timeline.files")}`, cls: "ginkgo-stat-changed" });
     }
     if (this.snap.deleted_count > 0) {
-      statItems.push({ icon: "minus-circle", label: "\u5220\u9664", value: `${this.snap.deleted_count} \u6587\u4EF6`, cls: "ginkgo-stat-deleted" });
+      statItems.push({ icon: "minus-circle", label: t("snapshot.deleted"), value: `${this.snap.deleted_count} ${t("timeline.files")}`, cls: "ginkgo-stat-deleted" });
     }
     if (this.snap.duration_ms > 0) {
       const sec = Math.round(this.snap.duration_ms / 1e3);
-      statItems.push({ icon: "timer", label: "\u8017\u65F6", value: sec >= 60 ? `${Math.floor(sec / 60)}m${sec % 60}s` : `${sec}s` });
+      statItems.push({ icon: "timer", label: t("snapshot.duration"), value: sec >= 60 ? `${Math.floor(sec / 60)}m${sec % 60}s` : `${sec}s` });
     }
     for (const item of statItems) {
       const statEl = statsEl.createEl("div", { cls: `ginkgo-snap-stat ${(_a = item.cls) != null ? _a : ""}` });
@@ -1455,8 +2011,8 @@ var SnapshotDetailModal = class extends import_obsidian3.Modal {
     }
     const fileSectionEl = contentEl.createEl("div", { cls: "ginkgo-snap-file-section" });
     const fileHeaderEl = fileSectionEl.createEl("div", { cls: "ginkgo-snap-file-header" });
-    fileHeaderEl.createEl("span", { text: "\u6587\u4EF6\u5217\u8868" });
-    const loadingEl = fileHeaderEl.createEl("span", { cls: "ginkgo-snap-loading", text: "\u52A0\u8F7D\u4E2D..." });
+    fileHeaderEl.createEl("span", { text: t("timeline.fileList") });
+    const loadingEl = fileHeaderEl.createEl("span", { cls: "ginkgo-snap-loading", text: t("timeline.loadingFiles") });
     const fileListEl = fileSectionEl.createEl("div", { cls: "ginkgo-snap-file-list" });
     this.loadFiles(fileListEl, loadingEl);
   }
@@ -1473,7 +2029,7 @@ var SnapshotDetailModal = class extends import_obsidian3.Modal {
       loadingEl.remove();
       const entries = (_a = result.entries) != null ? _a : [];
       if (entries.length === 0) {
-        listEl.createEl("div", { cls: "ginkgo-snap-empty", text: "\u6B64\u5FEB\u7167\u65E0\u6587\u4EF6" });
+        listEl.createEl("div", { cls: "ginkgo-snap-empty", text: t("timeline.noFiles") });
         return;
       }
       const dirs = entries.filter((e) => e.type === "dir");
@@ -1488,13 +2044,13 @@ var SnapshotDetailModal = class extends import_obsidian3.Modal {
         (0, import_obsidian3.setIcon)(iconEl, iconCls);
         rowEl.createEl("span", { cls: "ginkgo-snap-file-name", text: entry.name });
         if (entry.is_deleted) {
-          rowEl.createEl("span", { cls: "ginkgo-snap-file-deleted", text: "\u5DF2\u5220\u9664" });
+          rowEl.createEl("span", { cls: "ginkgo-snap-file-deleted", text: t("timeline.deleted") });
         }
         const rightEl = rowEl.createEl("span", { cls: "ginkgo-snap-file-right" });
         if (entry.type !== "dir") {
           rightEl.createEl("span", { cls: "ginkgo-snap-file-size", text: this.plugin.formatBytes(entry.size) });
         } else if (entry.file_count > 0) {
-          rightEl.createEl("span", { cls: "ginkgo-snap-file-count", text: `${entry.file_count} \u6587\u4EF6` });
+          rightEl.createEl("span", { cls: "ginkgo-snap-file-count", text: `${entry.file_count} ${t("timeline.files")}` });
         }
         if (entry.type !== "dir") {
           rowEl.addEventListener("click", () => {
@@ -1507,12 +2063,12 @@ var SnapshotDetailModal = class extends import_obsidian3.Modal {
         }
       }
       if (result.has_more) {
-        listEl.createEl("div", { cls: "ginkgo-snap-file-more", text: `\u8FD8\u6709\u66F4\u591A\u6587\u4EF6\uFF08\u5171 ${result.total} \u9879\uFF09` });
+        listEl.createEl("div", { cls: "ginkgo-snap-file-more", text: t("timeline.moreFiles", { count: result.total }) });
       }
     } catch (err) {
       loadingEl.remove();
       const msg = err instanceof Error ? err.message : String(err);
-      listEl.createEl("div", { cls: "ginkgo-error", text: `\u52A0\u8F7D\u5931\u8D25: ${msg}` });
+      listEl.createEl("div", { cls: "ginkgo-error", text: t("timeline.loadFailed", { message: msg }) });
     }
   }
   getFileIcon(name) {
@@ -1542,154 +2098,96 @@ var SnapshotDetailModal = class extends import_obsidian3.Modal {
 };
 
 // src/main.ts
-var GinkgoBackupPlugin = class extends import_obsidian6.Plugin {
-  constructor() {
-    super(...arguments);
-    this.vaultSourceId = 0;
-    this.vaultRepoPath = "";
-    this.vaultPath = "";
+init_i18n();
+
+// src/connection-manager.ts
+var import_obsidian4 = require("obsidian");
+init_i18n();
+var ConnectionManager = class {
+  constructor(app, settings, client, getVaultPath, statusBarUpdater, persistSettings, onReconnected) {
     this.connected = false;
     this.consecutiveFailures = 0;
-    this.pendingModifiedFiles = /* @__PURE__ */ new Set();
-    this.lastPushedHashes = /* @__PURE__ */ new Map();
+    this.vaultSourceId = 0;
+    this.vaultRepoPath = "";
+    this.app = app;
+    this.settings = settings;
+    this.client = client;
+    this.getVaultPath = getVaultPath;
+    this.statusBarUpdater = statusBarUpdater;
+    this.persistSettings = persistSettings;
+    this.onReconnected = onReconnected;
   }
-  async onload() {
-    await this.loadSettings();
-    this.client = new GinkgoBackupClient(
-      this.settings.apiHost,
-      this.settings.apiPort,
-      this.settings.apiToken
-    );
-    this.registerView(TIMELINE_VIEW_TYPE, (leaf) => new FileHistoryView(leaf, this));
-    this.statusBarItem = this.addStatusBarItem();
-    this.statusBarItem.addClass("ginkgo-status-bar");
-    this.statusBarItem.addEventListener("click", (e) => this.showStatusBarMenu(e));
-    this.updateStatusBar("connecting");
-    this.applyStatusBarVisibility();
-    this.addSettingTab(new GinkgoBackupSettingTab(this.app, this));
-    this.addRibbonIcon("hard-drive", "Ginkgo Backup", () => this.openTimeline());
-    this.addCommands();
-    this.addFileContextMenu();
-    this.addEditorContextMenu();
-    this.startStatusRefresh();
-    await this.loadHashCache();
-    this.setupAutoBackup();
-    this.debouncedSavePending = (0, import_obsidian6.debounce)(() => this.savePendingCache(), 5e3);
-    await this.loadPendingCache();
-    if (this.pendingModifiedFiles.size > 0) {
-      new import_obsidian6.Notice(`Ginkgo: \u6062\u590D ${this.pendingModifiedFiles.size} \u4E2A\u5F85\u63A8\u9001\u6587\u4EF6`, 5e3);
-    }
-    this.initializeConnection();
+  updateSettings(settings) {
+    this.settings = settings;
   }
-  onunload() {
-    if (this.refreshTimer)
-      window.clearInterval(this.refreshTimer);
-    if (this.progressTimer)
-      window.clearInterval(this.progressTimer);
-    this.app.workspace.detachLeavesOfType(TIMELINE_VIEW_TYPE);
-    this.saveHashCache();
-    if (this.pendingModifiedFiles.size > 0 && this.connected && this.vaultSourceId > 0) {
-      this.stagingPushPendingFiles();
-    } else if (this.pendingModifiedFiles.size > 0) {
-      this.savePendingCache();
-    }
-  }
-  async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-  }
-  async saveSettings() {
-    await this.saveData(this.settings);
-    this.client.updateConfig(
-      this.settings.apiHost,
-      this.settings.apiPort,
-      this.settings.apiToken
-    );
-    this.setupAutoBackup();
-    this.applyStatusBarVisibility();
-  }
-  applyStatusBarVisibility() {
-    this.statusBarItem.style.display = this.settings.showStatusBar ? "" : "none";
-  }
-  addCommands() {
-    this.addCommand({
-      id: "ginkgo-backup-now",
-      name: "\u7ACB\u5373\u5907\u4EFD",
-      callback: () => this.backupVault()
-    });
-    this.addCommand({
-      id: "ginkgo-staging-push",
-      name: "\u63A8\u9001\u5F53\u524D\u6587\u4EF6\u53D8\u66F4 (Staging Push)",
-      editorCallback: (_editor, view) => {
-        if (view.file)
-          this.stagingPushFile(view.file);
-      }
-    });
-    this.addCommand({
-      id: "ginkgo-check-status",
-      name: "\u68C0\u67E5\u5907\u4EFD\u72B6\u6001",
-      callback: () => this.checkStatus()
-    });
-    this.addCommand({
-      id: "ginkgo-setup-source",
-      name: "\u914D\u7F6E\u5907\u4EFD\u6E90",
-      callback: () => this.setupSource()
-    });
-    this.addCommand({
-      id: "ginkgo-timeline",
-      name: "\u6253\u5F00\u5907\u4EFD\u65F6\u95F4\u7EBF",
-      callback: () => this.openTimeline()
-    });
-    this.addCommand({
-      id: "ginkgo-file-history",
-      name: "\u67E5\u770B\u5F53\u524D\u6587\u4EF6\u5386\u53F2\u7248\u672C",
-      editorCallback: (_editor, view) => {
-        if (view.file)
-          this.showFileHistory(view.file);
-      }
-    });
-    this.addCommand({
-      id: "ginkgo-open-app",
-      name: "\u6253\u5F00 Ginkgo Backup \u5E94\u7528",
-      callback: () => this.openGinkgoApp()
-    });
-    this.addCommand({
-      id: "ginkgo-cancel-backup",
-      name: "\u53D6\u6D88\u5F53\u524D\u5907\u4EFD",
-      callback: () => this.cancelBackup()
-    });
-  }
-  addFileContextMenu() {
-    this.registerEvent(
-      this.app.workspace.on("file-menu", (menu, file) => {
-        if (file instanceof import_obsidian6.TFolder)
-          return;
-        menu.addItem((item) => {
-          item.setTitle("\u5386\u53F2\u7248\u672C").setIcon("history").onClick(() => this.showFileHistory(file));
-        });
-      })
-    );
-  }
-  addEditorContextMenu() {
-    this.registerEvent(
-      this.app.workspace.on("editor-menu", (menu, _editor, view) => {
-        if (view.file) {
-          menu.addItem((item) => {
-            item.setTitle("\u5386\u53F2\u7248\u672C").setIcon("history").onClick(() => this.showFileHistory(view.file));
-          });
-        }
-      })
-    );
-  }
-  async initializeConnection() {
+  async initialize() {
     const connected = await this.client.isConnected();
     if (connected) {
       this.connected = true;
       this.consecutiveFailures = 0;
       await this.detectSourceId();
-      this.updateStatusBar("connected");
+      this.statusBarUpdater("connected");
     } else {
       this.connected = false;
-      this.updateStatusBar("disconnected");
+      this.statusBarUpdater("disconnected");
+    }
+  }
+  startStatusRefresh() {
+    if (this.refreshTimer)
+      window.clearTimeout(this.refreshTimer);
+    this.scheduleNextRefresh(this.connected ? this.settings.refreshInterval * 1e3 : 1e4);
+  }
+  stopStatusRefresh() {
+    if (this.refreshTimer)
+      window.clearTimeout(this.refreshTimer);
+    this.refreshTimer = void 0;
+  }
+  scheduleNextRefresh(delay) {
+    this.refreshTimer = window.setTimeout(() => this.refreshStatus(), delay);
+  }
+  async refreshStatus() {
+    var _a;
+    try {
+      const connected = await this.client.isConnected();
+      if (!connected) {
+        this.connected = false;
+        this.consecutiveFailures++;
+        this.statusBarUpdater("disconnected");
+        if (this.consecutiveFailures === 1 && this.settings.stagingPushOnSave) {
+          new import_obsidian4.Notice(t("notice.autoBackupPaused"), 5e3);
+        }
+        return;
+      }
+      const wasDisconnected = !this.connected;
+      this.connected = true;
+      this.consecutiveFailures = 0;
+      if (wasDisconnected && this.onReconnected) {
+        this.onReconnected();
+      }
+      const progressArr = await this.client.getProgress();
+      const progress = Array.isArray(progressArr) ? progressArr[0] : progressArr;
+      if (progress && progress.phase && progress.phase !== "complete" && progress.phase !== "error" && progress.phase !== "cancelled") {
+        const pct = progress.total_files > 0 ? Math.round(progress.processed_files / progress.total_files * 100) : 0;
+        this.statusBarUpdater("backing_up", `${pct}%`);
+        return;
+      }
+      if (this.vaultSourceId > 0) {
+        const sources = await this.client.getSources();
+        const vaultSource = sources.find((s) => s.id === this.vaultSourceId);
+        if (vaultSource) {
+          const fileCount = (_a = vaultSource.file_count) != null ? _a : 0;
+          const lastBackup = vaultSource.last_backup > 0 ? this.formatRelativeTime(new Date(vaultSource.last_backup / 1e6)) : t("status.never");
+          this.statusBarUpdater("connected", t("status.fileCount", { count: fileCount, time: lastBackup }));
+          return;
+        }
+      }
+      this.statusBarUpdater("connected");
+    } catch (err) {
+      this.logError("refresh status failed", err);
+      this.connected = false;
+      this.statusBarUpdater("disconnected");
+    } finally {
+      this.scheduleNextRefresh(this.connected ? this.settings.refreshInterval * 1e3 : 1e4);
     }
   }
   async detectSourceId() {
@@ -1700,7 +2198,8 @@ var GinkgoBackupPlugin = class extends import_obsidian6.Plugin {
         if (source && source.repo_paths.length > 0) {
           this.vaultRepoPath = source.repo_paths[0];
         }
-      } catch (e) {
+      } catch (err) {
+        this.logError("detect source by id failed", err);
       }
       return;
     }
@@ -1713,25 +2212,186 @@ var GinkgoBackupPlugin = class extends import_obsidian6.Plugin {
         this.vaultSourceId = source.id;
         this.vaultRepoPath = source.repo_paths.length > 0 ? source.repo_paths[0] : "";
         this.settings.sourceId = source.id;
-        await this.saveSettings();
+        await this.persistSettings();
       }
-    } catch (e) {
+    } catch (err) {
+      this.logError("find source by path failed", err);
     }
   }
-  getVaultPath() {
-    if (this.vaultPath)
-      return this.vaultPath;
-    if (this.settings.vaultIdentifier) {
-      this.vaultPath = this.settings.vaultIdentifier;
-      return this.vaultPath;
+  async setupSource(repoPaths) {
+    const vaultPath = this.getVaultPath();
+    if (!vaultPath) {
+      new import_obsidian4.Notice(t("notice.noVaultPath"));
+      return null;
     }
-    const adapter = this.app.vault.adapter;
-    if (adapter instanceof import_obsidian6.FileSystemAdapter) {
-      this.vaultPath = adapter.getBasePath();
-    } else {
-      this.vaultPath = this.app.vault.getName();
+    if (!repoPaths || repoPaths.length === 0) {
+      new import_obsidian4.Notice(t("notice.selectRepoFirst"));
+      return null;
     }
-    return this.vaultPath;
+    const vaultName = this.app.vault.getName();
+    new import_obsidian4.Notice(t("notice.configuringSource"));
+    try {
+      const source = await this.client.ensureSourceExists(
+        vaultPath,
+        vaultName,
+        repoPaths,
+        this.settings.excludePaths
+      );
+      if (source) {
+        this.vaultSourceId = source.id;
+        this.vaultRepoPath = source.repo_paths.length > 0 ? source.repo_paths[0] : "";
+        this.settings.sourceId = source.id;
+        const repoList = (source.repo_paths || []).join(", ");
+        new import_obsidian4.Notice(t("notice.sourceConfigured", { name: vaultName, repos: repoList }), 6e3);
+        this.statusBarUpdater("connected");
+      } else {
+        new import_obsidian4.Notice(t("notice.createSourceFailed"));
+      }
+      return source;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      new import_obsidian4.Notice(t("error.configureSourceFailed") + " \u2014 " + msg);
+      return null;
+    }
+  }
+  startProgressPolling() {
+    if (this.progressTimer)
+      window.clearTimeout(this.progressTimer);
+    this.progressTimer = void 0;
+    this.pollProgress();
+  }
+  pollProgress() {
+    this.progressTimer = window.setTimeout(async () => {
+      try {
+        const progress = await this.client.getProgress(this.vaultSourceId);
+        if (!progress || progress.phase === "complete" || progress.phase === "error" || progress.phase === "cancelled") {
+          this.progressTimer = void 0;
+          if ((progress == null ? void 0 : progress.phase) === "complete") {
+            new import_obsidian4.Notice(t("notice.backupComplete"));
+            this.statusBarUpdater("connected");
+          } else if ((progress == null ? void 0 : progress.phase) === "error") {
+            new import_obsidian4.Notice(t("notice.backupError"));
+            this.statusBarUpdater("error");
+          } else {
+            this.statusBarUpdater("connected");
+          }
+          return;
+        }
+        const pct = progress.total_files > 0 ? Math.round(progress.processed_files / progress.total_files * 100) : 0;
+        this.statusBarUpdater("backing_up", `${pct}%`);
+        this.pollProgress();
+      } catch (err) {
+        this.logError("progress polling failed", err);
+        this.pollProgress();
+      }
+    }, 3e3);
+  }
+  stopProgressPolling() {
+    if (this.progressTimer)
+      window.clearTimeout(this.progressTimer);
+    this.progressTimer = void 0;
+  }
+  formatRelativeTime(date) {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 6e4);
+    if (diffMins < 1)
+      return t("time.justNow");
+    if (diffMins < 60)
+      return t("time.minutesAgo", { count: diffMins });
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24)
+      return t("time.hoursAgo", { count: diffHours });
+    const diffDays = Math.floor(diffHours / 24);
+    return t("time.daysAgo", { count: diffDays });
+  }
+  logError(context, err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[Ginkgo Backup] ${context}: ${msg}`, err);
+  }
+};
+
+// src/staging-manager.ts
+var import_obsidian5 = require("obsidian");
+init_encoding();
+init_i18n();
+var PENDING_CACHE_PATH = ".obsidian/plugins/ginkgo-backup/pending.json";
+var HASH_CACHE_PATH = ".obsidian/plugins/ginkgo-backup/hash-cache.json";
+var StagingManager = class {
+  constructor(app, client, settings, getVaultSourceId, getVaultRepoPath, onBackupVault, registerEvent) {
+    this.pendingModifiedFiles = /* @__PURE__ */ new Set();
+    this.lastPushedHashes = /* @__PURE__ */ new Map();
+    this.app = app;
+    this.client = client;
+    this.settings = settings;
+    this.getVaultSourceId = getVaultSourceId;
+    this.getVaultRepoPath = getVaultRepoPath;
+    this.onBackupVault = onBackupVault;
+    this.registerEvent = registerEvent;
+  }
+  async initialize() {
+    this.debouncedSavePending = (0, import_obsidian5.debounce)(() => this.savePendingCache(), 5e3);
+    await this.loadHashCache();
+    await this.loadPendingCache();
+  }
+  updateSettings(settings) {
+    this.settings = settings;
+    this.setupAutoBackup();
+  }
+  teardown() {
+    if (this.modifyEventRef) {
+      this.app.vault.offref(this.modifyEventRef);
+      this.modifyEventRef = void 0;
+    }
+  }
+  async persist() {
+    await this.saveHashCache();
+    if (this.pendingModifiedFiles.size > 0) {
+      await this.savePendingCache();
+    }
+  }
+  setupAutoBackup() {
+    if (this.modifyEventRef) {
+      this.app.vault.offref(this.modifyEventRef);
+      this.modifyEventRef = void 0;
+    }
+    this.debouncedAutoBackup = (0, import_obsidian5.debounce)(
+      async () => {
+        const sourceId = this.getVaultSourceId();
+        if (sourceId === 0)
+          return;
+        if (this.settings.stagingPushOnSave) {
+          await this.stagingPushPendingFiles();
+        } else if (this.settings.autoBackupOnSave) {
+          this.onBackupVault();
+        }
+      },
+      this.settings.autoBackupDebounceMs
+    );
+    if (this.settings.stagingPushOnSave || this.settings.autoBackupOnSave) {
+      this.modifyEventRef = this.app.vault.on("modify", async (file) => {
+        if (!(file instanceof import_obsidian5.TFile))
+          return;
+        if (this.isExcluded(file.path))
+          return;
+        if (!this.isWatchedExtension(file))
+          return;
+        if (await this.isLargeFile(file)) {
+          new import_obsidian5.Notice(t("notice.largeFileSkipped", { name: file.name, size: this.formatBytes(this.settings.largeFileThresholdBytes) }), 5e3);
+          return;
+        }
+        if (!await this.hasContentChanged(file))
+          return;
+        this.pendingModifiedFiles.add(file.path);
+        if (this.debouncedSavePending) {
+          this.debouncedSavePending();
+        }
+        if (this.debouncedAutoBackup) {
+          this.debouncedAutoBackup();
+        }
+      });
+      this.registerEvent(this.modifyEventRef);
+    }
   }
   isExcluded(filePath) {
     for (const pattern of this.settings.excludePaths) {
@@ -1743,6 +2403,16 @@ var GinkgoBackupPlugin = class extends import_obsidian6.Plugin {
   }
   isWatchedExtension(file) {
     return this.settings.watchExtensions.includes(file.extension);
+  }
+  async isLargeFile(file) {
+    var _a;
+    try {
+      const stat = await this.app.vault.adapter.stat(file.path);
+      return ((_a = stat == null ? void 0 : stat.size) != null ? _a : 0) > this.settings.largeFileThresholdBytes;
+    } catch (err) {
+      this.logError("stat file failed", err);
+      return false;
+    }
   }
   async contentHash(str) {
     const data = new TextEncoder().encode(str);
@@ -1763,104 +2433,9 @@ var GinkgoBackupPlugin = class extends import_obsidian6.Plugin {
         return false;
       this.lastPushedHashes.set(file.path, hash);
       return true;
-    } catch (e) {
+    } catch (err) {
+      this.logError("hasContentChanged failed", err);
       return true;
-    }
-  }
-  async savePendingCache() {
-    try {
-      const data = Array.from(this.pendingModifiedFiles);
-      await this.saveData({ ...this.settings, _pendingFiles: data });
-    } catch (e) {
-    }
-  }
-  async loadPendingCache() {
-    var _a;
-    try {
-      const data = await this.loadData();
-      const paths = (_a = data == null ? void 0 : data._pendingFiles) != null ? _a : [];
-      if (Array.isArray(paths)) {
-        for (const p of paths) {
-          if (!this.isExcluded(p)) {
-            this.pendingModifiedFiles.add(p);
-          }
-        }
-      }
-    } catch (e) {
-    }
-  }
-  async clearPendingCache() {
-    try {
-      const data = await this.loadData();
-      if (data == null ? void 0 : data._pendingFiles) {
-        delete data._pendingFiles;
-        await this.saveData(data);
-      }
-    } catch (e) {
-    }
-  }
-  async saveHashCache() {
-    try {
-      const data = {};
-      for (const [path, hash] of this.lastPushedHashes) {
-        const file = this.app.vault.getAbstractFileByPath(path);
-        if (file instanceof import_obsidian6.TFile) {
-          data[path] = hash;
-        }
-      }
-      this.lastPushedHashes = new Map(Object.entries(data));
-      const stored = await this.loadData();
-      await this.saveData({ ...stored, _hashCache: data });
-    } catch (e) {
-    }
-  }
-  async loadHashCache() {
-    var _a;
-    try {
-      const data = await this.loadData();
-      const cache = (_a = data == null ? void 0 : data._hashCache) != null ? _a : {};
-      for (const [path, hash] of Object.entries(cache)) {
-        this.lastPushedHashes.set(path, hash);
-      }
-    } catch (e) {
-    }
-  }
-  setupAutoBackup() {
-    if (this.modifyEventRef) {
-      this.app.vault.offref(this.modifyEventRef);
-      this.modifyEventRef = void 0;
-    }
-    this.debouncedAutoBackup = (0, import_obsidian6.debounce)(
-      async () => {
-        if (!this.connected || this.vaultSourceId === 0)
-          return;
-        if (this.settings.stagingPushOnSave) {
-          await this.stagingPushPendingFiles();
-        } else if (this.settings.autoBackupOnSave) {
-          await this.backupVault();
-        }
-      },
-      this.settings.autoBackupDebounceMs
-    );
-    if (this.settings.stagingPushOnSave || this.settings.autoBackupOnSave) {
-      this.modifyEventRef = this.app.vault.on("modify", async (file) => {
-        if (!(file instanceof import_obsidian6.TFile))
-          return;
-        if (this.isExcluded(file.path))
-          return;
-        if (!this.isWatchedExtension(file))
-          return;
-        if (!await this.hasContentChanged(file))
-          return;
-        this.pendingModifiedFiles.add(file.path);
-        if (this.debouncedSavePending) {
-          this.debouncedSavePending();
-        }
-        if (this.debouncedAutoBackup) {
-          this.debouncedAutoBackup();
-        }
-      });
-      this.registerEvent(this.modifyEventRef);
     }
   }
   isBinaryFile(file) {
@@ -1870,19 +2445,15 @@ var GinkgoBackupPlugin = class extends import_obsidian6.Plugin {
   async encodeFileContent(file) {
     if (this.isBinaryFile(file)) {
       const data = await this.app.vault.readBinary(file);
-      const bytes = new Uint8Array(data);
-      let binary = "";
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      return btoa(binary);
+      return encodeBinary(data);
     }
     const content = await this.app.vault.read(file);
-    return btoa(unescape(encodeURIComponent(content)));
+    return encodeText(content);
   }
   async stagingPushPendingFiles() {
     var _a, _b;
-    if (this.vaultSourceId === 0)
+    const sourceId = this.getVaultSourceId();
+    if (sourceId === 0)
       return;
     const filePaths = Array.from(this.pendingModifiedFiles);
     this.pendingModifiedFiles.clear();
@@ -1894,8 +2465,12 @@ var GinkgoBackupPlugin = class extends import_obsidian6.Plugin {
     for (const filePath of filePaths) {
       try {
         const file = this.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof import_obsidian6.TFile))
+        if (!(file instanceof import_obsidian5.TFile))
           continue;
+        if (await this.isLargeFile(file)) {
+          new import_obsidian5.Notice(t("notice.largeFileSkipped", { name: file.name, size: this.formatBytes(this.settings.largeFileThresholdBytes) }), 5e3);
+          continue;
+        }
         const encoded = await this.encodeFileContent(file);
         const stat = await this.app.vault.adapter.stat(file.path);
         files.push({
@@ -1903,9 +2478,10 @@ var GinkgoBackupPlugin = class extends import_obsidian6.Plugin {
           action: "modify",
           content: encoded,
           size: (_a = stat == null ? void 0 : stat.size) != null ? _a : 0,
-          mtime: (_b = stat == null ? void 0 : stat.mtime) != null ? _b : Date.now() * 1e3
+          mtime: ((_b = stat == null ? void 0 : stat.mtime) != null ? _b : Date.now()) * 1e3
         });
-      } catch (e) {
+      } catch (err) {
+        this.logError("encode pending file failed", err);
         failedPaths.push(filePath);
       }
     }
@@ -1918,21 +2494,21 @@ var GinkgoBackupPlugin = class extends import_obsidian6.Plugin {
     }
     try {
       const result = await this.client.stagingPush({
-        source_id: this.vaultSourceId,
+        source_id: sourceId,
         message: `Obsidian: ${files.length} file${files.length > 1 ? "s" : ""}`,
         files,
         trigger: "api"
       });
       const names = files.map((f) => f.rel_path.split("/").pop()).join(", ");
-      new import_obsidian6.Notice(`Ginkgo: \u5DF2\u63A8\u9001 ${files.length} \u4E2A\u6587\u4EF6 (${names})`, 4e3);
-      this.saveHashCache();
+      new import_obsidian5.Notice(t("notice.pushSuccess", { count: files.length, names }), 4e3);
+      await this.saveHashCache();
       if (failedPaths.length > 0) {
         for (const p of failedPaths)
           this.pendingModifiedFiles.add(p);
         await this.savePendingCache();
       }
     } catch (err) {
-      this.handleError(err, "\u63A8\u9001\u5931\u8D25");
+      this.handleError(err, t("error.pushFailed"));
       for (const p of filePaths)
         this.pendingModifiedFiles.add(p);
       await this.savePendingCache();
@@ -1940,13 +2516,18 @@ var GinkgoBackupPlugin = class extends import_obsidian6.Plugin {
   }
   async stagingPushFile(file) {
     var _a, _b;
-    if (this.vaultSourceId === 0) {
-      new import_obsidian6.Notice("Ginkgo: \u8BF7\u5148\u914D\u7F6E\u5907\u4EFD\u6E90");
+    const sourceId = this.getVaultSourceId();
+    if (sourceId === 0) {
+      new import_obsidian5.Notice(t("notice.sourceNotConfigured"));
+      return;
+    }
+    if (await this.isLargeFile(file)) {
+      new import_obsidian5.Notice(t("notice.largeFileSkipped", { name: file.name, size: this.formatBytes(this.settings.largeFileThresholdBytes) }), 5e3);
       return;
     }
     try {
       if (!await this.hasContentChanged(file)) {
-        new import_obsidian6.Notice("Ginkgo: \u6587\u4EF6\u5185\u5BB9\u672A\u53D8\u5316\uFF0C\u8DF3\u8FC7\u63A8\u9001");
+        new import_obsidian5.Notice(t("notice.pushSkipped"));
         return;
       }
       const encoded = await this.encodeFileContent(file);
@@ -1957,122 +2538,325 @@ var GinkgoBackupPlugin = class extends import_obsidian6.Plugin {
         action: "modify",
         content: encoded,
         size: (_a = stat == null ? void 0 : stat.size) != null ? _a : 0,
-        mtime: (_b = stat == null ? void 0 : stat.mtime) != null ? _b : Date.now() * 1e3
+        mtime: ((_b = stat == null ? void 0 : stat.mtime) != null ? _b : Date.now()) * 1e3
       };
       const result = await this.client.stagingPush({
-        source_id: this.vaultSourceId,
+        source_id: sourceId,
         message: `Obsidian: ${file.name}`,
         files: [filePush],
         trigger: "api"
       });
-      new import_obsidian6.Notice(`Ginkgo: \u5DF2\u63A8\u9001 ${file.name} (session: ${result.session_id.slice(0, 8)})`);
+      new import_obsidian5.Notice(t("notice.pushFileSuccess", { name: file.name, session: result.session_id.slice(0, 8) }));
       if (!this.isBinaryFile(file)) {
         const content = await this.app.vault.read(file);
         this.lastPushedHashes.set(file.path, await this.contentHash(content));
       }
-      this.saveHashCache();
+      await this.saveHashCache();
     } catch (err) {
-      this.handleError(err, "\u63A8\u9001\u5931\u8D25");
+      this.handleError(err, t("error.pushFailed"));
     }
   }
+  async savePendingCache() {
+    try {
+      const data = Array.from(this.pendingModifiedFiles);
+      await this.app.vault.adapter.write(PENDING_CACHE_PATH, JSON.stringify(data));
+    } catch (err) {
+      this.logError("save pending cache failed", err);
+    }
+  }
+  async loadPendingCache() {
+    try {
+      const data = await this.app.vault.adapter.read(PENDING_CACHE_PATH);
+      const paths = JSON.parse(data);
+      if (Array.isArray(paths)) {
+        for (const p of paths) {
+          if (!this.isExcluded(p)) {
+            this.pendingModifiedFiles.add(p);
+          }
+        }
+      }
+    } catch (err) {
+      this.logError("load pending cache failed", err);
+    }
+  }
+  async clearPendingCache() {
+    try {
+      await this.app.vault.adapter.remove(PENDING_CACHE_PATH);
+    } catch (err) {
+      this.logError("clear pending cache failed", err);
+    }
+  }
+  async saveHashCache() {
+    try {
+      const data = {};
+      for (const [path, hash] of this.lastPushedHashes) {
+        const file = this.app.vault.getAbstractFileByPath(path);
+        if (file instanceof import_obsidian5.TFile) {
+          data[path] = hash;
+        }
+      }
+      this.lastPushedHashes = new Map(Object.entries(data));
+      await this.app.vault.adapter.write(HASH_CACHE_PATH, JSON.stringify(data));
+    } catch (err) {
+      this.logError("save hash cache failed", err);
+    }
+  }
+  async loadHashCache() {
+    try {
+      const data = await this.app.vault.adapter.read(HASH_CACHE_PATH);
+      const cache = JSON.parse(data);
+      for (const [path, hash] of Object.entries(cache)) {
+        this.lastPushedHashes.set(path, hash);
+      }
+    } catch (err) {
+      this.logError("load hash cache failed", err);
+    }
+  }
+  handleError(err, prefix) {
+    if (err instanceof GinkgoApiError) {
+      new import_obsidian5.Notice(`Ginkgo: ${prefix} \u2014 ${err.userMessage}`, 8e3);
+    } else {
+      const msg = err instanceof Error ? err.message : String(err);
+      new import_obsidian5.Notice(`Ginkgo: ${prefix} \u2014 ${msg}`, 8e3);
+    }
+  }
+  formatBytes(bytes) {
+    if (bytes < 1024)
+      return `${bytes} B`;
+    if (bytes < 1048576)
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1073741824)
+      return `${(bytes / 1048576).toFixed(1)} MB`;
+    return `${(bytes / 1073741824).toFixed(1)} GB`;
+  }
+  logError(context, err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[Ginkgo Backup] ${context}: ${msg}`, err);
+  }
+};
+
+// src/main.ts
+var GinkgoBackupPlugin = class extends import_obsidian8.Plugin {
+  constructor() {
+    super(...arguments);
+    this.vaultPath = "";
+  }
+  async onload() {
+    await this.loadSettings();
+    setActiveLocale(this.settings.language);
+    this.client = new GinkgoBackupClient(
+      this.settings.apiHost,
+      this.settings.apiPort,
+      this.settings.apiToken
+    );
+    this.registerView(TIMELINE_VIEW_TYPE, (leaf) => new FileHistoryView(leaf, this));
+    this.statusBarItem = this.addStatusBarItem();
+    this.statusBarItem.addClass("ginkgo-status-bar");
+    this.statusBarItem.addEventListener("click", (e) => this.showStatusBarMenu(e));
+    this.updateStatusBar("connecting");
+    this.applyStatusBarVisibility();
+    this.addSettingTab(new GinkgoBackupSettingTab(this.app, this));
+    this.addRibbonIcon("hard-drive", "Ginkgo Backup", () => this.openTimeline());
+    this.addCommands();
+    this.addFileContextMenu();
+    this.addEditorContextMenu();
+    this.connectionManager = new ConnectionManager(
+      this.app,
+      this.settings,
+      this.client,
+      () => this.getVaultPath(),
+      (state, detail) => this.updateStatusBar(state, detail),
+      () => this.saveSettings(),
+      () => this.onReconnected()
+    );
+    this.stagingManager = new StagingManager(
+      this.app,
+      this.client,
+      this.settings,
+      () => this.connectionManager.vaultSourceId,
+      () => this.connectionManager.vaultRepoPath,
+      () => this.backupVault(),
+      (ref) => this.registerEvent(ref)
+    );
+    await this.connectionManager.initialize();
+    await this.stagingManager.initialize();
+    this.connectionManager.startStatusRefresh();
+  }
+  onunload() {
+    this.connectionManager.stopStatusRefresh();
+    this.connectionManager.stopProgressPolling();
+    this.stagingManager.teardown();
+    const finalize = async () => {
+      if (this.connectionManager.connected && this.connectionManager.vaultSourceId > 0 && this.stagingManager.pendingModifiedFiles.size > 0) {
+        await this.stagingManager.stagingPushPendingFiles();
+      }
+      await this.stagingManager.persist();
+    };
+    finalize();
+    this.app.workspace.detachLeavesOfType(TIMELINE_VIEW_TYPE);
+  }
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+  async saveSettings() {
+    await this.saveData(this.settings);
+    this.client.updateConfig(
+      this.settings.apiHost,
+      this.settings.apiPort,
+      this.settings.apiToken
+    );
+    this.connectionManager.updateSettings(this.settings);
+    this.stagingManager.updateSettings(this.settings);
+    this.applyStatusBarVisibility();
+  }
+  get vaultSourceId() {
+    return this.connectionManager.vaultSourceId;
+  }
+  set vaultSourceId(value) {
+    this.connectionManager.vaultSourceId = value;
+  }
+  get vaultRepoPath() {
+    return this.connectionManager.vaultRepoPath;
+  }
+  get connected() {
+    return this.connectionManager.connected;
+  }
+  applyStatusBarVisibility() {
+    this.statusBarItem.style.display = this.settings.showStatusBar ? "" : "none";
+  }
+  addCommands() {
+    this.addCommand({
+      id: "ginkgo-backup-now",
+      name: t("command.backupNow"),
+      callback: () => this.backupVault()
+    });
+    this.addCommand({
+      id: "ginkgo-staging-push",
+      name: t("command.pushCurrentFile"),
+      editorCallback: (_editor, view) => {
+        if (view.file)
+          this.stagingManager.stagingPushFile(view.file);
+      }
+    });
+    this.addCommand({
+      id: "ginkgo-check-status",
+      name: t("command.checkStatus"),
+      callback: () => this.checkStatus()
+    });
+    this.addCommand({
+      id: "ginkgo-setup-source",
+      name: t("command.setupSource"),
+      callback: () => this.setupSource()
+    });
+    this.addCommand({
+      id: "ginkgo-timeline",
+      name: t("command.openTimeline"),
+      callback: () => this.openTimeline()
+    });
+    this.addCommand({
+      id: "ginkgo-file-history",
+      name: t("command.fileHistory"),
+      editorCallback: (_editor, view) => {
+        if (view.file)
+          this.showFileHistory(view.file);
+      }
+    });
+    this.addCommand({
+      id: "ginkgo-open-app",
+      name: t("command.openApp"),
+      callback: () => this.openGinkgoApp()
+    });
+    this.addCommand({
+      id: "ginkgo-cancel-backup",
+      name: t("command.cancelBackup"),
+      callback: () => this.cancelBackup()
+    });
+  }
+  addFileContextMenu() {
+    this.registerEvent(
+      this.app.workspace.on("file-menu", (menu, file) => {
+        if (file instanceof import_obsidian8.TFolder)
+          return;
+        menu.addItem((item) => {
+          item.setTitle(t("menu.fileHistory")).setIcon("history").onClick(() => this.showFileHistory(file));
+        });
+      })
+    );
+  }
+  addEditorContextMenu() {
+    this.registerEvent(
+      this.app.workspace.on("editor-menu", (menu, _editor, view) => {
+        if (view.file) {
+          menu.addItem((item) => {
+            item.setTitle(t("menu.fileHistory")).setIcon("history").onClick(() => this.showFileHistory(view.file));
+          });
+        }
+      })
+    );
+  }
+  getVaultPath() {
+    if (this.vaultPath)
+      return this.vaultPath;
+    if (this.settings.vaultIdentifier) {
+      this.vaultPath = this.settings.vaultIdentifier;
+      return this.vaultPath;
+    }
+    const adapter = this.app.vault.adapter;
+    if (adapter instanceof import_obsidian8.FileSystemAdapter) {
+      this.vaultPath = adapter.getBasePath();
+    } else {
+      this.vaultPath = this.app.vault.getName();
+    }
+    return this.vaultPath;
+  }
+  logError(context, err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[Ginkgo Backup] ${context}: ${msg}`, err);
+  }
   async backupVault() {
-    if (this.vaultSourceId === 0) {
+    if (this.connectionManager.vaultSourceId === 0) {
       await this.setupSource();
-      if (this.vaultSourceId === 0)
+      if (this.connectionManager.vaultSourceId === 0)
         return;
     }
     this.updateStatusBar("backing_up");
-    new import_obsidian6.Notice("Ginkgo: \u5907\u4EFD\u5DF2\u5F00\u59CB");
+    new import_obsidian8.Notice(t("notice.backupStarted"));
     try {
-      await this.client.triggerBackup(this.vaultSourceId);
-      this.startProgressPolling();
+      await this.client.triggerBackup(this.connectionManager.vaultSourceId);
+      this.connectionManager.startProgressPolling();
     } catch (err) {
-      this.handleError(err, "\u5907\u4EFD\u5931\u8D25");
+      this.handleError(err, t("error.backupFailed"));
       this.updateStatusBar("error");
     }
   }
   async cancelBackup() {
     try {
-      await this.client.cancelBackup(this.vaultSourceId);
-      new import_obsidian6.Notice("Ginkgo: \u5907\u4EFD\u5DF2\u53D6\u6D88");
+      await this.client.cancelBackup(this.connectionManager.vaultSourceId);
+      new import_obsidian8.Notice(t("notice.backupCancelled"));
       this.updateStatusBar("connected");
     } catch (err) {
-      this.handleError(err, "\u53D6\u6D88\u5907\u4EFD\u5931\u8D25");
+      this.handleError(err, t("error.cancelBackupFailed"));
     }
-  }
-  startProgressPolling() {
-    if (this.progressTimer)
-      window.clearInterval(this.progressTimer);
-    this.progressTimer = window.setInterval(async () => {
-      try {
-        const progress = await this.client.getProgress(this.vaultSourceId);
-        if (!progress || progress.phase === "complete" || progress.phase === "error" || progress.phase === "cancelled") {
-          window.clearInterval(this.progressTimer);
-          this.progressTimer = void 0;
-          if ((progress == null ? void 0 : progress.phase) === "complete") {
-            new import_obsidian6.Notice("Ginkgo: \u5907\u4EFD\u5B8C\u6210");
-            this.updateStatusBar("connected");
-          } else if ((progress == null ? void 0 : progress.phase) === "error") {
-            new import_obsidian6.Notice("Ginkgo: \u5907\u4EFD\u51FA\u9519");
-            this.updateStatusBar("error");
-          } else {
-            this.updateStatusBar("connected");
-          }
-          return;
-        }
-        const pct = progress.total_files > 0 ? Math.round(progress.processed_files / progress.total_files * 100) : 0;
-        this.updateStatusBar("backing_up", `${pct}%`);
-      } catch (e) {
-      }
-    }, 3e3);
   }
   async setupSource(repoPaths) {
-    const vaultPath = this.getVaultPath();
-    if (!vaultPath) {
-      new import_obsidian6.Notice("Ginkgo: \u65E0\u6CD5\u786E\u5B9A Vault \u8DEF\u5F84");
-      return;
-    }
-    if (!repoPaths || repoPaths.length === 0) {
-      new import_obsidian6.Notice("Ginkgo: \u8BF7\u5148\u9009\u62E9\u5907\u4EFD\u4ED3\u5E93");
-      return;
-    }
-    const vaultName = this.app.vault.getName();
-    new import_obsidian6.Notice("Ginkgo: \u6B63\u5728\u914D\u7F6E\u5907\u4EFD\u6E90...");
-    try {
-      const source = await this.client.ensureSourceExists(
-        vaultPath,
-        vaultName,
-        repoPaths,
-        this.settings.excludePaths
-      );
-      if (source) {
-        this.vaultSourceId = source.id;
-        this.vaultRepoPath = source.repo_paths.length > 0 ? source.repo_paths[0] : "";
-        this.settings.sourceId = source.id;
-        await this.saveSettings();
-        const repoList = (source.repo_paths || []).join(", ");
-        new import_obsidian6.Notice(`Ginkgo: ${vaultName} \u5DF2\u914D\u7F6E\uFF08\u4ED3\u5E93: ${repoList}\uFF09`, 6e3);
-        this.updateStatusBar("connected");
-      } else {
-        new import_obsidian6.Notice("Ginkgo: \u521B\u5EFA\u5907\u4EFD\u6E90\u5931\u8D25");
-      }
-    } catch (err) {
-      this.handleError(err, "\u914D\u7F6E\u5907\u4EFD\u6E90\u5931\u8D25");
+    const source = await this.connectionManager.setupSource(repoPaths);
+    if (source) {
+      this.vaultPath = this.getVaultPath();
+      await this.saveSettings();
     }
   }
   async checkStatus() {
     try {
       const status = await this.client.getStatus();
       const lines = [
-        `\u5907\u4EFD\u6E90: ${status.source_count} \u4E2A`,
-        `\u5FEB\u7167: ${status.snapshot_count} \u4E2A`,
-        `\u5B58\u50A8: ${this.formatBytes(status.storage_used)}`,
-        `\u72B6\u6001: ${status.backup_running ? "\u5907\u4EFD\u4E2D" : "\u7A7A\u95F2"}`
+        t("status.sources", { count: status.source_count }),
+        t("status.snapshots", { count: status.snapshot_count }),
+        t("status.storage", { size: this.formatBytes(status.storage_used) }),
+        t("status.state", { state: status.backup_running ? t("status.backingUp") : t("status.idle") })
       ];
-      new import_obsidian6.Notice(`Ginkgo \u72B6\u6001
-${lines.join("\n")}`, 8e3);
+      new import_obsidian8.Notice(t("status.notice", { lines: lines.join("\n") }), 8e3);
     } catch (err) {
-      this.handleError(err, "\u83B7\u53D6\u72B6\u6001\u5931\u8D25");
+      this.handleError(err, t("error.getStatusFailed"));
     }
   }
   openTimeline() {
@@ -2088,21 +2872,21 @@ ${lines.join("\n")}`, 8e3);
     }
   }
   async showFileHistory(file) {
-    if (this.vaultSourceId === 0) {
-      new import_obsidian6.Notice("Ginkgo: \u5F53\u524D Vault \u672A\u914D\u7F6E\u5907\u4EFD\u6E90");
+    if (this.connectionManager.vaultSourceId === 0) {
+      new import_obsidian8.Notice(t("notice.sourceNotConfigured"));
       return;
     }
     const { FileHistoryModal: FileHistoryModal2 } = await Promise.resolve().then(() => (init_file_history_modal(), file_history_modal_exports));
-    const modal = new FileHistoryModal2(this.app, this.client, this.vaultSourceId, file.path, this.vaultRepoPath);
+    const modal = new FileHistoryModal2(this.app, this.client, this.connectionManager.vaultSourceId, file.path, this.connectionManager.vaultRepoPath);
     modal.open();
   }
   async showFileHistoryByPath(filePath) {
-    if (this.vaultSourceId === 0) {
-      new import_obsidian6.Notice("Ginkgo: \u5F53\u524D Vault \u672A\u914D\u7F6E\u5907\u4EFD\u6E90");
+    if (this.connectionManager.vaultSourceId === 0) {
+      new import_obsidian8.Notice(t("notice.sourceNotConfigured"));
       return;
     }
     const { FileHistoryModal: FileHistoryModal2 } = await Promise.resolve().then(() => (init_file_history_modal(), file_history_modal_exports));
-    const modal = new FileHistoryModal2(this.app, this.client, this.vaultSourceId, filePath, this.vaultRepoPath);
+    const modal = new FileHistoryModal2(this.app, this.client, this.connectionManager.vaultSourceId, filePath, this.connectionManager.vaultRepoPath);
     modal.open();
   }
   openGinkgoApp() {
@@ -2120,124 +2904,81 @@ ${lines.join("\n")}`, 8e3);
     }
     window.open(url, "_blank");
   }
-  startStatusRefresh() {
-    if (this.refreshTimer)
-      window.clearInterval(this.refreshTimer);
-    const interval = this.connected ? this.settings.refreshInterval * 1e3 : 1e4;
-    this.refreshTimer = window.setInterval(() => this.refreshStatus(), interval);
-  }
-  async refreshStatus() {
-    var _a;
-    try {
-      const connected = await this.client.isConnected();
-      if (!connected) {
-        this.connected = false;
-        this.consecutiveFailures++;
-        this.updateStatusBar("disconnected");
-        if (this.consecutiveFailures === 1 && this.settings.stagingPushOnSave) {
-          new import_obsidian6.Notice("Ginkgo: \u672A\u8FDE\u63A5\uFF0C\u81EA\u52A8\u5907\u4EFD\u5DF2\u6682\u505C", 5e3);
-        }
-        return;
-      }
-      const wasDisconnected = !this.connected;
-      this.connected = true;
-      this.consecutiveFailures = 0;
-      if (wasDisconnected && this.settings.stagingPushOnSave && this.pendingModifiedFiles.size > 0 && this.vaultSourceId > 0) {
-        this.stagingPushPendingFiles();
-      }
-      const progressArr = await this.client.getProgress();
-      const progress = Array.isArray(progressArr) ? progressArr[0] : progressArr;
-      if (progress && progress.phase && progress.phase !== "complete" && progress.phase !== "error" && progress.phase !== "cancelled") {
-        const pct = progress.total_files > 0 ? Math.round(progress.processed_files / progress.total_files * 100) : 0;
-        this.updateStatusBar("backing_up", `${pct}%`);
-        return;
-      }
-      if (this.vaultSourceId > 0) {
-        const sources = await this.client.getSources();
-        const vaultSource = sources.find((s) => s.id === this.vaultSourceId);
-        if (vaultSource) {
-          const fileCount = (_a = vaultSource.file_count) != null ? _a : 0;
-          const lastBackup = vaultSource.last_backup > 0 ? this.formatRelativeTime(new Date(vaultSource.last_backup / 1e6)) : "\u4ECE\u672A";
-          this.updateStatusBar("connected", `${fileCount} \u6587\u4EF6 | ${lastBackup}`);
-          return;
-        }
-      }
-      this.updateStatusBar("connected");
-    } catch (e) {
-      this.connected = false;
-      this.updateStatusBar("disconnected");
+  onReconnected() {
+    if (this.settings.stagingPushOnSave && this.stagingManager.pendingModifiedFiles.size > 0) {
+      this.stagingManager.stagingPushPendingFiles();
     }
   }
   updateStatusBar(state, detail) {
     this.statusBarItem.empty();
     const icon = this.statusBarItem.createSpan({ cls: "ginkgo-status-icon" });
-    (0, import_obsidian6.setIcon)(icon, "hard-drive");
+    (0, import_obsidian8.setIcon)(icon, "hard-drive");
     const textSpan = this.statusBarItem.createSpan();
     switch (state) {
       case "connected":
         icon.addClass("ginkgo-status-ok");
-        textSpan.setText(detail ? ` ${detail}` : " \u5DF2\u8FDE\u63A5");
-        this.statusBarItem.setAttribute("aria-label", "Ginkgo Backup \u5DF2\u8FDE\u63A5");
+        textSpan.setText(detail ? ` ${detail}` : ` ${t("status.connected")}`);
+        this.statusBarItem.setAttribute("aria-label", t("status.connectedAria"));
         break;
       case "disconnected":
         icon.addClass("ginkgo-status-err");
-        textSpan.setText(" \u672A\u8FDE\u63A5");
-        this.statusBarItem.setAttribute("aria-label", "Ginkgo Backup \u672A\u8FDE\u63A5");
+        textSpan.setText(` ${t("status.disconnected")}`);
+        this.statusBarItem.setAttribute("aria-label", t("status.disconnectedAria"));
         break;
       case "backing_up":
         icon.addClass("ginkgo-status-active");
-        textSpan.setText(detail ? ` \u5907\u4EFD\u4E2D ${detail}` : " \u5907\u4EFD\u4E2D...");
-        this.statusBarItem.setAttribute("aria-label", "\u6B63\u5728\u5907\u4EFD");
+        textSpan.setText(detail ? ` ${t("status.backingUp")} ${detail}` : ` ${t("status.backingUp")}...`);
+        this.statusBarItem.setAttribute("aria-label", t("status.backingUpAria"));
         break;
       case "error":
         icon.addClass("ginkgo-status-err");
-        textSpan.setText(" \u9519\u8BEF");
-        this.statusBarItem.setAttribute("aria-label", "\u5907\u4EFD\u51FA\u9519");
+        textSpan.setText(` ${t("status.error")}`);
+        this.statusBarItem.setAttribute("aria-label", t("status.errorAria"));
         break;
       default:
-        textSpan.setText(" \u8FDE\u63A5\u4E2D...");
+        textSpan.setText(` ${t("status.connecting")}...`);
         break;
     }
   }
   showStatusBarMenu(event) {
-    const menu = new import_obsidian6.Menu();
+    const menu = new import_obsidian8.Menu();
     menu.addItem((item) => {
-      item.setTitle("\u7ACB\u5373\u5907\u4EFD").setIcon("upload").onClick(() => this.backupVault());
+      item.setTitle(t("menu.backupNow")).setIcon("upload").onClick(() => this.backupVault());
     });
     menu.addItem((item) => {
-      item.setTitle("\u53D6\u6D88\u5907\u4EFD").setIcon("x").onClick(() => this.cancelBackup());
+      item.setTitle(t("menu.cancelBackup")).setIcon("x").onClick(() => this.cancelBackup());
     });
     menu.addItem((item) => {
-      item.setTitle("\u63A8\u9001\u5F53\u524D\u6587\u4EF6").setIcon("file-plus").onClick(() => {
+      item.setTitle(t("menu.pushCurrentFile")).setIcon("file-plus").onClick(() => {
         const file = this.app.workspace.getActiveFile();
         if (file)
-          this.stagingPushFile(file);
+          this.stagingManager.stagingPushFile(file);
       });
     });
     menu.addItem((item) => {
-      item.setTitle("\u67E5\u770B\u65F6\u95F4\u7EBF").setIcon("calendar").onClick(() => this.openTimeline());
+      item.setTitle(t("menu.openTimeline")).setIcon("calendar").onClick(() => this.openTimeline());
     });
     menu.addSeparator();
     menu.addItem((item) => {
-      item.setTitle("\u68C0\u67E5\u72B6\u6001").setIcon("activity").onClick(() => this.checkStatus());
+      item.setTitle(t("menu.checkStatus")).setIcon("activity").onClick(() => this.checkStatus());
     });
-    if (this.vaultSourceId === 0) {
+    if (this.connectionManager.vaultSourceId === 0) {
       menu.addItem((item) => {
-        item.setTitle("\u914D\u7F6E\u5907\u4EFD").setIcon("settings").onClick(() => this.setupSource());
+        item.setTitle(t("menu.configureBackup")).setIcon("settings").onClick(() => this.setupSource());
       });
     }
     menu.addSeparator();
     menu.addItem((item) => {
-      item.setTitle("\u6253\u5F00\u5E94\u7528").setIcon("globe").onClick(() => this.openGinkgoApp());
+      item.setTitle(t("menu.openApp")).setIcon("globe").onClick(() => this.openGinkgoApp());
     });
     menu.showAtMouseEvent(event);
   }
   handleError(err, prefix) {
     if (err instanceof GinkgoApiError) {
-      new import_obsidian6.Notice(`Ginkgo: ${prefix} \u2014 ${err.userMessage}`, 8e3);
+      new import_obsidian8.Notice(`Ginkgo: ${prefix} \u2014 ${err.userMessage}`, 8e3);
     } else {
       const msg = err instanceof Error ? err.message : String(err);
-      new import_obsidian6.Notice(`Ginkgo: ${prefix} \u2014 ${msg}`, 8e3);
+      new import_obsidian8.Notice(`Ginkgo: ${prefix} \u2014 ${msg}`, 8e3);
     }
   }
   formatBytes(bytes) {
@@ -2248,19 +2989,5 @@ ${lines.join("\n")}`, 8e3);
     if (bytes < 1073741824)
       return `${(bytes / 1048576).toFixed(1)} MB`;
     return `${(bytes / 1073741824).toFixed(1)} GB`;
-  }
-  formatRelativeTime(date) {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 6e4);
-    if (diffMins < 1)
-      return "\u521A\u521A";
-    if (diffMins < 60)
-      return `${diffMins}\u5206\u949F\u524D`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24)
-      return `${diffHours}\u5C0F\u65F6\u524D`;
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}\u5929\u524D`;
   }
 };
