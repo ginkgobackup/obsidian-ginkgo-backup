@@ -1435,7 +1435,7 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
     (0, import_obsidian2.setIcon)(iconEl, "leaf");
     const titleEl = bannerLeft.createEl("div", { cls: "ginkgo-settings-banner-text" });
     titleEl.createEl("div", { cls: "ginkgo-settings-banner-title", text: "Ginkgo Backup" });
-    titleEl.createEl("div", { cls: "ginkgo-settings-banner-version", text: "\u94F6\u674F\u65F6\u5149\u5907\u4EFD \xB7 Obsidian \u63D2\u4EF6 v0.2.0" });
+    titleEl.createEl("div", { cls: "ginkgo-settings-banner-version", text: "\u94F6\u674F\u65F6\u5149\u5907\u4EFD \xB7 Obsidian \u63D2\u4EF6 v0.3.0" });
     const statusDot = bannerEl.createEl("div", { cls: "ginkgo-settings-banner-status" });
     this.checkBannerStatus(statusDot);
     this.renderConnectionSection(containerEl);
