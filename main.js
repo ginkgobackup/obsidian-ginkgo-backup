@@ -310,28 +310,33 @@ var init_file_history_modal = __esm({
             cls: `ginkgo-fh-item ${isSelected ? "is-selected" : ""} ${isComparing ? "is-comparing" : ""}`
           });
           const trackEl = itemEl.createEl("div", { cls: "ginkgo-fh-track" });
-          const dotEl = trackEl.createEl("div", {
-            cls: `ginkgo-fh-dot ${isCurrent ? "is-current" : ""} ${isSelected ? "is-selected" : ""} ${isComparing ? "is-comparing" : ""}`
-          });
-          const contentWrap = itemEl.createEl("div", { cls: "ginkgo-fh-item-content" });
-          const mainBtn = contentWrap.createEl("button", { cls: "ginkgo-fh-item-main" });
-          mainBtn.addEventListener("click", () => this.handleSelect(i));
-          const timeEl = mainBtn.createEl("div", { cls: "ginkgo-fh-time" });
-          const revLabel = mainBtn.createEl("span", { cls: "ginkgo-fh-rev", text: `v${this.versions.length - i}` });
+          if (isComparing) {
+            const markerEl = trackEl.createEl("div", { cls: "ginkgo-fh-compare-marker" });
+            (0, import_obsidian5.setIcon)(markerEl, "git-branch");
+          } else if (isSelected) {
+            const checkEl = trackEl.createEl("div", { cls: "ginkgo-fh-check" });
+            (0, import_obsidian5.setIcon)(checkEl, "check");
+          } else {
+            trackEl.createEl("div", { cls: `ginkgo-fh-dot ${isLatest ? "is-latest" : ""} ${isCurrent ? "is-current" : ""}` });
+          }
+          const infoEl = itemEl.createEl("div", { cls: "ginkgo-fh-info" });
+          infoEl.addEventListener("click", () => this.handleSelect(i));
+          const timeEl = infoEl.createEl("div", { cls: "ginkgo-fh-time" });
           if (isCurrent) {
             timeEl.createEl("span", { cls: "ginkgo-fh-reltime", text: "\u5F53\u524D\u7248\u672C" });
+            timeEl.createEl("span", { cls: "ginkgo-fh-abstime", text: this.formatTime(version.first_seen) });
           } else {
             timeEl.createEl("span", { cls: "ginkgo-fh-reltime", text: this.relativeTime(version.last_seen) });
+            timeEl.createEl("span", { cls: "ginkgo-fh-abstime", text: this.formatTime(version.last_seen) });
           }
-          timeEl.createEl("span", { cls: "ginkgo-fh-abstime", text: this.formatTime(version.first_seen) });
-          const metaEl = mainBtn.createEl("div", { cls: "ginkgo-fh-meta" });
+          const metaEl = infoEl.createEl("div", { cls: "ginkgo-fh-meta" });
           metaEl.createEl("span", { cls: "ginkgo-fh-size", text: this.formatBytes(version.size) });
           if (isLatest && !isCurrent) {
             metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-latest", text: "\u6700\u65B0" });
           } else if (isFirst) {
             metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-first", text: "\u9996\u6B21" });
-          } else if (i > 0) {
-            const prevSize = this.versions[i - 1].size;
+          } else if (i < this.versions.length - 1) {
+            const prevSize = this.versions[i + 1].size;
             const delta = version.size - prevSize;
             if (delta !== 0) {
               const isUp = delta > 0;
@@ -350,22 +355,12 @@ var init_file_history_modal = __esm({
           if (isComparing) {
             metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-a", text: "A" });
           }
-          if (this.selectedIdx !== null && i !== this.selectedIdx && !isComparing) {
-            const compareBtn = contentWrap.createEl("button", {
+          if (this.selectedIdx !== null && i !== this.selectedIdx) {
+            const compareBtn = itemEl.createEl("button", {
               cls: `ginkgo-fh-compare-btn ${isComparing ? "is-active" : ""}`,
-              text: "\u5BF9\u6BD4"
+              text: isComparing ? "\u53D6\u6D88" : "\u5BF9\u6BD4"
             });
             compareBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              this.handleCompare(i);
-            });
-          }
-          if (isComparing) {
-            const cancelBtn = contentWrap.createEl("button", {
-              cls: "ginkgo-fh-compare-btn is-active",
-              text: "\u53D6\u6D88"
-            });
-            cancelBtn.addEventListener("click", (e) => {
               e.stopPropagation();
               this.handleCompare(i);
             });

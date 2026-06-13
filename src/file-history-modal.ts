@@ -206,34 +206,37 @@ export class FileHistoryModal extends Modal {
 			});
 
 			const trackEl = itemEl.createEl("div", { cls: "ginkgo-fh-track" });
-			const dotEl = trackEl.createEl("div", {
-				cls: `ginkgo-fh-dot ${isCurrent ? "is-current" : ""} ${isSelected ? "is-selected" : ""} ${isComparing ? "is-comparing" : ""}`,
-			});
+			if (isComparing) {
+				const markerEl = trackEl.createEl("div", { cls: "ginkgo-fh-compare-marker" });
+				setIcon(markerEl, "git-branch");
+			} else if (isSelected) {
+				const checkEl = trackEl.createEl("div", { cls: "ginkgo-fh-check" });
+				setIcon(checkEl, "check");
+			} else {
+				trackEl.createEl("div", { cls: `ginkgo-fh-dot ${isLatest ? "is-latest" : ""} ${isCurrent ? "is-current" : ""}` });
+			}
 
-			const contentWrap = itemEl.createEl("div", { cls: "ginkgo-fh-item-content" });
+			const infoEl = itemEl.createEl("div", { cls: "ginkgo-fh-info" });
+			infoEl.addEventListener("click", () => this.handleSelect(i));
 
-			const mainBtn = contentWrap.createEl("button", { cls: "ginkgo-fh-item-main" });
-			mainBtn.addEventListener("click", () => this.handleSelect(i));
-
-			const timeEl = mainBtn.createEl("div", { cls: "ginkgo-fh-time" });
-			const revLabel = mainBtn.createEl("span", { cls: "ginkgo-fh-rev", text: `v${this.versions.length - i}` });
-
+			const timeEl = infoEl.createEl("div", { cls: "ginkgo-fh-time" });
 			if (isCurrent) {
 				timeEl.createEl("span", { cls: "ginkgo-fh-reltime", text: "当前版本" });
+				timeEl.createEl("span", { cls: "ginkgo-fh-abstime", text: this.formatTime(version.first_seen) });
 			} else {
 				timeEl.createEl("span", { cls: "ginkgo-fh-reltime", text: this.relativeTime(version.last_seen) });
+				timeEl.createEl("span", { cls: "ginkgo-fh-abstime", text: this.formatTime(version.last_seen) });
 			}
-			timeEl.createEl("span", { cls: "ginkgo-fh-abstime", text: this.formatTime(version.first_seen) });
 
-			const metaEl = mainBtn.createEl("div", { cls: "ginkgo-fh-meta" });
+			const metaEl = infoEl.createEl("div", { cls: "ginkgo-fh-meta" });
 			metaEl.createEl("span", { cls: "ginkgo-fh-size", text: this.formatBytes(version.size) });
 
 			if (isLatest && !isCurrent) {
 				metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-latest", text: "最新" });
 			} else if (isFirst) {
 				metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-first", text: "首次" });
-			} else if (i > 0) {
-				const prevSize = this.versions[i - 1].size;
+			} else if (i < this.versions.length - 1) {
+				const prevSize = this.versions[i + 1].size;
 				const delta = version.size - prevSize;
 				if (delta !== 0) {
 					const isUp = delta > 0;
@@ -255,23 +258,12 @@ export class FileHistoryModal extends Modal {
 				metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-a", text: "A" });
 			}
 
-			if (this.selectedIdx !== null && i !== this.selectedIdx && !isComparing) {
-				const compareBtn = contentWrap.createEl("button", {
+			if (this.selectedIdx !== null && i !== this.selectedIdx) {
+				const compareBtn = itemEl.createEl("button", {
 					cls: `ginkgo-fh-compare-btn ${isComparing ? "is-active" : ""}`,
-					text: "对比",
+					text: isComparing ? "取消" : "对比",
 				});
 				compareBtn.addEventListener("click", (e: MouseEvent) => {
-					e.stopPropagation();
-					this.handleCompare(i);
-				});
-			}
-
-			if (isComparing) {
-				const cancelBtn = contentWrap.createEl("button", {
-					cls: "ginkgo-fh-compare-btn is-active",
-					text: "取消",
-				});
-				cancelBtn.addEventListener("click", (e: MouseEvent) => {
 					e.stopPropagation();
 					this.handleCompare(i);
 				});
