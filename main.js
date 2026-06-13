@@ -24,274 +24,6 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// node_modules/diff/libesm/diff/base.js
-var Diff;
-var init_base = __esm({
-  "node_modules/diff/libesm/diff/base.js"() {
-    Diff = class {
-      diff(oldStr, newStr, options = {}) {
-        let callback;
-        if (typeof options === "function") {
-          callback = options;
-          options = {};
-        } else if ("callback" in options) {
-          callback = options.callback;
-        }
-        const oldString = this.castInput(oldStr, options);
-        const newString = this.castInput(newStr, options);
-        const oldTokens = this.removeEmpty(this.tokenize(oldString, options));
-        const newTokens = this.removeEmpty(this.tokenize(newString, options));
-        return this.diffWithOptionsObj(oldTokens, newTokens, options, callback);
-      }
-      diffWithOptionsObj(oldTokens, newTokens, options, callback) {
-        var _a;
-        const done = (value) => {
-          value = this.postProcess(value, options);
-          if (callback) {
-            setTimeout(function() {
-              callback(value);
-            }, 0);
-            return void 0;
-          } else {
-            return value;
-          }
-        };
-        const newLen = newTokens.length, oldLen = oldTokens.length;
-        let editLength = 1;
-        let maxEditLength = newLen + oldLen;
-        if (options.maxEditLength != null) {
-          maxEditLength = Math.min(maxEditLength, options.maxEditLength);
-        }
-        const maxExecutionTime = (_a = options.timeout) !== null && _a !== void 0 ? _a : Infinity;
-        const abortAfterTimestamp = Date.now() + maxExecutionTime;
-        const bestPath = [{ oldPos: -1, lastComponent: void 0 }];
-        let newPos = this.extractCommon(bestPath[0], newTokens, oldTokens, 0, options);
-        if (bestPath[0].oldPos + 1 >= oldLen && newPos + 1 >= newLen) {
-          return done(this.buildValues(bestPath[0].lastComponent, newTokens, oldTokens));
-        }
-        let minDiagonalToConsider = -Infinity, maxDiagonalToConsider = Infinity;
-        const execEditLength = () => {
-          for (let diagonalPath = Math.max(minDiagonalToConsider, -editLength); diagonalPath <= Math.min(maxDiagonalToConsider, editLength); diagonalPath += 2) {
-            let basePath;
-            const removePath = bestPath[diagonalPath - 1], addPath = bestPath[diagonalPath + 1];
-            if (removePath) {
-              bestPath[diagonalPath - 1] = void 0;
-            }
-            let canAdd = false;
-            if (addPath) {
-              const addPathNewPos = addPath.oldPos - diagonalPath;
-              canAdd = addPath && 0 <= addPathNewPos && addPathNewPos < newLen;
-            }
-            const canRemove = removePath && removePath.oldPos + 1 < oldLen;
-            if (!canAdd && !canRemove) {
-              bestPath[diagonalPath] = void 0;
-              continue;
-            }
-            if (!canRemove || canAdd && removePath.oldPos < addPath.oldPos) {
-              basePath = this.addToPath(addPath, true, false, 0, options);
-            } else {
-              basePath = this.addToPath(removePath, false, true, 1, options);
-            }
-            newPos = this.extractCommon(basePath, newTokens, oldTokens, diagonalPath, options);
-            if (basePath.oldPos + 1 >= oldLen && newPos + 1 >= newLen) {
-              return done(this.buildValues(basePath.lastComponent, newTokens, oldTokens)) || true;
-            } else {
-              bestPath[diagonalPath] = basePath;
-              if (basePath.oldPos + 1 >= oldLen) {
-                maxDiagonalToConsider = Math.min(maxDiagonalToConsider, diagonalPath - 1);
-              }
-              if (newPos + 1 >= newLen) {
-                minDiagonalToConsider = Math.max(minDiagonalToConsider, diagonalPath + 1);
-              }
-            }
-          }
-          editLength++;
-        };
-        if (callback) {
-          (function exec() {
-            setTimeout(function() {
-              if (editLength > maxEditLength || Date.now() > abortAfterTimestamp) {
-                return callback(void 0);
-              }
-              if (!execEditLength()) {
-                exec();
-              }
-            }, 0);
-          })();
-        } else {
-          while (editLength <= maxEditLength && Date.now() <= abortAfterTimestamp) {
-            const ret = execEditLength();
-            if (ret) {
-              return ret;
-            }
-          }
-        }
-      }
-      addToPath(path, added, removed, oldPosInc, options) {
-        const last = path.lastComponent;
-        if (last && !options.oneChangePerToken && last.added === added && last.removed === removed) {
-          return {
-            oldPos: path.oldPos + oldPosInc,
-            lastComponent: { count: last.count + 1, added, removed, previousComponent: last.previousComponent }
-          };
-        } else {
-          return {
-            oldPos: path.oldPos + oldPosInc,
-            lastComponent: { count: 1, added, removed, previousComponent: last }
-          };
-        }
-      }
-      extractCommon(basePath, newTokens, oldTokens, diagonalPath, options) {
-        const newLen = newTokens.length, oldLen = oldTokens.length;
-        let oldPos = basePath.oldPos, newPos = oldPos - diagonalPath, commonCount = 0;
-        while (newPos + 1 < newLen && oldPos + 1 < oldLen && this.equals(oldTokens[oldPos + 1], newTokens[newPos + 1], options)) {
-          newPos++;
-          oldPos++;
-          commonCount++;
-          if (options.oneChangePerToken) {
-            basePath.lastComponent = { count: 1, previousComponent: basePath.lastComponent, added: false, removed: false };
-          }
-        }
-        if (commonCount && !options.oneChangePerToken) {
-          basePath.lastComponent = { count: commonCount, previousComponent: basePath.lastComponent, added: false, removed: false };
-        }
-        basePath.oldPos = oldPos;
-        return newPos;
-      }
-      equals(left, right, options) {
-        if (options.comparator) {
-          return options.comparator(left, right);
-        } else {
-          return left === right || !!options.ignoreCase && left.toLowerCase() === right.toLowerCase();
-        }
-      }
-      removeEmpty(array) {
-        const ret = [];
-        for (let i = 0; i < array.length; i++) {
-          if (array[i]) {
-            ret.push(array[i]);
-          }
-        }
-        return ret;
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      castInput(value, options) {
-        return value;
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      tokenize(value, options) {
-        return Array.from(value);
-      }
-      join(chars) {
-        return chars.join("");
-      }
-      postProcess(changeObjects, options) {
-        return changeObjects;
-      }
-      get useLongestToken() {
-        return false;
-      }
-      buildValues(lastComponent, newTokens, oldTokens) {
-        const components = [];
-        let nextComponent;
-        while (lastComponent) {
-          components.push(lastComponent);
-          nextComponent = lastComponent.previousComponent;
-          delete lastComponent.previousComponent;
-          lastComponent = nextComponent;
-        }
-        components.reverse();
-        const componentLen = components.length;
-        let componentPos = 0, newPos = 0, oldPos = 0;
-        for (; componentPos < componentLen; componentPos++) {
-          const component = components[componentPos];
-          if (!component.removed) {
-            if (!component.added && this.useLongestToken) {
-              let value = newTokens.slice(newPos, newPos + component.count);
-              value = value.map(function(value2, i) {
-                const oldValue = oldTokens[oldPos + i];
-                return oldValue.length > value2.length ? oldValue : value2;
-              });
-              component.value = this.join(value);
-            } else {
-              component.value = this.join(newTokens.slice(newPos, newPos + component.count));
-            }
-            newPos += component.count;
-            if (!component.added) {
-              oldPos += component.count;
-            }
-          } else {
-            component.value = this.join(oldTokens.slice(oldPos, oldPos + component.count));
-            oldPos += component.count;
-          }
-        }
-        return components;
-      }
-    };
-  }
-});
-
-// node_modules/diff/libesm/diff/line.js
-function diffLines(oldStr, newStr, options) {
-  return lineDiff.diff(oldStr, newStr, options);
-}
-function tokenize(value, options) {
-  if (options.stripTrailingCr) {
-    value = value.replace(/\r\n/g, "\n");
-  }
-  const retLines = [], linesAndNewlines = value.split(/(\n|\r\n)/);
-  if (!linesAndNewlines[linesAndNewlines.length - 1]) {
-    linesAndNewlines.pop();
-  }
-  for (let i = 0; i < linesAndNewlines.length; i++) {
-    const line = linesAndNewlines[i];
-    if (i % 2 && !options.newlineIsToken) {
-      retLines[retLines.length - 1] += line;
-    } else {
-      retLines.push(line);
-    }
-  }
-  return retLines;
-}
-var LineDiff, lineDiff;
-var init_line = __esm({
-  "node_modules/diff/libesm/diff/line.js"() {
-    init_base();
-    LineDiff = class extends Diff {
-      constructor() {
-        super(...arguments);
-        this.tokenize = tokenize;
-      }
-      equals(left, right, options) {
-        if (options.ignoreWhitespace) {
-          if (!options.newlineIsToken || !left.includes("\n")) {
-            left = left.trim();
-          }
-          if (!options.newlineIsToken || !right.includes("\n")) {
-            right = right.trim();
-          }
-        } else if (options.ignoreNewlineAtEof && !options.newlineIsToken) {
-          if (left.endsWith("\n")) {
-            left = left.slice(0, -1);
-          }
-          if (right.endsWith("\n")) {
-            right = right.slice(0, -1);
-          }
-        }
-        return super.equals(left, right, options);
-      }
-    };
-    lineDiff = new LineDiff();
-  }
-});
-
-// node_modules/diff/libesm/index.js
-var init_libesm = __esm({
-  "node_modules/diff/libesm/index.js"() {
-    init_line();
-  }
-});
-
 // src/restore-preview-modal.ts
 var restore_preview_modal_exports = {};
 __export(restore_preview_modal_exports, {
@@ -398,194 +130,98 @@ var init_restore_preview_modal = __esm({
   }
 });
 
-// src/file-diff-modal.ts
-var file_diff_modal_exports = {};
-__export(file_diff_modal_exports, {
-  FileDiffModal: () => FileDiffModal
-});
-var import_obsidian5, FileDiffModal;
-var init_file_diff_modal = __esm({
-  "src/file-diff-modal.ts"() {
-    import_obsidian5 = require("obsidian");
-    FileDiffModal = class extends import_obsidian5.Modal {
-      constructor(app, client, sourceId, filePath, oldSnapshot, newSnapshot, oldLabel, newLabel, repoPath) {
-        super(app);
-        this.client = client;
-        this.sourceId = sourceId;
-        this.filePath = filePath;
-        this.oldSnapshot = oldSnapshot;
-        this.newSnapshot = newSnapshot;
-        this.oldLabel = oldLabel;
-        this.newLabel = newLabel;
-        this.repoPath = repoPath;
-      }
-      async onOpen() {
-        const { contentEl } = this;
-        contentEl.empty();
-        contentEl.addClass("ginkgo-diff-modal");
-        const headerEl = contentEl.createEl("div", { cls: "ginkgo-header" });
-        headerEl.createEl("span", { cls: "ginkgo-header-title", text: "\u7248\u672C\u5BF9\u6BD4" });
-        headerEl.createEl("div", { cls: "ginkgo-header-path", text: this.filePath });
-        const loadingEl = contentEl.createEl("div", { cls: "ginkgo-loading" });
-        loadingEl.createEl("span", { text: "\u52A0\u8F7D\u4E2D..." });
-        try {
-          const diff = await this.client.getFileDiff(
-            this.sourceId,
-            this.filePath,
-            this.oldSnapshot,
-            this.newSnapshot,
-            this.repoPath
-          );
-          let oldContent = "";
-          let newContent = "";
-          try {
-            const oldResp = await this.client.getFileContent(this.sourceId, this.filePath, this.oldSnapshot, this.repoPath);
-            if (oldResp.content) {
-              try {
-                oldContent = decodeURIComponent(escape(atob(oldResp.content)));
-              } catch (e) {
-                oldContent = oldResp.content;
-              }
-            }
-          } catch (e) {
-            oldContent = "(\u65E0\u6CD5\u83B7\u53D6\u65E7\u7248\u672C\u5185\u5BB9)";
-          }
-          try {
-            const newResp = await this.client.getFileContent(this.sourceId, this.filePath, this.newSnapshot, this.repoPath);
-            if (newResp.content) {
-              try {
-                newContent = decodeURIComponent(escape(atob(newResp.content)));
-              } catch (e) {
-                newContent = newResp.content;
-              }
-            }
-          } catch (e) {
-            newContent = "(\u65E0\u6CD5\u83B7\u53D6\u65B0\u7248\u672C\u5185\u5BB9)";
-          }
-          loadingEl.remove();
-          this.renderDiff(contentEl, diff, oldContent, newContent);
-        } catch (err) {
-          loadingEl.remove();
-          const msg = err instanceof Error ? err.message : String(err);
-          contentEl.createEl("div", { cls: "ginkgo-error", text: `\u52A0\u8F7D\u5931\u8D25: ${msg}` });
-        }
-      }
-      renderDiff(contentEl, diff, oldContent, newContent) {
-        const summaryEl = contentEl.createEl("div", { cls: "ginkgo-diff-summary" });
-        const typeBadge = summaryEl.createEl("span", {
-          cls: `ginkgo-diff-type ginkgo-diff-type-${diff.diff_type}`
-        });
-        switch (diff.diff_type) {
-          case "unchanged":
-            typeBadge.setText("\u65E0\u53D8\u5316");
-            break;
-          case "modified":
-            typeBadge.setText("\u5DF2\u4FEE\u6539");
-            break;
-          case "deleted":
-            typeBadge.setText("\u5DF2\u5220\u9664");
-            break;
-          case "restored":
-            typeBadge.setText("\u5DF2\u6062\u590D");
-            break;
-        }
-        if (diff.size_delta !== 0) {
-          const isPositive = diff.size_delta > 0;
-          summaryEl.createEl("span", {
-            cls: `ginkgo-diff-size ${isPositive ? "is-positive" : "is-negative"}`,
-            text: `${isPositive ? "+" : ""}${this.formatBytes(diff.size_delta)}`
-          });
-        }
-        if (diff.diff_type === "unchanged") {
-          contentEl.createEl("div", { cls: "ginkgo-diff-unchanged", text: "\u4E24\u4E2A\u7248\u672C\u5185\u5BB9\u76F8\u540C" });
-          this.renderFooter(contentEl);
-          return;
-        }
-        const diffContainer = contentEl.createEl("div", { cls: "ginkgo-diff-container" });
-        const oldPanel = diffContainer.createEl("div", { cls: "ginkgo-diff-panel" });
-        oldPanel.createEl("div", { cls: "ginkgo-diff-panel-header", text: this.oldLabel });
-        const oldCode = oldPanel.createEl("pre", { cls: "ginkgo-diff-code" });
-        oldCode.createEl("code", { text: oldContent });
-        const newPanel = diffContainer.createEl("div", { cls: "ginkgo-diff-panel" });
-        newPanel.createEl("div", { cls: "ginkgo-diff-panel-header", text: this.newLabel });
-        const newCode = newPanel.createEl("pre", { cls: "ginkgo-diff-code" });
-        newCode.createEl("code", { text: newContent });
-        this.renderInlineDiff(diffContainer, oldContent, newContent);
-        this.renderFooter(contentEl);
-      }
-      renderInlineDiff(container, oldContent, newContent) {
-        const oldLines = oldContent.split("\n");
-        const newLines = newContent.split("\n");
-        const diffEl = container.createEl("div", { cls: "ginkgo-inline-diff" });
-        diffEl.createEl("div", { cls: "ginkgo-diff-section-title", text: "\u5DEE\u5F02" });
-        const maxLen = Math.max(oldLines.length, newLines.length);
-        let hasDiff = false;
-        for (let i = 0; i < maxLen; i++) {
-          const oldLine = oldLines[i];
-          const newLine = newLines[i];
-          if (oldLine === void 0 && newLine !== void 0) {
-            hasDiff = true;
-            const lineEl = diffEl.createEl("div", { cls: "ginkgo-diff-line ginkgo-diff-added" });
-            lineEl.createEl("span", { cls: "ginkgo-line-num", text: `+${i + 1}` });
-            lineEl.createEl("span", { cls: "ginkgo-line-content", text: newLine });
-          } else if (oldLine !== void 0 && newLine === void 0) {
-            hasDiff = true;
-            const lineEl = diffEl.createEl("div", { cls: "ginkgo-diff-line ginkgo-diff-removed" });
-            lineEl.createEl("span", { cls: "ginkgo-line-num", text: `-${i + 1}` });
-            lineEl.createEl("span", { cls: "ginkgo-line-content", text: oldLine });
-          } else if (oldLine !== newLine) {
-            hasDiff = true;
-            const removedEl = diffEl.createEl("div", { cls: "ginkgo-diff-line ginkgo-diff-removed" });
-            removedEl.createEl("span", { cls: "ginkgo-line-num", text: `-${i + 1}` });
-            removedEl.createEl("span", { cls: "ginkgo-line-content", text: oldLine });
-            const addedEl = diffEl.createEl("div", { cls: "ginkgo-diff-line ginkgo-diff-added" });
-            addedEl.createEl("span", { cls: "ginkgo-line-num", text: `+${i + 1}` });
-            addedEl.createEl("span", { cls: "ginkgo-line-content", text: newLine });
-          }
-        }
-        if (!hasDiff) {
-          diffEl.createEl("div", { cls: "ginkgo-diff-unchanged", text: "\u5185\u5BB9\u76F8\u540C" });
-        }
-      }
-      renderFooter(contentEl) {
-        const footerEl = contentEl.createEl("div", { cls: "ginkgo-modal-footer" });
-        footerEl.createEl("button", { cls: "ginkgo-close-btn", text: "\u5173\u95ED" }).addEventListener("click", () => this.close());
-      }
-      formatBytes(bytes) {
-        if (!bytes || isNaN(bytes))
-          return "0 B";
-        const sign = bytes < 0 ? "-" : "";
-        bytes = Math.abs(bytes);
-        if (bytes === 0)
-          return "0 B";
-        const k = 1024;
-        const sizes = ["B", "KB", "MB", "GB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return sign + parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[Math.min(i, sizes.length - 1)];
-      }
-      onClose() {
-        this.contentEl.empty();
-      }
-    };
-  }
-});
-
 // src/file-history-modal.ts
 var file_history_modal_exports = {};
 __export(file_history_modal_exports, {
   FileHistoryModal: () => FileHistoryModal
 });
-var import_obsidian6, FileHistoryModal;
+function computeLCS(oldLines, newLines) {
+  const m = oldLines.length;
+  const n = newLines.length;
+  if (m === 0)
+    return newLines.map((l) => ({ type: "added", text: l }));
+  if (n === 0)
+    return oldLines.map((l) => ({ type: "removed", text: l }));
+  if (m * n > 4e6)
+    return computeSimpleDiff(oldLines, newLines);
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i2 = 1; i2 <= m; i2++) {
+    for (let j2 = 1; j2 <= n; j2++) {
+      dp[i2][j2] = oldLines[i2 - 1] === newLines[j2 - 1] ? dp[i2 - 1][j2 - 1] + 1 : Math.max(dp[i2 - 1][j2], dp[i2][j2 - 1]);
+    }
+  }
+  const result = [];
+  let i = m, j = n;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
+      result.unshift({ type: "unchanged", text: oldLines[i - 1] });
+      i--;
+      j--;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      result.unshift({ type: "added", text: newLines[j - 1] });
+      j--;
+    } else {
+      result.unshift({ type: "removed", text: oldLines[i - 1] });
+      i--;
+    }
+  }
+  return result;
+}
+function computeSimpleDiff(oldLines, newLines) {
+  const result = [];
+  const maxLen = Math.max(oldLines.length, newLines.length);
+  for (let i = 0; i < maxLen; i++) {
+    const oLine = i < oldLines.length ? oldLines[i] : void 0;
+    const nLine = i < newLines.length ? newLines[i] : void 0;
+    if (oLine !== void 0 && nLine !== void 0 && oLine === nLine) {
+      result.push({ type: "unchanged", text: oLine });
+    } else {
+      if (oLine !== void 0)
+        result.push({ type: "removed", text: oLine });
+      if (nLine !== void 0)
+        result.push({ type: "added", text: nLine });
+    }
+  }
+  return result;
+}
+function extractDiffOnly(lines, contextLines) {
+  const changeIndices = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].type !== "unchanged")
+      changeIndices.push(i);
+  }
+  if (changeIndices.length === 0)
+    return [];
+  const included = /* @__PURE__ */ new Set();
+  for (const idx of changeIndices) {
+    for (let c = -contextLines; c <= contextLines; c++) {
+      const target = idx + c;
+      if (target >= 0 && target < lines.length)
+        included.add(target);
+    }
+  }
+  const sorted = [...included].sort((a, b) => a - b);
+  const result = [];
+  let lastIdx = -2;
+  for (const idx of sorted) {
+    if (idx > lastIdx + 1) {
+      result.push({ type: "unchanged", text: "..." });
+    }
+    result.push(lines[idx]);
+    lastIdx = idx;
+  }
+  return result;
+}
+var import_obsidian5, FileHistoryModal;
 var init_file_history_modal = __esm({
   "src/file-history-modal.ts"() {
-    import_obsidian6 = require("obsidian");
-    init_libesm();
-    FileHistoryModal = class extends import_obsidian6.Modal {
+    import_obsidian5 = require("obsidian");
+    FileHistoryModal = class extends import_obsidian5.Modal {
       constructor(app, client, sourceId, filePath, repoPath) {
         super(app);
         this.versions = [];
-        this.selectedVersion = null;
-        this.compareVersion = null;
+        this.selectedIdx = null;
+        this.compareIdx = null;
         this.currentContent = "";
         this.client = client;
         this.sourceId = sourceId;
@@ -631,13 +267,13 @@ var init_file_history_modal = __esm({
       renderBody(contentEl) {
         const bodyEl = contentEl.createEl("div", { cls: "ginkgo-fh-body" });
         const leftEl = bodyEl.createEl("div", { cls: "ginkgo-fh-versions" });
-        leftEl.createEl("div", { cls: "ginkgo-fh-section-label", text: `\u5171 ${this.versions.length} \u4E2A\u7248\u672C` });
+        leftEl.createEl("div", { cls: "ginkgo-fh-section-label", text: `\u5171 ${this.versions.length} \u4E2A\u7248\u672C \xB7 \u70B9\u51FB\u9009\u62E9\uFF0C\u518D\u70B9\u51FB\u53E6\u4E00\u7248\u672C\u7684\u300C\u5BF9\u6BD4\u300D` });
         this.listEl = leftEl.createEl("div", { cls: "ginkgo-fh-list" });
         this.renderVersionList();
         const rightEl = bodyEl.createEl("div", { cls: "ginkgo-fh-preview" });
-        rightEl.createEl("div", { cls: "ginkgo-fh-section-label", text: "\u4E0E\u5F53\u524D\u6587\u4EF6\u7684\u5DEE\u5F02" });
+        const diffHeaderEl = rightEl.createEl("div", { cls: "ginkgo-fh-section-label", text: "\u5DEE\u5F02" });
         this.diffEl = rightEl.createEl("div", { cls: "ginkgo-fh-diff" });
-        this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: "\u70B9\u51FB\u5DE6\u4FA7\u7248\u672C\u67E5\u770B\u5DEE\u5F02" });
+        this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: "\u70B9\u51FB\u5DE6\u4FA7\u7248\u672C\u67E5\u770B\u4E0E\u5F53\u524D\u6587\u4EF6\u7684\u5DEE\u5F02" });
         const footerEl = contentEl.createEl("div", { cls: "ginkgo-fh-footer" });
         this.restoreBtn = footerEl.createEl("button", {
           cls: "ginkgo-btn-restore",
@@ -645,12 +281,6 @@ var init_file_history_modal = __esm({
         });
         this.restoreBtn.disabled = true;
         this.restoreBtn.addEventListener("click", () => this.restoreSelectedVersion());
-        this.compareBtn = footerEl.createEl("button", {
-          cls: "ginkgo-btn-compare",
-          text: "\u5BF9\u6BD4\u4E24\u4E2A\u7248\u672C"
-        });
-        this.compareBtn.disabled = true;
-        this.compareBtn.addEventListener("click", () => this.openCompareModal());
         footerEl.createEl("button", { cls: "ginkgo-close-btn", text: "\u5173\u95ED" }).addEventListener("click", () => this.close());
       }
       isSentinelTs(ts) {
@@ -663,9 +293,8 @@ var init_file_history_modal = __esm({
         return version.last_seen;
       }
       tsToDate(ts) {
-        if (ts > 1e15) {
+        if (ts > 1e15)
           return new Date(ts / 1e6);
-        }
         return new Date(ts);
       }
       renderVersionList() {
@@ -673,106 +302,116 @@ var init_file_history_modal = __esm({
         for (let i = 0; i < this.versions.length; i++) {
           const version = this.versions[i];
           const isLatest = i === 0;
-          const isSelected = this.selectedVersion === version;
-          const isCompareBase = this.compareVersion === version;
+          const isFirst = i === this.versions.length - 1;
+          const isSelected = this.selectedIdx === i;
+          const isComparing = this.compareIdx === i;
           const isCurrent = this.isSentinelTs(version.last_seen);
           const itemEl = this.listEl.createEl("div", {
-            cls: `ginkgo-fh-item ${isSelected ? "is-selected" : ""} ${isCompareBase ? "is-compare-base" : ""} ${isLatest ? "is-latest" : ""}`
-          });
-          itemEl.addEventListener("click", (evt) => {
-            if (this.compareVersion) {
-              if (version === this.compareVersion) {
-                this.deselectVersion();
-              } else {
-                this.selectVersion(version);
-              }
-            } else if (this.selectedVersion === version) {
-              this.deselectVersion();
-            } else if (evt.shiftKey && this.selectedVersion) {
-              this.compareVersion = this.selectedVersion;
-              this.selectVersion(version);
-            } else {
-              this.selectVersion(version);
-            }
+            cls: `ginkgo-fh-item ${isSelected ? "is-selected" : ""} ${isComparing ? "is-comparing" : ""}`
           });
           const trackEl = itemEl.createEl("div", { cls: "ginkgo-fh-track" });
-          if (isCompareBase) {
-            const baseEl = trackEl.createEl("div", { cls: "ginkgo-fh-compare-marker" });
-            (0, import_obsidian6.setIcon)(baseEl, "git-branch");
-          } else if (isSelected) {
-            const checkEl = trackEl.createEl("div", { cls: "ginkgo-fh-check" });
-            (0, import_obsidian6.setIcon)(checkEl, "check");
-          } else {
-            trackEl.createEl("div", { cls: `ginkgo-fh-dot ${isLatest ? "is-latest" : ""}` });
-          }
-          const infoEl = itemEl.createEl("div", { cls: "ginkgo-fh-info" });
-          const timeEl = infoEl.createEl("div", { cls: "ginkgo-fh-time" });
+          const dotEl = trackEl.createEl("div", {
+            cls: `ginkgo-fh-dot ${isCurrent ? "is-current" : ""} ${isSelected ? "is-selected" : ""} ${isComparing ? "is-comparing" : ""}`
+          });
+          const contentWrap = itemEl.createEl("div", { cls: "ginkgo-fh-item-content" });
+          const mainBtn = contentWrap.createEl("button", { cls: "ginkgo-fh-item-main" });
+          mainBtn.addEventListener("click", () => this.handleSelect(i));
+          const timeEl = mainBtn.createEl("div", { cls: "ginkgo-fh-time" });
+          const revLabel = mainBtn.createEl("span", { cls: "ginkgo-fh-rev", text: `v${this.versions.length - i}` });
           if (isCurrent) {
             timeEl.createEl("span", { cls: "ginkgo-fh-reltime", text: "\u5F53\u524D\u7248\u672C" });
-            timeEl.createEl("span", { cls: "ginkgo-fh-abstime", text: this.formatTime(version.first_seen) });
           } else {
             timeEl.createEl("span", { cls: "ginkgo-fh-reltime", text: this.relativeTime(version.last_seen) });
-            timeEl.createEl("span", { cls: "ginkgo-fh-abstime", text: this.formatTime(version.last_seen) });
           }
-          const metaEl = infoEl.createEl("div", { cls: "ginkgo-fh-meta" });
+          timeEl.createEl("span", { cls: "ginkgo-fh-abstime", text: this.formatTime(version.first_seen) });
+          const metaEl = mainBtn.createEl("div", { cls: "ginkgo-fh-meta" });
           metaEl.createEl("span", { cls: "ginkgo-fh-size", text: this.formatBytes(version.size) });
-          if (isLatest) {
+          if (isLatest && !isCurrent) {
             metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-latest", text: "\u6700\u65B0" });
-          } else if (i === this.versions.length - 1) {
+          } else if (isFirst) {
             metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-first", text: "\u9996\u6B21" });
-          } else {
-            const prevSize = this.versions[i + 1].size;
+          } else if (i > 0) {
+            const prevSize = this.versions[i - 1].size;
             const delta = version.size - prevSize;
             if (delta !== 0) {
-              const isPositive = delta > 0;
+              const isUp = delta > 0;
               metaEl.createEl("span", {
-                cls: `ginkgo-fh-delta ${isPositive ? "is-up" : "is-down"}`,
-                text: `${isPositive ? "+" : ""}${this.formatBytes(delta)}`
+                cls: `ginkgo-fh-delta ${isUp ? "is-up" : "is-down"}`,
+                text: `${isUp ? "+" : ""}${this.formatBytes(delta)}`
               });
             }
           }
           if (version.is_deleted) {
             metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-deleted", text: "\u5DF2\u5220\u9664" });
           }
-        }
-      }
-      deselectVersion() {
-        if (this.compareVersion && this.selectedVersion) {
-          this.selectedVersion = null;
-          this.compareVersion = null;
-        } else {
-          this.selectedVersion = null;
-        }
-        this.renderVersionList();
-        this.restoreBtn.disabled = true;
-        this.restoreBtn.textContent = "\u6062\u590D\u6B64\u7248\u672C";
-        this.compareBtn.disabled = true;
-        this.diffEl.empty();
-        this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: "\u70B9\u51FB\u5DE6\u4FA7\u7248\u672C\u67E5\u770B\u5DEE\u5F02" });
-      }
-      async selectVersion(version) {
-        if (this.compareVersion) {
-          if (this.compareVersion === version) {
-            this.compareVersion = null;
-            this.selectedVersion = null;
-          } else {
-            this.selectedVersion = version;
-            this.compareBtn.disabled = false;
+          if (isSelected) {
+            metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-b", text: "B" });
           }
-          this.renderVersionList();
-          this.restoreBtn.disabled = !this.selectedVersion;
-          return;
+          if (isComparing) {
+            metaEl.createEl("span", { cls: "ginkgo-fh-badge ginkgo-fh-badge-a", text: "A" });
+          }
+          if (this.selectedIdx !== null && i !== this.selectedIdx && !isComparing) {
+            const compareBtn = contentWrap.createEl("button", {
+              cls: `ginkgo-fh-compare-btn ${isComparing ? "is-active" : ""}`,
+              text: "\u5BF9\u6BD4"
+            });
+            compareBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              this.handleCompare(i);
+            });
+          }
+          if (isComparing) {
+            const cancelBtn = contentWrap.createEl("button", {
+              cls: "ginkgo-fh-compare-btn is-active",
+              text: "\u53D6\u6D88"
+            });
+            cancelBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              this.handleCompare(i);
+            });
+          }
         }
-        this.selectedVersion = version;
+      }
+      handleSelect(idx) {
+        if (this.selectedIdx === idx) {
+          this.selectedIdx = null;
+          this.compareIdx = null;
+        } else {
+          this.selectedIdx = idx;
+        }
         this.renderVersionList();
-        this.restoreBtn.disabled = false;
-        this.restoreBtn.textContent = "\u6062\u590D\u6B64\u7248\u672C";
-        this.compareBtn.disabled = true;
+        this.restoreBtn.disabled = this.selectedIdx === null;
+        if (this.selectedIdx !== null && this.compareIdx !== null && this.selectedIdx !== this.compareIdx) {
+          this.loadCompareDiff();
+        } else if (this.selectedIdx !== null) {
+          this.loadCurrentDiff();
+        } else {
+          this.diffEl.empty();
+          this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: "\u70B9\u51FB\u5DE6\u4FA7\u7248\u672C\u67E5\u770B\u5DEE\u5F02" });
+        }
+      }
+      handleCompare(idx) {
+        if (this.compareIdx === idx) {
+          this.compareIdx = null;
+        } else {
+          this.compareIdx = idx;
+        }
+        this.renderVersionList();
+        if (this.selectedIdx !== null && this.compareIdx !== null && this.selectedIdx !== this.compareIdx) {
+          this.loadCompareDiff();
+        } else if (this.selectedIdx !== null) {
+          this.loadCurrentDiff();
+        }
+      }
+      async loadCurrentDiff() {
+        if (this.selectedIdx === null)
+          return;
+        const version = this.versions[this.selectedIdx];
         this.diffEl.empty();
         this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-loading", text: "\u52A0\u8F7D\u5DEE\u5F02..." });
         try {
           if (this.isSentinelTs(version.last_seen)) {
-            this.renderDiff(this.diffEl, this.currentContent, this.currentContent);
+            this.renderDiff(this.diffEl, this.currentContent, this.currentContent, "\u5F53\u524D\u7248\u672C", "\u5F53\u524D\u7248\u672C");
             return;
           }
           const snapshotTime = this.effectiveTs(version);
@@ -790,127 +429,112 @@ var init_file_history_modal = __esm({
             this.diffEl.createEl("div", { cls: "ginkgo-error", text: `\u5185\u5BB9\u8BFB\u53D6\u5931\u8D25: ${resp.error}` });
             return;
           }
-          if (!versionContent && !this.currentContent) {
-            this.diffEl.empty();
-            this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: "\u4E24\u4E2A\u7248\u672C\u5185\u5BB9\u5747\u4E3A\u7A7A" });
-            return;
-          }
-          this.renderDiff(this.diffEl, versionContent, this.currentContent);
+          this.renderDiff(this.diffEl, versionContent, this.currentContent, this.formatTime(version.first_seen), "\u5F53\u524D\u6587\u4EF6");
         } catch (err) {
           this.diffEl.empty();
           const msg = err instanceof Error ? err.message : String(err);
           this.diffEl.createEl("div", { cls: "ginkgo-error", text: `\u52A0\u8F7D\u5931\u8D25: ${msg}` });
         }
       }
-      renderDiff(container, oldContent, newContent) {
-        var _a, _b, _c;
+      async loadCompareDiff() {
+        if (this.selectedIdx === null || this.compareIdx === null)
+          return;
+        const aVersion = this.versions[this.compareIdx];
+        const bVersion = this.versions[this.selectedIdx];
+        this.diffEl.empty();
+        this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-loading", text: "\u52A0\u8F7D\u4E24\u4E2A\u7248\u672C..." });
+        try {
+          const [aResp, bResp] = await Promise.all([
+            this.isSentinelTs(aVersion.last_seen) ? { content: btoa(unescape(encodeURIComponent(this.currentContent))), error: "" } : this.client.getFileContent(this.sourceId, this.filePath, this.effectiveTs(aVersion), this.repoPath),
+            this.isSentinelTs(bVersion.last_seen) ? { content: btoa(unescape(encodeURIComponent(this.currentContent))), error: "" } : this.client.getFileContent(this.sourceId, this.filePath, this.effectiveTs(bVersion), this.repoPath)
+          ]);
+          let aContent = "";
+          let bContent = "";
+          if (aResp.content) {
+            try {
+              aContent = decodeURIComponent(escape(atob(aResp.content)));
+            } catch (e) {
+              aContent = aResp.content;
+            }
+          }
+          if (bResp.content) {
+            try {
+              bContent = decodeURIComponent(escape(atob(bResp.content)));
+            } catch (e) {
+              bContent = bResp.content;
+            }
+          }
+          const aLabel = this.isSentinelTs(aVersion.last_seen) ? "\u5F53\u524D\u7248\u672C" : this.formatTime(aVersion.first_seen);
+          const bLabel = this.isSentinelTs(bVersion.last_seen) ? "\u5F53\u524D\u7248\u672C" : this.formatTime(bVersion.first_seen);
+          this.renderDiff(this.diffEl, aContent, bContent, aLabel, bLabel);
+        } catch (err) {
+          this.diffEl.empty();
+          const msg = err instanceof Error ? err.message : String(err);
+          this.diffEl.createEl("div", { cls: "ginkgo-error", text: `\u52A0\u8F7D\u5931\u8D25: ${msg}` });
+        }
+      }
+      renderDiff(container, oldContent, newContent, oldLabel, newLabel) {
         container.empty();
         const normalizedOld = oldContent.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
         const normalizedNew = newContent.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-        const changes = diffLines(normalizedOld, normalizedNew);
+        const oldLines = normalizedOld.split("\n");
+        const newLines = normalizedNew.split("\n");
+        if (oldLines.length > 0 && oldLines[oldLines.length - 1] === "")
+          oldLines.pop();
+        if (newLines.length > 0 && newLines[newLines.length - 1] === "")
+          newLines.pop();
+        const diffLines = computeLCS(oldLines, newLines);
         let added = 0;
         let removed = 0;
-        for (const change of changes) {
-          if (change.added) {
-            added += (_a = change.count) != null ? _a : 0;
-          } else if (change.removed) {
-            removed += (_b = change.count) != null ? _b : 0;
-          }
+        for (const l of diffLines) {
+          if (l.type === "added")
+            added++;
+          else if (l.type === "removed")
+            removed++;
         }
-        const summaryEl = container.createEl("div", { cls: "ginkgo-fh-diff-summary" });
+        const headerEl = container.createEl("div", { cls: "ginkgo-fh-diff-header" });
+        const labelEl = headerEl.createEl("div", { cls: "ginkgo-fh-diff-labels" });
+        labelEl.createEl("span", { cls: "ginkgo-fh-diff-label-a", text: `A: ${oldLabel}` });
+        const arrowEl = labelEl.createEl("span", { cls: "ginkgo-fh-diff-arrow" });
+        (0, import_obsidian5.setIcon)(arrowEl, "arrow-right");
+        labelEl.createEl("span", { cls: "ginkgo-fh-diff-label-b", text: `B: ${newLabel}` });
         if (added === 0 && removed === 0) {
-          summaryEl.createEl("span", { cls: "ginkgo-fh-diff-identical", text: "\u4E0E\u5F53\u524D\u6587\u4EF6\u5185\u5BB9\u76F8\u540C" });
+          headerEl.createEl("span", { cls: "ginkgo-fh-diff-identical", text: "\u5185\u5BB9\u76F8\u540C" });
           return;
         }
-        if (removed > 0) {
-          summaryEl.createEl("span", { cls: "ginkgo-fh-diff-stat ginkgo-fh-stat-remove", text: `-${removed} \u884C` });
-        }
-        if (added > 0) {
-          summaryEl.createEl("span", { cls: "ginkgo-fh-diff-stat ginkgo-fh-stat-add", text: `+${added} \u884C` });
-        }
-        const total = added + removed;
-        if (total > 0) {
-          const barEl = summaryEl.createEl("div", { cls: "ginkgo-fh-diff-bar" });
-          barEl.createEl("div", { cls: "ginkgo-fh-diff-bar-add", attr: { style: `width: ${added / total * 100}%` } });
-          barEl.createEl("div", { cls: "ginkgo-fh-diff-bar-remove", attr: { style: `width: ${removed / total * 100}%` } });
-        }
-        const allLines = [];
-        let oldLineNum = 0;
-        let newLineNum = 0;
-        for (const change of changes) {
-          const lines = ((_c = change.value) != null ? _c : "").replace(/\n$/, "").split("\n");
-          for (const line of lines) {
-            if (change.added) {
-              newLineNum++;
-              allLines.push({ type: "add", oldNum: 0, newNum: newLineNum, text: line });
-            } else if (change.removed) {
-              oldLineNum++;
-              allLines.push({ type: "remove", oldNum: oldLineNum, newNum: 0, text: line });
-            } else {
-              oldLineNum++;
-              newLineNum++;
-              allLines.push({ type: "same", oldNum: oldLineNum, newNum: newLineNum, text: line });
-            }
-          }
-        }
-        const contextLines = 3;
-        const changedIndices = /* @__PURE__ */ new Set();
-        for (let i = 0; i < allLines.length; i++) {
-          if (allLines[i].type !== "same") {
-            for (let j = Math.max(0, i - contextLines); j <= Math.min(allLines.length - 1, i + contextLines); j++) {
-              changedIndices.add(j);
-            }
-          }
-        }
+        const statsEl = headerEl.createEl("div", { cls: "ginkgo-fh-diff-stats" });
+        if (removed > 0)
+          statsEl.createEl("span", { cls: "ginkgo-fh-stat-remove", text: `-${removed}` });
+        if (added > 0)
+          statsEl.createEl("span", { cls: "ginkgo-fh-stat-add", text: `+${added}` });
+        const diffOnly = extractDiffOnly(diffLines, 1);
         const codeEl = container.createEl("div", { cls: "ginkgo-fh-diff-code" });
-        let lastRendered = -1;
-        for (let i = 0; i < allLines.length; i++) {
-          if (!changedIndices.has(i)) {
-            if (lastRendered >= 0 && i - lastRendered > 1) {
-              const sepEl = codeEl.createEl("div", { cls: "ginkgo-fh-diff-fold" });
-              const skipped = i - lastRendered - 1;
-              sepEl.createEl("span", { cls: "ginkgo-fh-diff-fold-text", text: `\u22EF ${skipped} \u884C\u672A\u53D8\u5316 \u22EF` });
-            }
-            lastRendered = i;
+        for (const line of diffOnly) {
+          const lineEl = codeEl.createEl("div", {
+            cls: `ginkgo-fh-diff-line ${line.type === "added" ? "is-add" : line.type === "removed" ? "is-remove" : line.text === "..." ? "is-fold" : "is-same"}`
+          });
+          if (line.text === "...") {
+            lineEl.createEl("span", { cls: "ginkgo-fh-diff-fold-text", text: "\u22EF" });
             continue;
           }
-          if (lastRendered >= 0 && i - lastRendered > 1) {
-            const sepEl = codeEl.createEl("div", { cls: "ginkgo-fh-diff-fold" });
-            const skipped = i - lastRendered - 1;
-            sepEl.createEl("span", { cls: "ginkgo-fh-diff-fold-text", text: `\u22EF ${skipped} \u884C\u672A\u53D8\u5316 \u22EF` });
-          }
-          const dl = allLines[i];
-          const lineEl = codeEl.createEl("div", {
-            cls: `ginkgo-fh-diff-line ${dl.type === "add" ? "is-add" : dl.type === "remove" ? "is-remove" : "is-same"}`
-          });
-          const gutterEl = lineEl.createEl("span", { cls: "ginkgo-fh-diff-gutter" });
-          if (dl.type === "add") {
-            gutterEl.createEl("span", { cls: "ginkgo-fh-diff-num-add", text: String(dl.newNum) });
-            gutterEl.createEl("span", { cls: "ginkgo-fh-diff-sign", text: "+" });
-          } else if (dl.type === "remove") {
-            gutterEl.createEl("span", { cls: "ginkgo-fh-diff-num-remove", text: String(dl.oldNum) });
-            gutterEl.createEl("span", { cls: "ginkgo-fh-diff-sign", text: "-" });
-          } else {
-            gutterEl.createEl("span", { cls: "ginkgo-fh-diff-num-same", text: String(dl.newNum) });
-            gutterEl.createEl("span", { cls: "ginkgo-fh-diff-sign", text: " " });
-          }
-          const contentEl = lineEl.createEl("span", { cls: "ginkgo-fh-diff-content" });
-          contentEl.setText(dl.text);
-          lastRendered = i;
+          const signEl = lineEl.createEl("span", { cls: "ginkgo-fh-diff-sign" });
+          signEl.setText(line.type === "added" ? "+" : line.type === "removed" ? "-" : " ");
+          lineEl.createEl("span", { cls: "ginkgo-fh-diff-content" }).setText(line.text);
         }
       }
       async restoreSelectedVersion() {
-        if (!this.selectedVersion)
+        if (this.selectedIdx === null)
           return;
-        const snapshotTime = this.effectiveTs(this.selectedVersion);
-        const versionLabel = this.isSentinelTs(this.selectedVersion.last_seen) ? "\u5F53\u524D\u7248\u672C" : this.formatTime(this.selectedVersion.last_seen);
+        const version = this.versions[this.selectedIdx];
+        const snapshotTime = this.effectiveTs(version);
+        const versionLabel = this.isSentinelTs(version.last_seen) ? "\u5F53\u524D\u7248\u672C" : this.formatTime(version.last_seen);
         const { RestorePreviewModal: RestorePreviewModal2 } = await Promise.resolve().then(() => (init_restore_preview_modal(), restore_preview_modal_exports));
         const modal = new RestorePreviewModal2(
           this.app,
           this.client,
           this.sourceId,
           this.filePath,
-          this.selectedVersion,
+          version,
           versionLabel,
           this.repoPath,
           async () => {
@@ -928,49 +552,26 @@ var init_file_history_modal = __esm({
               if (!file) {
                 const allFiles = this.app.vault.getFiles();
                 const matches = allFiles.filter((f) => f.name === this.filePath || f.path.endsWith("/" + this.filePath) || f.path === this.filePath);
-                if (matches.length > 0) {
+                if (matches.length > 0)
                   file = matches[0];
-                }
               }
-              if (file instanceof import_obsidian6.TFile) {
+              if (file instanceof import_obsidian5.TFile) {
                 await this.app.vault.modify(file, versionContent);
               } else {
                 const dirPath = this.filePath.includes("/") ? this.filePath.substring(0, this.filePath.lastIndexOf("/")) : "";
-                if (dirPath) {
+                if (dirPath)
                   await this.app.vault.createFolder(dirPath).catch(() => {
                   });
-                }
                 await this.app.vault.create(this.filePath, versionContent);
               }
               this.currentContent = versionContent;
-              new import_obsidian6.Notice("Ginkgo: \u6587\u4EF6\u5DF2\u6062\u590D");
+              new import_obsidian5.Notice("Ginkgo: \u6587\u4EF6\u5DF2\u6062\u590D");
               this.close();
             } catch (err) {
               const msg = err instanceof Error ? err.message : String(err);
-              new import_obsidian6.Notice(`Ginkgo: \u6062\u590D\u5931\u8D25 \u2014 ${msg}`);
+              new import_obsidian5.Notice(`Ginkgo: \u6062\u590D\u5931\u8D25 \u2014 ${msg}`);
             }
           }
-        );
-        modal.open();
-      }
-      async openCompareModal() {
-        if (!this.compareVersion || !this.selectedVersion)
-          return;
-        const oldTs = this.effectiveTs(this.compareVersion);
-        const newTs = this.effectiveTs(this.selectedVersion);
-        const oldLabel = this.isSentinelTs(this.compareVersion.last_seen) ? "\u5F53\u524D\u7248\u672C" : this.formatTime(this.compareVersion.last_seen);
-        const newLabel = this.isSentinelTs(this.selectedVersion.last_seen) ? "\u5F53\u524D\u7248\u672C" : this.formatTime(this.selectedVersion.last_seen);
-        const { FileDiffModal: FileDiffModal2 } = await Promise.resolve().then(() => (init_file_diff_modal(), file_diff_modal_exports));
-        const modal = new FileDiffModal2(
-          this.app,
-          this.client,
-          this.sourceId,
-          this.filePath,
-          oldTs,
-          newTs,
-          oldLabel,
-          newLabel,
-          this.repoPath
         );
         modal.open();
       }
@@ -980,13 +581,10 @@ var init_file_history_modal = __esm({
           if (!file) {
             const allFiles = this.app.vault.getFiles();
             const matches = allFiles.filter((f) => f.name === this.filePath || f.path.endsWith("/" + this.filePath) || f.path === this.filePath);
-            if (matches.length > 0) {
+            if (matches.length > 0)
               file = matches[0];
-            }
           }
-          if (!file)
-            return "";
-          if (!(file instanceof import_obsidian6.TFile))
+          if (!file || !(file instanceof import_obsidian5.TFile))
             return "";
           return await this.app.vault.read(file);
         } catch (e) {
@@ -1020,8 +618,6 @@ var init_file_history_modal = __esm({
           return "\u4ECA\u5929";
         if (dayDiff === 1)
           return "\u6628\u5929";
-        if (dayDiff === 2)
-          return "\u524D\u5929";
         if (dayDiff < 7)
           return `${dayDiff} \u5929\u524D`;
         if (dayDiff < 30)
@@ -1034,9 +630,7 @@ var init_file_history_modal = __esm({
         const date = this.tsToDate(ts);
         if (isNaN(date.getTime()))
           return String(ts);
-        const h = String(date.getHours()).padStart(2, "0");
-        const min = String(date.getMinutes()).padStart(2, "0");
-        return `${h}:${min}`;
+        return date.toLocaleString();
       }
       formatBytes(bytes) {
         if (!bytes || isNaN(bytes))
@@ -1063,7 +657,7 @@ __export(main_exports, {
   default: () => GinkgoBackupPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian7 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 
 // src/api.ts
 var import_obsidian = require("obsidian");
@@ -1945,7 +1539,7 @@ var SnapshotDetailModal = class extends import_obsidian3.Modal {
 };
 
 // src/main.ts
-var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
+var GinkgoBackupPlugin = class extends import_obsidian6.Plugin {
   constructor() {
     super(...arguments);
     this.vaultSourceId = 0;
@@ -1977,10 +1571,10 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
     this.startStatusRefresh();
     await this.loadHashCache();
     this.setupAutoBackup();
-    this.debouncedSavePending = (0, import_obsidian7.debounce)(() => this.savePendingCache(), 5e3);
+    this.debouncedSavePending = (0, import_obsidian6.debounce)(() => this.savePendingCache(), 5e3);
     await this.loadPendingCache();
     if (this.pendingModifiedFiles.size > 0) {
-      new import_obsidian7.Notice(`Ginkgo: \u6062\u590D ${this.pendingModifiedFiles.size} \u4E2A\u5F85\u63A8\u9001\u6587\u4EF6`, 5e3);
+      new import_obsidian6.Notice(`Ginkgo: \u6062\u590D ${this.pendingModifiedFiles.size} \u4E2A\u5F85\u63A8\u9001\u6587\u4EF6`, 5e3);
     }
     this.initializeConnection();
   }
@@ -2064,7 +1658,7 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
   addFileContextMenu() {
     this.registerEvent(
       this.app.workspace.on("file-menu", (menu, file) => {
-        if (file instanceof import_obsidian7.TFolder)
+        if (file instanceof import_obsidian6.TFolder)
           return;
         menu.addItem((item) => {
           item.setTitle("\u5386\u53F2\u7248\u672C").setIcon("history").onClick(() => this.showFileHistory(file));
@@ -2129,7 +1723,7 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
       return this.vaultPath;
     }
     const adapter = this.app.vault.adapter;
-    if (adapter instanceof import_obsidian7.FileSystemAdapter) {
+    if (adapter instanceof import_obsidian6.FileSystemAdapter) {
       this.vaultPath = adapter.getBasePath();
     } else {
       this.vaultPath = this.app.vault.getName();
@@ -2207,7 +1801,7 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
       const data = {};
       for (const [path, hash] of this.lastPushedHashes) {
         const file = this.app.vault.getAbstractFileByPath(path);
-        if (file instanceof import_obsidian7.TFile) {
+        if (file instanceof import_obsidian6.TFile) {
           data[path] = hash;
         }
       }
@@ -2233,7 +1827,7 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
       this.app.vault.offref(this.modifyEventRef);
       this.modifyEventRef = void 0;
     }
-    this.debouncedAutoBackup = (0, import_obsidian7.debounce)(
+    this.debouncedAutoBackup = (0, import_obsidian6.debounce)(
       async () => {
         if (!this.connected || this.vaultSourceId === 0)
           return;
@@ -2247,7 +1841,7 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
     );
     if (this.settings.stagingPushOnSave || this.settings.autoBackupOnSave) {
       this.modifyEventRef = this.app.vault.on("modify", async (file) => {
-        if (!(file instanceof import_obsidian7.TFile))
+        if (!(file instanceof import_obsidian6.TFile))
           return;
         if (this.isExcluded(file.path))
           return;
@@ -2297,7 +1891,7 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
     for (const filePath of filePaths) {
       try {
         const file = this.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof import_obsidian7.TFile))
+        if (!(file instanceof import_obsidian6.TFile))
           continue;
         const encoded = await this.encodeFileContent(file);
         const stat = await this.app.vault.adapter.stat(file.path);
@@ -2327,7 +1921,7 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
         trigger: "api"
       });
       const names = files.map((f) => f.rel_path.split("/").pop()).join(", ");
-      new import_obsidian7.Notice(`Ginkgo: \u5DF2\u63A8\u9001 ${files.length} \u4E2A\u6587\u4EF6 (${names})`, 4e3);
+      new import_obsidian6.Notice(`Ginkgo: \u5DF2\u63A8\u9001 ${files.length} \u4E2A\u6587\u4EF6 (${names})`, 4e3);
       this.saveHashCache();
       if (failedPaths.length > 0) {
         for (const p of failedPaths)
@@ -2344,12 +1938,12 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
   async stagingPushFile(file) {
     var _a, _b;
     if (this.vaultSourceId === 0) {
-      new import_obsidian7.Notice("Ginkgo: \u8BF7\u5148\u914D\u7F6E\u5907\u4EFD\u6E90");
+      new import_obsidian6.Notice("Ginkgo: \u8BF7\u5148\u914D\u7F6E\u5907\u4EFD\u6E90");
       return;
     }
     try {
       if (!await this.hasContentChanged(file)) {
-        new import_obsidian7.Notice("Ginkgo: \u6587\u4EF6\u5185\u5BB9\u672A\u53D8\u5316\uFF0C\u8DF3\u8FC7\u63A8\u9001");
+        new import_obsidian6.Notice("Ginkgo: \u6587\u4EF6\u5185\u5BB9\u672A\u53D8\u5316\uFF0C\u8DF3\u8FC7\u63A8\u9001");
         return;
       }
       const encoded = await this.encodeFileContent(file);
@@ -2368,7 +1962,7 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
         files: [filePush],
         trigger: "api"
       });
-      new import_obsidian7.Notice(`Ginkgo: \u5DF2\u63A8\u9001 ${file.name} (session: ${result.session_id.slice(0, 8)})`);
+      new import_obsidian6.Notice(`Ginkgo: \u5DF2\u63A8\u9001 ${file.name} (session: ${result.session_id.slice(0, 8)})`);
       if (!this.isBinaryFile(file)) {
         const content = await this.app.vault.read(file);
         this.lastPushedHashes.set(file.path, await this.contentHash(content));
@@ -2385,7 +1979,7 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
         return;
     }
     this.updateStatusBar("backing_up");
-    new import_obsidian7.Notice("Ginkgo: \u5907\u4EFD\u5DF2\u5F00\u59CB");
+    new import_obsidian6.Notice("Ginkgo: \u5907\u4EFD\u5DF2\u5F00\u59CB");
     try {
       await this.client.triggerBackup(this.vaultSourceId);
       this.startProgressPolling();
@@ -2397,7 +1991,7 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
   async cancelBackup() {
     try {
       await this.client.cancelBackup(this.vaultSourceId);
-      new import_obsidian7.Notice("Ginkgo: \u5907\u4EFD\u5DF2\u53D6\u6D88");
+      new import_obsidian6.Notice("Ginkgo: \u5907\u4EFD\u5DF2\u53D6\u6D88");
       this.updateStatusBar("connected");
     } catch (err) {
       this.handleError(err, "\u53D6\u6D88\u5907\u4EFD\u5931\u8D25");
@@ -2413,10 +2007,10 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
           window.clearInterval(this.progressTimer);
           this.progressTimer = void 0;
           if ((progress == null ? void 0 : progress.phase) === "complete") {
-            new import_obsidian7.Notice("Ginkgo: \u5907\u4EFD\u5B8C\u6210");
+            new import_obsidian6.Notice("Ginkgo: \u5907\u4EFD\u5B8C\u6210");
             this.updateStatusBar("connected");
           } else if ((progress == null ? void 0 : progress.phase) === "error") {
-            new import_obsidian7.Notice("Ginkgo: \u5907\u4EFD\u51FA\u9519");
+            new import_obsidian6.Notice("Ginkgo: \u5907\u4EFD\u51FA\u9519");
             this.updateStatusBar("error");
           } else {
             this.updateStatusBar("connected");
@@ -2432,15 +2026,15 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
   async setupSource(repoPaths) {
     const vaultPath = this.getVaultPath();
     if (!vaultPath) {
-      new import_obsidian7.Notice("Ginkgo: \u65E0\u6CD5\u786E\u5B9A Vault \u8DEF\u5F84");
+      new import_obsidian6.Notice("Ginkgo: \u65E0\u6CD5\u786E\u5B9A Vault \u8DEF\u5F84");
       return;
     }
     if (!repoPaths || repoPaths.length === 0) {
-      new import_obsidian7.Notice("Ginkgo: \u8BF7\u5148\u9009\u62E9\u5907\u4EFD\u4ED3\u5E93");
+      new import_obsidian6.Notice("Ginkgo: \u8BF7\u5148\u9009\u62E9\u5907\u4EFD\u4ED3\u5E93");
       return;
     }
     const vaultName = this.app.vault.getName();
-    new import_obsidian7.Notice("Ginkgo: \u6B63\u5728\u914D\u7F6E\u5907\u4EFD\u6E90...");
+    new import_obsidian6.Notice("Ginkgo: \u6B63\u5728\u914D\u7F6E\u5907\u4EFD\u6E90...");
     try {
       const source = await this.client.ensureSourceExists(
         vaultPath,
@@ -2454,10 +2048,10 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
         this.settings.sourceId = source.id;
         await this.saveSettings();
         const repoList = (source.repo_paths || []).join(", ");
-        new import_obsidian7.Notice(`Ginkgo: ${vaultName} \u5DF2\u914D\u7F6E\uFF08\u4ED3\u5E93: ${repoList}\uFF09`, 6e3);
+        new import_obsidian6.Notice(`Ginkgo: ${vaultName} \u5DF2\u914D\u7F6E\uFF08\u4ED3\u5E93: ${repoList}\uFF09`, 6e3);
         this.updateStatusBar("connected");
       } else {
-        new import_obsidian7.Notice("Ginkgo: \u521B\u5EFA\u5907\u4EFD\u6E90\u5931\u8D25");
+        new import_obsidian6.Notice("Ginkgo: \u521B\u5EFA\u5907\u4EFD\u6E90\u5931\u8D25");
       }
     } catch (err) {
       this.handleError(err, "\u914D\u7F6E\u5907\u4EFD\u6E90\u5931\u8D25");
@@ -2472,7 +2066,7 @@ var GinkgoBackupPlugin = class extends import_obsidian7.Plugin {
         `\u5B58\u50A8: ${this.formatBytes(status.storage_used)}`,
         `\u72B6\u6001: ${status.backup_running ? "\u5907\u4EFD\u4E2D" : "\u7A7A\u95F2"}`
       ];
-      new import_obsidian7.Notice(`Ginkgo \u72B6\u6001
+      new import_obsidian6.Notice(`Ginkgo \u72B6\u6001
 ${lines.join("\n")}`, 8e3);
     } catch (err) {
       this.handleError(err, "\u83B7\u53D6\u72B6\u6001\u5931\u8D25");
@@ -2492,7 +2086,7 @@ ${lines.join("\n")}`, 8e3);
   }
   async showFileHistory(file) {
     if (this.vaultSourceId === 0) {
-      new import_obsidian7.Notice("Ginkgo: \u5F53\u524D Vault \u672A\u914D\u7F6E\u5907\u4EFD\u6E90");
+      new import_obsidian6.Notice("Ginkgo: \u5F53\u524D Vault \u672A\u914D\u7F6E\u5907\u4EFD\u6E90");
       return;
     }
     const { FileHistoryModal: FileHistoryModal2 } = await Promise.resolve().then(() => (init_file_history_modal(), file_history_modal_exports));
@@ -2501,7 +2095,7 @@ ${lines.join("\n")}`, 8e3);
   }
   async showFileHistoryByPath(filePath) {
     if (this.vaultSourceId === 0) {
-      new import_obsidian7.Notice("Ginkgo: \u5F53\u524D Vault \u672A\u914D\u7F6E\u5907\u4EFD\u6E90");
+      new import_obsidian6.Notice("Ginkgo: \u5F53\u524D Vault \u672A\u914D\u7F6E\u5907\u4EFD\u6E90");
       return;
     }
     const { FileHistoryModal: FileHistoryModal2 } = await Promise.resolve().then(() => (init_file_history_modal(), file_history_modal_exports));
@@ -2538,7 +2132,7 @@ ${lines.join("\n")}`, 8e3);
         this.consecutiveFailures++;
         this.updateStatusBar("disconnected");
         if (this.consecutiveFailures === 1 && this.settings.stagingPushOnSave) {
-          new import_obsidian7.Notice("Ginkgo: \u672A\u8FDE\u63A5\uFF0C\u81EA\u52A8\u5907\u4EFD\u5DF2\u6682\u505C", 5e3);
+          new import_obsidian6.Notice("Ginkgo: \u672A\u8FDE\u63A5\uFF0C\u81EA\u52A8\u5907\u4EFD\u5DF2\u6682\u505C", 5e3);
         }
         return;
       }
@@ -2574,7 +2168,7 @@ ${lines.join("\n")}`, 8e3);
   updateStatusBar(state, detail) {
     this.statusBarItem.empty();
     const icon = this.statusBarItem.createSpan({ cls: "ginkgo-status-icon" });
-    (0, import_obsidian7.setIcon)(icon, "hard-drive");
+    (0, import_obsidian6.setIcon)(icon, "hard-drive");
     const textSpan = this.statusBarItem.createSpan();
     switch (state) {
       case "connected":
@@ -2603,7 +2197,7 @@ ${lines.join("\n")}`, 8e3);
     }
   }
   showStatusBarMenu(event) {
-    const menu = new import_obsidian7.Menu();
+    const menu = new import_obsidian6.Menu();
     menu.addItem((item) => {
       item.setTitle("\u7ACB\u5373\u5907\u4EFD").setIcon("upload").onClick(() => this.backupVault());
     });
@@ -2637,10 +2231,10 @@ ${lines.join("\n")}`, 8e3);
   }
   handleError(err, prefix) {
     if (err instanceof GinkgoApiError) {
-      new import_obsidian7.Notice(`Ginkgo: ${prefix} \u2014 ${err.userMessage}`, 8e3);
+      new import_obsidian6.Notice(`Ginkgo: ${prefix} \u2014 ${err.userMessage}`, 8e3);
     } else {
       const msg = err instanceof Error ? err.message : String(err);
-      new import_obsidian7.Notice(`Ginkgo: ${prefix} \u2014 ${msg}`, 8e3);
+      new import_obsidian6.Notice(`Ginkgo: ${prefix} \u2014 ${msg}`, 8e3);
     }
   }
   formatBytes(bytes) {
