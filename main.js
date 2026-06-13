@@ -1710,6 +1710,7 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
   }
   renderTimeline(container) {
     var _a;
+    container.findAll(".ginkgo-timeline-summary, .ginkgo-timeline-list, .ginkgo-empty-state").forEach((el) => el.remove());
     if (this.snapshots.length === 0) {
       const emptyEl = container.createEl("div", { cls: "ginkgo-empty-state" });
       const iconEl = emptyEl.createEl("div", { cls: "ginkgo-empty-icon" });
