@@ -1,6 +1,6 @@
 {
 	"name": "ginkgo-backup",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"description": "Obsidian 知识库的时光机 — 自动备份、版本对比、一键恢复",
 	"main": "main.js",
 	"scripts": {
