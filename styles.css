@@ -511,7 +511,14 @@
 }
 
 .ginkgo-fh-item.is-selected {
-	background: rgba(var(--interactive-accent-rgb), 0.1);
+	background: rgba(var(--interactive-accent-rgb), 0.2);
+	border-left: 3px solid var(--interactive-accent);
+}
+
+.ginkgo-fh-item.is-comparing {
+	background: rgba(var(--interactive-accent-rgb), 0.12);
+	border-left: 3px solid var(--interactive-accent);
+	border-left-style: dashed;
 }
 
 .ginkgo-fh-track {
@@ -1073,4 +1080,322 @@
 	justify-content: flex-end;
 	gap: 8px;
 	margin-top: 16px;
+}
+
+/* Timeline card clickable */
+.ginkgo-timeline-card {
+	cursor: pointer;
+}
+
+.ginkgo-timeline-card:hover {
+	border-color: var(--interactive-accent, #7c4dff);
+}
+
+/* A/B badges for version comparison */
+.ginkgo-fh-badge-a {
+	background: rgba(var(--interactive-accent-rgb), 0.15);
+	color: var(--interactive-accent);
+	font-weight: 700;
+	font-size: 9px;
+	padding: 1px 5px;
+}
+
+.ginkgo-fh-badge-b {
+	background: rgba(var(--text-success-rgb), 0.15);
+	color: var(--text-success);
+	font-weight: 700;
+	font-size: 9px;
+	padding: 1px 5px;
+}
+
+.ginkgo-fh-item.is-comparing {
+	background: rgba(var(--interactive-accent-rgb), 0.12);
+	border-left: 3px solid var(--interactive-accent);
+	border-left-style: dashed;
+}
+
+.ginkgo-fh-compare-marker {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--interactive-accent);
+}
+
+.ginkgo-fh-compare-marker svg {
+	width: 16px;
+	height: 16px;
+}
+
+.ginkgo-fh-compare-btn {
+	flex-shrink: 0;
+	padding: 1px 8px;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: 10px;
+	font-weight: 500;
+	transition: all 0.1s;
+	white-space: nowrap;
+	opacity: 0;
+}
+
+.ginkgo-fh-item:hover .ginkgo-fh-compare-btn {
+	opacity: 1;
+}
+
+.ginkgo-fh-compare-btn:hover {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.ginkgo-fh-compare-btn.is-active {
+	opacity: 1;
+	background: rgba(var(--interactive-accent-rgb), 0.15);
+	color: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+}
+
+/* Diff header for A→B comparison */
+.ginkgo-fh-diff-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	border-radius: 8px 8px 0 0;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.ginkgo-fh-diff-labels {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+}
+
+.ginkgo-fh-diff-label-a {
+	color: var(--interactive-accent);
+	font-weight: 600;
+}
+
+.ginkgo-fh-diff-arrow {
+	display: flex;
+	align-items: center;
+	color: var(--text-faint);
+}
+
+.ginkgo-fh-diff-arrow svg {
+	width: 12px;
+	height: 12px;
+}
+
+.ginkgo-fh-diff-label-b {
+	color: var(--text-success);
+	font-weight: 600;
+}
+
+.ginkgo-fh-diff-stats {
+	display: flex;
+	gap: 8px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.ginkgo-fh-diff-line.is-fold {
+	text-align: center;
+	padding: 2px 8px;
+	color: var(--text-faint);
+	background: var(--background-secondary);
+	font-size: 12px;
+	user-select: none;
+}
+
+.ginkgo-fh-diff-fold-text {
+	font-size: 14px;
+	letter-spacing: 2px;
+}
+
+/* Snapshot detail modal */
+.ginkgo-snap-header {
+	margin-bottom: 16px;
+}
+
+.ginkgo-snap-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--text-normal, #333);
+}
+
+.ginkgo-snap-title-icon {
+	display: flex;
+	align-items: center;
+	color: var(--interactive-accent, #7c4dff);
+}
+
+.ginkgo-snap-title-icon svg {
+	width: 18px;
+	height: 18px;
+}
+
+.ginkgo-snap-stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+
+.ginkgo-snap-stat {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 12px;
+	border-radius: 6px;
+	background: var(--background-secondary, rgba(0,0,0,0.03));
+	font-size: 13px;
+}
+
+.ginkgo-snap-stat-icon {
+	display: flex;
+	align-items: center;
+	color: var(--text-muted, #888);
+}
+
+.ginkgo-snap-stat-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+.ginkgo-snap-stat-text {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.ginkgo-snap-stat-label {
+	font-size: 10px;
+	color: var(--text-faint, #aaa);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.ginkgo-snap-stat-value {
+	color: var(--text-normal, #333);
+	font-weight: 500;
+}
+
+.ginkgo-stat-new .ginkgo-snap-stat-icon { color: var(--text-success, #4caf50); }
+.ginkgo-stat-changed .ginkgo-snap-stat-icon { color: var(--text-accent, #7c4dff); }
+.ginkgo-stat-deleted .ginkgo-snap-stat-icon { color: var(--text-error, #ef5350); }
+
+.ginkgo-snap-file-section {
+	border-top: 1px solid var(--background-modifier-border, #eee);
+	padding-top: 12px;
+}
+
+.ginkgo-snap-file-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text-muted, #888);
+	margin-bottom: 8px;
+}
+
+.ginkgo-snap-loading {
+	font-size: 11px;
+	font-weight: 400;
+	color: var(--text-faint, #aaa);
+}
+
+.ginkgo-snap-file-list {
+	max-height: 400px;
+	overflow-y: auto;
+}
+
+.ginkgo-snap-file-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 13px;
+	transition: background 0.1s;
+}
+
+.ginkgo-snap-file-row.is-file {
+	cursor: pointer;
+}
+
+.ginkgo-snap-file-row.is-file:hover {
+	background: var(--background-modifier-hover, rgba(0,0,0,0.03));
+}
+
+.ginkgo-snap-file-row.is-deleted {
+	opacity: 0.5;
+}
+
+.ginkgo-snap-file-icon {
+	display: flex;
+	align-items: center;
+	color: var(--text-muted, #888);
+	flex-shrink: 0;
+}
+
+.ginkgo-snap-file-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+.ginkgo-snap-file-name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--text-normal, #333);
+	font-family: var(--font-monospace);
+	font-size: 12px;
+}
+
+.ginkgo-snap-file-deleted {
+	font-size: 10px;
+	padding: 0 5px;
+	border-radius: 6px;
+	background: rgba(var(--text-error-rgb, 200,50,50), 0.1);
+	color: var(--text-error, #ef5350);
+	flex-shrink: 0;
+}
+
+.ginkgo-snap-file-right {
+	display: flex;
+	flex-shrink: 0;
+}
+
+.ginkgo-snap-file-size,
+.ginkgo-snap-file-count {
+	font-size: 11px;
+	color: var(--text-faint, #aaa);
+}
+
+.ginkgo-snap-file-more {
+	padding: 8px 0;
+	font-size: 12px;
+	color: var(--text-faint, #aaa);
+	text-align: center;
+}
+
+.ginkgo-snap-empty {
+	padding: 16px 0;
+	text-align: center;
+	font-size: 13px;
+	color: var(--text-faint, #aaa);
 }
