@@ -164,10 +164,10 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("API 端口")
-			.setDesc("API 服务端口（默认 9274）")
+			.setDesc("API 服务端口（默认 9275）")
 			.addText((text) =>
 				text
-					.setPlaceholder("9274")
+					.setPlaceholder("9275")
 					.setValue(String(this.plugin.settings.apiPort))
 					.onChange(async (value) => {
 						const port = parseInt(value, 10);

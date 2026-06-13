@@ -32,7 +32,7 @@ export const DEFAULT_SETTINGS: GinkgoBackupSettings = {
 	stagingPushOnSave: true,
 	sourceId: 0,
 	excludePaths: [".obsidian", ".trash", ".DS_Store"],
-	watchExtensions: ["md", "canvas", "base"],
+	watchExtensions: ["md", "canvas", "base", "json", "css"],
 	vaultIdentifier: "",
 };
 

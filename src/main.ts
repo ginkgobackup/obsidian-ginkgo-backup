@@ -28,6 +28,7 @@ export default class GinkgoBackupPlugin extends Plugin {
 	refreshTimer?: number;
 	progressTimer?: number;
 	debouncedAutoBackup?: () => void;
+	debouncedSavePending?: () => void;
 	vaultSourceId: number = 0;
 	vaultRepoPath: string = "";
 	vaultPath: string = "";
@@ -52,9 +53,11 @@ export default class GinkgoBackupPlugin extends Plugin {
 		this.statusBarItem.addClass("ginkgo-status-bar");
 		this.statusBarItem.addEventListener("click", (e) => this.showStatusBarMenu(e));
 		this.updateStatusBar("connecting");
+		this.applyStatusBarVisibility();
 
 		this.addSettingTab(new GinkgoBackupSettingTab(this.app, this));
 
+		this.addRibbonIcon("hard-drive", "Ginkgo Backup", () => this.openTimeline());
 		this.addCommands();
 		this.addFileContextMenu();
 		this.addEditorContextMenu();
@@ -62,6 +65,7 @@ export default class GinkgoBackupPlugin extends Plugin {
 		this.startStatusRefresh();
 		await this.loadHashCache();
 		this.setupAutoBackup();
+		this.debouncedSavePending = debounce(() => this.savePendingCache(), 5000);
 		await this.loadPendingCache();
 		if (this.pendingModifiedFiles.size > 0) {
 			new Notice(`Ginkgo: 恢复 ${this.pendingModifiedFiles.size} 个待推送文件`, 5000);
@@ -93,6 +97,11 @@ export default class GinkgoBackupPlugin extends Plugin {
 			this.settings.apiToken
 		);
 		this.setupAutoBackup();
+		this.applyStatusBarVisibility();
+	}
+
+	private applyStatusBarVisibility() {
+		this.statusBarItem.style.display = this.settings.showStatusBar ? "" : "none";
 	}
 
 	private addCommands() {
@@ -140,6 +149,12 @@ export default class GinkgoBackupPlugin extends Plugin {
 			id: "ginkgo-open-app",
 			name: "打开 Ginkgo Backup 应用",
 			callback: () => this.openGinkgoApp(),
+		});
+
+		this.addCommand({
+			id: "ginkgo-cancel-backup",
+			name: "取消当前备份",
+			callback: () => this.cancelBackup(),
 		});
 	}
 
@@ -356,13 +371,34 @@ export default class GinkgoBackupPlugin extends Plugin {
 				if (!this.isWatchedExtension(file)) return;
 				if (!(await this.hasContentChanged(file))) return;
 				this.pendingModifiedFiles.add(file.path);
-				this.savePendingCache();
+				if (this.debouncedSavePending) {
+					this.debouncedSavePending();
+				}
 				if (this.debouncedAutoBackup) {
 					this.debouncedAutoBackup();
 				}
 			});
 			this.registerEvent(this.modifyEventRef);
 		}
+	}
+
+	private isBinaryFile(file: TFile): boolean {
+		const binaryExtensions = new Set(["png", "jpg", "jpeg", "gif", "bmp", "svg", "webp", "ico", "pdf", "mp3", "wav", "ogg", "m4a", "flac", "mp4", "webm", "mov", "zip", "gz", "tar", "7z", "rar"]);
+		return binaryExtensions.has(file.extension.toLowerCase());
+	}
+
+	private async encodeFileContent(file: TFile): Promise<string> {
+		if (this.isBinaryFile(file)) {
+			const data = await this.app.vault.readBinary(file);
+			const bytes = new Uint8Array(data);
+			let binary = "";
+			for (let i = 0; i < bytes.length; i++) {
+				binary += String.fromCharCode(bytes[i]);
+			}
+			return btoa(binary);
+		}
+		const content = await this.app.vault.read(file);
+		return btoa(unescape(encodeURIComponent(content)));
 	}
 
 	private async stagingPushPendingFiles() {
@@ -380,16 +416,14 @@ export default class GinkgoBackupPlugin extends Plugin {
 				const file = this.app.vault.getAbstractFileByPath(filePath);
 				if (!(file instanceof TFile)) continue;
 
-				// btoa only works for text content; binary files (images, PDFs) are handled by full backup
-				const content = await this.app.vault.read(file);
-				const encoded = btoa(unescape(encodeURIComponent(content)));
+				const encoded = await this.encodeFileContent(file);
 				const stat = await this.app.vault.adapter.stat(file.path);
 
 				files.push({
 					rel_path: file.path.replace(/\\/g, "/"),
 					action: "modify",
 					content: encoded,
-					size: stat?.size ?? content.length,
+					size: stat?.size ?? 0,
 					mtime: stat?.mtime ?? Date.now() * 1000,
 				});
 			} catch {
@@ -431,9 +465,12 @@ export default class GinkgoBackupPlugin extends Plugin {
 		}
 
 		try {
-			// btoa only works for text content; binary files (images, PDFs) are handled by full backup
-			const content = await this.app.vault.read(file);
-			const encoded = btoa(unescape(encodeURIComponent(content)));
+			if (!(await this.hasContentChanged(file))) {
+				new Notice("Ginkgo: 文件内容未变化，跳过推送");
+				return;
+			}
+
+			const encoded = await this.encodeFileContent(file);
 			const relPath = file.path.replace(/\\/g, "/");
 			const stat = await this.app.vault.adapter.stat(file.path);
 
@@ -441,7 +478,7 @@ export default class GinkgoBackupPlugin extends Plugin {
 				rel_path: relPath,
 				action: "modify",
 				content: encoded,
-				size: stat?.size ?? content.length,
+				size: stat?.size ?? 0,
 				mtime: stat?.mtime ?? Date.now() * 1000,
 			};
 
@@ -453,7 +490,10 @@ export default class GinkgoBackupPlugin extends Plugin {
 			});
 
 			new Notice(`Ginkgo: 已推送 ${file.name} (session: ${result.session_id.slice(0, 8)})`);
-			this.lastPushedHashes.set(file.path, await this.contentHash(content));
+			if (!this.isBinaryFile(file)) {
+				const content = await this.app.vault.read(file);
+				this.lastPushedHashes.set(file.path, await this.contentHash(content));
+			}
 			this.saveHashCache();
 		} catch (err) {
 			this.handleError(err, "推送失败");
@@ -475,6 +515,16 @@ export default class GinkgoBackupPlugin extends Plugin {
 		} catch (err) {
 			this.handleError(err, "备份失败");
 			this.updateStatusBar("error");
+		}
+	}
+
+	private async cancelBackup() {
+		try {
+			await this.client.cancelBackup(this.vaultSourceId);
+			new Notice("Ginkgo: 备份已取消");
+			this.updateStatusBar("connected");
+		} catch (err) {
+			this.handleError(err, "取消备份失败");
 		}
 	}
 
@@ -586,6 +636,17 @@ export default class GinkgoBackupPlugin extends Plugin {
 		modal.open();
 	}
 
+	async showFileHistoryByPath(filePath: string) {
+		if (this.vaultSourceId === 0) {
+			new Notice("Ginkgo: 当前 Vault 未配置备份源");
+			return;
+		}
+
+		const { FileHistoryModal } = await import("./file-history-modal");
+		const modal = new FileHistoryModal(this.app, this.client, this.vaultSourceId, filePath, this.vaultRepoPath);
+		modal.open();
+	}
+
 	openGinkgoApp() {
 		const host = this.settings.apiHost;
 		const port = this.settings.apiPort;
@@ -626,8 +687,13 @@ export default class GinkgoBackupPlugin extends Plugin {
 				return;
 			}
 
+			const wasDisconnected = !this.connected;
 			this.connected = true;
 			this.consecutiveFailures = 0;
+
+			if (wasDisconnected && this.settings.stagingPushOnSave && this.pendingModifiedFiles.size > 0 && this.vaultSourceId > 0) {
+				this.stagingPushPendingFiles();
+			}
 
 			const progressArr = await this.client.getProgress() as BackupProgress | BackupProgress[];
 			const progress = Array.isArray(progressArr) ? progressArr[0] : progressArr;
@@ -699,6 +765,10 @@ export default class GinkgoBackupPlugin extends Plugin {
 
 		menu.addItem((item) => {
 			item.setTitle("立即备份").setIcon("upload").onClick(() => this.backupVault());
+		});
+
+		menu.addItem((item) => {
+			item.setTitle("取消备份").setIcon("x").onClick(() => this.cancelBackup());
 		});
 
 		menu.addItem((item) => {

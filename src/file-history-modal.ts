@@ -10,9 +10,11 @@ export class FileHistoryModal extends Modal {
 	private repoPath: string;
 	private versions: FileHistoryEntry[] = [];
 	private selectedVersion: FileHistoryEntry | null = null;
+	private compareVersion: FileHistoryEntry | null = null;
 	private currentContent: string = "";
 	private diffEl!: HTMLElement;
 	private restoreBtn!: HTMLButtonElement;
+	private compareBtn!: HTMLButtonElement;
 	private listEl!: HTMLElement;
 
 	constructor(app: App, client: GinkgoBackupClient, sourceId: number, filePath: string, repoPath: string) {
@@ -88,6 +90,13 @@ export class FileHistoryModal extends Modal {
 		this.restoreBtn.disabled = true;
 		this.restoreBtn.addEventListener("click", () => this.restoreSelectedVersion());
 
+		this.compareBtn = footerEl.createEl("button", {
+			cls: "ginkgo-btn-compare",
+			text: "对比两个版本",
+		});
+		this.compareBtn.disabled = true;
+		this.compareBtn.addEventListener("click", () => this.openCompareModal());
+
 		footerEl.createEl("button", { cls: "ginkgo-close-btn", text: "关闭" })
 			.addEventListener("click", () => this.close());
 	}
@@ -104,6 +113,9 @@ export class FileHistoryModal extends Modal {
 	}
 
 	private tsToDate(ts: number): Date {
+		if (ts > 1e15) {
+			return new Date(ts / 1000000);
+		}
 		return new Date(ts);
 	}
 
@@ -114,22 +126,35 @@ export class FileHistoryModal extends Modal {
 			const version = this.versions[i];
 			const isLatest = i === 0;
 			const isSelected = this.selectedVersion === version;
+			const isCompareBase = this.compareVersion === version;
 			const isCurrent = this.isSentinelTs(version.last_seen);
 
 			const itemEl = this.listEl.createEl("div", {
-				cls: `ginkgo-fh-item ${isSelected ? "is-selected" : ""} ${isLatest ? "is-latest" : ""}`,
+				cls: `ginkgo-fh-item ${isSelected ? "is-selected" : ""} ${isCompareBase ? "is-compare-base" : ""} ${isLatest ? "is-latest" : ""}`,
 			});
 
-			itemEl.addEventListener("click", () => {
-			if (this.selectedVersion === version) {
+			itemEl.addEventListener("click", (evt: MouseEvent) => {
+			if (this.compareVersion) {
+				if (version === this.compareVersion) {
+					this.deselectVersion();
+				} else {
+					this.selectVersion(version);
+				}
+			} else if (this.selectedVersion === version) {
 				this.deselectVersion();
+			} else if (evt.shiftKey && this.selectedVersion) {
+				this.compareVersion = this.selectedVersion;
+				this.selectVersion(version);
 			} else {
 				this.selectVersion(version);
 			}
 		});
 
 		const trackEl = itemEl.createEl("div", { cls: "ginkgo-fh-track" });
-		if (isSelected) {
+		if (isCompareBase) {
+			const baseEl = trackEl.createEl("div", { cls: "ginkgo-fh-compare-marker" });
+			setIcon(baseEl, "git-branch");
+		} else if (isSelected) {
 			const checkEl = trackEl.createEl("div", { cls: "ginkgo-fh-check" });
 			setIcon(checkEl, "check");
 		} else {
@@ -173,19 +198,39 @@ export class FileHistoryModal extends Modal {
 	}
 
 	private deselectVersion() {
-		this.selectedVersion = null;
+		if (this.compareVersion && this.selectedVersion) {
+			this.selectedVersion = null;
+			this.compareVersion = null;
+		} else {
+			this.selectedVersion = null;
+		}
 		this.renderVersionList();
 		this.restoreBtn.disabled = true;
 		this.restoreBtn.textContent = "恢复此版本";
+		this.compareBtn.disabled = true;
 		this.diffEl.empty();
 		this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: "点击左侧版本查看差异" });
 	}
 
 	private async selectVersion(version: FileHistoryEntry) {
+		if (this.compareVersion) {
+			if (this.compareVersion === version) {
+				this.compareVersion = null;
+				this.selectedVersion = null;
+			} else {
+				this.selectedVersion = version;
+				this.compareBtn.disabled = false;
+			}
+			this.renderVersionList();
+			this.restoreBtn.disabled = !this.selectedVersion;
+			return;
+		}
+
 		this.selectedVersion = version;
 		this.renderVersionList();
 		this.restoreBtn.disabled = false;
 		this.restoreBtn.textContent = "恢复此版本";
+		this.compareBtn.disabled = true;
 
 		this.diffEl.empty();
 		this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-loading", text: "加载差异..." });
@@ -341,49 +386,88 @@ export class FileHistoryModal extends Modal {
 	private async restoreSelectedVersion() {
 		if (!this.selectedVersion) return;
 
-		this.restoreBtn.disabled = true;
-		this.restoreBtn.textContent = "恢复中...";
+		const snapshotTime = this.effectiveTs(this.selectedVersion);
+		const versionLabel = this.isSentinelTs(this.selectedVersion.last_seen)
+			? "当前版本"
+			: this.formatTime(this.selectedVersion.last_seen);
 
-		try {
-			const snapshotTime = this.effectiveTs(this.selectedVersion);
-			const resp = await this.client.getFileContent(this.sourceId, this.filePath, snapshotTime, this.repoPath);
-			let versionContent = "";
-			if (resp.content) {
+		const { RestorePreviewModal } = await import("./restore-preview-modal");
+		const modal = new RestorePreviewModal(
+			this.app,
+			this.client,
+			this.sourceId,
+			this.filePath,
+			this.selectedVersion,
+			versionLabel,
+			this.repoPath,
+			async () => {
 				try {
-					versionContent = decodeURIComponent(escape(atob(resp.content)));
-				} catch {
-					versionContent = resp.content;
+					const resp = await this.client.getFileContent(this.sourceId, this.filePath, snapshotTime, this.repoPath);
+					let versionContent = "";
+					if (resp.content) {
+						try {
+							versionContent = decodeURIComponent(escape(atob(resp.content)));
+						} catch {
+							versionContent = resp.content;
+						}
+					}
+
+					let file = this.app.vault.getAbstractFileByPath(this.filePath);
+					if (!file) {
+						const allFiles = this.app.vault.getFiles();
+						const matches = allFiles.filter(f => f.name === this.filePath || f.path.endsWith("/" + this.filePath) || f.path === this.filePath);
+						if (matches.length > 0) {
+							file = matches[0];
+						}
+					}
+
+					if (file instanceof TFile) {
+						await this.app.vault.modify(file, versionContent);
+					} else {
+						const dirPath = this.filePath.includes("/") ? this.filePath.substring(0, this.filePath.lastIndexOf("/")) : "";
+						if (dirPath) {
+							await this.app.vault.createFolder(dirPath).catch(() => {});
+						}
+						await this.app.vault.create(this.filePath, versionContent);
+					}
+
+					this.currentContent = versionContent;
+					new Notice("Ginkgo: 文件已恢复");
+					this.close();
+				} catch (err) {
+					const msg = err instanceof Error ? err.message : String(err);
+					new Notice(`Ginkgo: 恢复失败 — ${msg}`);
 				}
 			}
+		);
+		modal.open();
+	}
 
-			let file = this.app.vault.getAbstractFileByPath(this.filePath);
-			if (!file) {
-				const allFiles = this.app.vault.getFiles();
-				const matches = allFiles.filter(f => f.name === this.filePath || f.path.endsWith("/" + this.filePath) || f.path === this.filePath);
-				if (matches.length > 0) {
-					file = matches[0];
-				}
-			}
+	private async openCompareModal() {
+		if (!this.compareVersion || !this.selectedVersion) return;
 
-			if (file instanceof TFile) {
-				await this.app.vault.modify(file, versionContent);
-			} else {
-				const dirPath = this.filePath.includes("/") ? this.filePath.substring(0, this.filePath.lastIndexOf("/")) : "";
-				if (dirPath) {
-					await this.app.vault.createFolder(dirPath).catch(() => {});
-				}
-				await this.app.vault.create(this.filePath, versionContent);
-			}
+		const oldTs = this.effectiveTs(this.compareVersion);
+		const newTs = this.effectiveTs(this.selectedVersion);
+		const oldLabel = this.isSentinelTs(this.compareVersion.last_seen)
+			? "当前版本"
+			: this.formatTime(this.compareVersion.last_seen);
+		const newLabel = this.isSentinelTs(this.selectedVersion.last_seen)
+			? "当前版本"
+			: this.formatTime(this.selectedVersion.last_seen);
 
-			this.currentContent = versionContent;
-			new Notice("Ginkgo: 文件已恢复");
-			this.close();
-		} catch (err) {
-			const msg = err instanceof Error ? err.message : String(err);
-			new Notice(`Ginkgo: 恢复失败 — ${msg}`);
-			this.restoreBtn.disabled = false;
-			this.restoreBtn.textContent = "恢复此版本";
-		}
+		const { FileDiffModal } = await import("./file-diff-modal");
+		const modal = new FileDiffModal(
+			this.app,
+			this.client,
+			this.sourceId,
+			this.filePath,
+			oldTs,
+			newTs,
+			oldLabel,
+			newLabel,
+			this.repoPath
+		);
+		modal.open();
 	}
 
 	private async readCurrentFile(): Promise<string> {

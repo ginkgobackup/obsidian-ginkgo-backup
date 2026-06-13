@@ -25,7 +25,7 @@ export class SetupGuideModal extends Modal {
 			text: "下载 Ginkgo Backup",
 			cls: "ginkgo-setup-link",
 		});
-		linkEl.href = "https://github.com/ginkgobackup/ginkgo";
+		linkEl.href = "https://ginkgobackup.com/#download";
 		linkEl.target = "_blank";
 
 		const step2 = contentEl.createEl("div", { cls: "ginkgo-setup-step" });

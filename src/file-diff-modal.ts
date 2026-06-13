@@ -10,6 +10,7 @@ export class FileDiffModal extends Modal {
 	private newSnapshot: number;
 	private oldLabel: string;
 	private newLabel: string;
+	private repoPath: string;
 
 	constructor(
 		app: App,
@@ -19,7 +20,8 @@ export class FileDiffModal extends Modal {
 		oldSnapshot: number,
 		newSnapshot: number,
 		oldLabel: string,
-		newLabel: string
+		newLabel: string,
+		repoPath: string
 	) {
 		super(app);
 		this.client = client;
@@ -29,6 +31,7 @@ export class FileDiffModal extends Modal {
 		this.newSnapshot = newSnapshot;
 		this.oldLabel = oldLabel;
 		this.newLabel = newLabel;
+		this.repoPath = repoPath;
 	}
 
 	async onOpen() {
@@ -48,22 +51,35 @@ export class FileDiffModal extends Modal {
 				this.sourceId,
 				this.filePath,
 				this.oldSnapshot,
-				this.newSnapshot
+				this.newSnapshot,
+				this.repoPath
 			);
 
 			let oldContent = "";
 			let newContent = "";
 
 			try {
-				const oldResp = await this.client.getFileContent(this.sourceId, this.filePath, this.oldSnapshot);
-				oldContent = oldResp.content ?? "";
+				const oldResp = await this.client.getFileContent(this.sourceId, this.filePath, this.oldSnapshot, this.repoPath);
+				if (oldResp.content) {
+					try {
+						oldContent = decodeURIComponent(escape(atob(oldResp.content)));
+					} catch {
+						oldContent = oldResp.content;
+					}
+				}
 			} catch {
 				oldContent = "(无法获取旧版本内容)";
 			}
 
 			try {
-				const newResp = await this.client.getFileContent(this.sourceId, this.filePath, this.newSnapshot);
-				newContent = newResp.content ?? "";
+				const newResp = await this.client.getFileContent(this.sourceId, this.filePath, this.newSnapshot, this.repoPath);
+				if (newResp.content) {
+					try {
+						newContent = decodeURIComponent(escape(atob(newResp.content)));
+					} catch {
+						newContent = newResp.content;
+					}
+				}
 			} catch {
 				newContent = "(无法获取新版本内容)";
 			}

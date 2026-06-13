@@ -8,6 +8,7 @@ export class RestorePreviewModal extends Modal {
 	private filePath: string;
 	private version: FileHistoryEntry;
 	private versionLabel: string;
+	private repoPath: string;
 	private onRestore: () => void;
 
 	constructor(
@@ -17,6 +18,7 @@ export class RestorePreviewModal extends Modal {
 		filePath: string,
 		version: FileHistoryEntry,
 		versionLabel: string,
+		repoPath: string,
 		onRestore: () => void
 	) {
 		super(app);
@@ -25,6 +27,7 @@ export class RestorePreviewModal extends Modal {
 		this.filePath = filePath;
 		this.version = version;
 		this.versionLabel = versionLabel;
+		this.repoPath = repoPath;
 		this.onRestore = onRestore;
 	}
 
@@ -50,12 +53,28 @@ export class RestorePreviewModal extends Modal {
 
 		let content = "";
 		try {
+			const snapshotTime = this.version.last_seen > 9000000000000
+				? this.version.first_seen
+				: this.version.last_seen;
 			const resp = await this.client.getFileContent(
 				this.sourceId,
 				this.filePath,
-				this.version.last_seen
+				snapshotTime,
+				this.repoPath
 			);
-			content = resp.content ?? "(空文件)";
+			if (resp.content) {
+				try {
+					content = decodeURIComponent(escape(atob(resp.content)));
+				} catch {
+					content = resp.content;
+				}
+			}
+			if (resp.error) {
+				content = `(读取失败: ${resp.error})`;
+			}
+			if (!content) {
+				content = "(空文件)";
+			}
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
 			content = `(无法获取内容: ${msg})`;
