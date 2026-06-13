@@ -1660,9 +1660,6 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.snapshots = [];
-    this.selectedSnapshot = null;
-    this.snapshotFiles = [];
-    this.snapshotHasMore = false;
     this.plugin = plugin;
   }
   getViewType() {
@@ -1710,7 +1707,6 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
     }
   }
   renderTimeline(container) {
-    var _a, _b, _c;
     container.findAll(".ginkgo-timeline-summary, .ginkgo-timeline-list, .ginkgo-empty-state").forEach((el) => el.remove());
     if (this.snapshots.length === 0) {
       const emptyEl = container.createEl("div", { cls: "ginkgo-empty-state" });
@@ -1732,38 +1728,26 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
         const dotCls = this.getDotClass(snap, daySnapshots);
         trackEl.createEl("div", { cls: dotCls });
         const cardEl = itemEl.createEl("div", { cls: "ginkgo-timeline-card" });
-        if (((_a = this.selectedSnapshot) == null ? void 0 : _a.id) === snap.id) {
-          cardEl.addClass("is-selected");
-        }
-        cardEl.addEventListener("click", () => this.selectSnapshot(snap));
-        const cardLeft = cardEl.createEl("div", { cls: "ginkgo-card-left" });
+        cardEl.addEventListener("click", () => this.openSnapshotDetail(snap));
         const time = new Date(snap.timestamp / 1e3);
-        cardLeft.createEl("div", {
+        cardEl.createEl("div", {
           cls: "ginkgo-card-time",
           text: time.toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" })
         });
-        const metaEl = cardLeft.createEl("div", { cls: "ginkgo-card-meta" });
+        const metaEl = cardEl.createEl("div", { cls: "ginkgo-card-meta" });
         metaEl.createEl("span", { text: `${snap.file_count} \u6587\u4EF6` });
         metaEl.createEl("span", { text: this.plugin.formatBytes(snap.total_size) });
         if (snap.new_files > 0) {
           metaEl.createEl("span", {
-            text: `+${snap.new_files} \u65B0`,
+            text: `+${snap.new_files}`,
             cls: "ginkgo-meta-new"
           });
         }
         if (snap.changed_files > 0) {
           metaEl.createEl("span", {
-            text: `~${snap.changed_files} \u6539`,
+            text: `~${snap.changed_files}`,
             cls: "ginkgo-meta-changed"
           });
-        }
-        const cardRight = cardEl.createEl("div", { cls: "ginkgo-card-right" });
-        if (((_b = this.selectedSnapshot) == null ? void 0 : _b.id) === snap.id) {
-          const chevron = cardRight.createEl("span", { cls: "ginkgo-card-chevron is-open" });
-          (0, import_obsidian3.setIcon)(chevron, "chevron-down");
-        } else {
-          const chevron = cardRight.createEl("span", { cls: "ginkgo-card-chevron" });
-          (0, import_obsidian3.setIcon)(chevron, "chevron-right");
         }
         if (snap.tags && snap.tags.length > 0) {
           const tagsEl = cardEl.createEl("div", { cls: "ginkgo-card-tags" });
@@ -1780,16 +1764,11 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
             cls: "ginkgo-badge-status"
           });
         }
-        if (((_c = this.selectedSnapshot) == null ? void 0 : _c.id) === snap.id) {
-          const detailEl = itemEl.createEl("div", { cls: "ginkgo-snapshot-detail" });
-          this.renderSnapshotDetailInline(detailEl, snap);
-        }
       }
     }
   }
   renderSummary(container) {
     const summaryEl = container.createEl("div", { cls: "ginkgo-timeline-summary" });
-    const totalFiles = this.snapshots.reduce((sum, s) => sum + s.file_count, 0);
     const totalSize = this.snapshots.reduce((sum, s) => sum + s.total_size, 0);
     const latestSnap = this.snapshots[0];
     const lastTime = latestSnap ? new Date(latestSnap.timestamp / 1e3).toLocaleTimeString(void 0, { hour: "2-digit", minute: "2-digit" }) : "-";
@@ -1829,110 +1808,114 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
     }
     return grouped;
   }
-  async selectSnapshot(snap) {
-    var _a, _b, _c;
-    if (((_a = this.selectedSnapshot) == null ? void 0 : _a.id) === snap.id) {
-      this.selectedSnapshot = null;
-      this.snapshotFiles = [];
-      this.renderTimeline(this.containerEl.children[1]);
-      return;
+  openSnapshotDetail(snap) {
+    new SnapshotDetailModal(this.app, this.plugin, snap).open();
+  }
+  async onClose() {
+  }
+};
+var SnapshotDetailModal = class extends import_obsidian3.Modal {
+  constructor(app, plugin, snap) {
+    super(app);
+    this.plugin = plugin;
+    this.snap = snap;
+  }
+  onOpen() {
+    var _a;
+    const { contentEl } = this;
+    contentEl.addClass("ginkgo-snapshot-modal");
+    const time = new Date(this.snap.timestamp / 1e3);
+    const headerEl = contentEl.createEl("div", { cls: "ginkgo-snap-header" });
+    const titleEl = headerEl.createEl("div", { cls: "ginkgo-snap-title" });
+    const iconSpan = titleEl.createSpan({ cls: "ginkgo-snap-title-icon" });
+    (0, import_obsidian3.setIcon)(iconSpan, "camera");
+    titleEl.createSpan({ text: `\u5FEB\u7167 ${time.toLocaleString()}` });
+    const statsEl = contentEl.createEl("div", { cls: "ginkgo-snap-stats" });
+    const statItems = [
+      { icon: "files", label: "\u6587\u4EF6", value: `${this.snap.file_count} \u6587\u4EF6 \xB7 ${this.snap.dir_count} \u76EE\u5F55` },
+      { icon: "hard-drive", label: "\u5927\u5C0F", value: this.plugin.formatBytes(this.snap.total_size) }
+    ];
+    if (this.snap.new_files > 0) {
+      statItems.push({ icon: "plus-circle", label: "\u65B0\u589E", value: `${this.snap.new_files} \u6587\u4EF6`, cls: "ginkgo-stat-new" });
     }
-    this.selectedSnapshot = snap;
-    this.snapshotFiles = [];
-    this.snapshotHasMore = false;
-    this.renderTimeline(this.containerEl.children[1]);
-    const detailEl = this.containerEl.querySelector(".ginkgo-snapshot-detail");
-    if (!detailEl)
-      return;
-    const loadingEl = detailEl.createEl("div", { cls: "ginkgo-detail-loading" });
-    const spinnerEl = loadingEl.createEl("div", { cls: "ginkgo-detail-spinner" });
-    (0, import_obsidian3.setIcon)(spinnerEl, "loader");
-    loadingEl.createEl("span", { text: "\u52A0\u8F7D\u6587\u4EF6\u5217\u8868..." });
+    if (this.snap.changed_files > 0) {
+      statItems.push({ icon: "refresh-cw", label: "\u4FEE\u6539", value: `${this.snap.changed_files} \u6587\u4EF6`, cls: "ginkgo-stat-changed" });
+    }
+    if (this.snap.deleted_count > 0) {
+      statItems.push({ icon: "minus-circle", label: "\u5220\u9664", value: `${this.snap.deleted_count} \u6587\u4EF6`, cls: "ginkgo-stat-deleted" });
+    }
+    if (this.snap.duration_ms > 0) {
+      const sec = Math.round(this.snap.duration_ms / 1e3);
+      statItems.push({ icon: "timer", label: "\u8017\u65F6", value: sec >= 60 ? `${Math.floor(sec / 60)}m${sec % 60}s` : `${sec}s` });
+    }
+    for (const item of statItems) {
+      const statEl = statsEl.createEl("div", { cls: `ginkgo-snap-stat ${(_a = item.cls) != null ? _a : ""}` });
+      const iconSpan2 = statEl.createEl("span", { cls: "ginkgo-snap-stat-icon" });
+      (0, import_obsidian3.setIcon)(iconSpan2, item.icon);
+      const textEl = statEl.createEl("div", { cls: "ginkgo-snap-stat-text" });
+      textEl.createEl("span", { cls: "ginkgo-snap-stat-label", text: item.label });
+      textEl.createEl("span", { cls: "ginkgo-snap-stat-value", text: item.value });
+    }
+    const fileSectionEl = contentEl.createEl("div", { cls: "ginkgo-snap-file-section" });
+    const fileHeaderEl = fileSectionEl.createEl("div", { cls: "ginkgo-snap-file-header" });
+    fileHeaderEl.createEl("span", { text: "\u6587\u4EF6\u5217\u8868" });
+    const loadingEl = fileHeaderEl.createEl("span", { cls: "ginkgo-snap-loading", text: "\u52A0\u8F7D\u4E2D..." });
+    const fileListEl = fileSectionEl.createEl("div", { cls: "ginkgo-snap-file-list" });
+    this.loadFiles(fileListEl, loadingEl);
+  }
+  async loadFiles(listEl, loadingEl) {
+    var _a;
     try {
       const result = await this.plugin.client.browseDirectory(
         this.plugin.vaultSourceId,
         "",
-        snap.timestamp,
-        100,
+        this.snap.timestamp,
+        200,
         0
       );
-      this.snapshotFiles = (_b = result.entries) != null ? _b : [];
-      this.snapshotHasMore = (_c = result.has_more) != null ? _c : false;
       loadingEl.remove();
-      this.renderFileList(detailEl, snap);
+      const entries = (_a = result.entries) != null ? _a : [];
+      if (entries.length === 0) {
+        listEl.createEl("div", { cls: "ginkgo-snap-empty", text: "\u6B64\u5FEB\u7167\u65E0\u6587\u4EF6" });
+        return;
+      }
+      const dirs = entries.filter((e) => e.type === "dir");
+      const files = entries.filter((e) => e.type !== "dir");
+      const sorted = [...dirs, ...files];
+      for (const entry of sorted) {
+        const rowEl = listEl.createEl("div", {
+          cls: `ginkgo-snap-file-row ${entry.is_deleted ? "is-deleted" : ""} ${entry.type === "dir" ? "is-dir" : "is-file"}`
+        });
+        const iconCls = entry.type === "dir" ? "folder" : this.getFileIcon(entry.name);
+        const iconEl = rowEl.createEl("span", { cls: "ginkgo-snap-file-icon" });
+        (0, import_obsidian3.setIcon)(iconEl, iconCls);
+        rowEl.createEl("span", { cls: "ginkgo-snap-file-name", text: entry.name });
+        if (entry.is_deleted) {
+          rowEl.createEl("span", { cls: "ginkgo-snap-file-deleted", text: "\u5DF2\u5220\u9664" });
+        }
+        const rightEl = rowEl.createEl("span", { cls: "ginkgo-snap-file-right" });
+        if (entry.type !== "dir") {
+          rightEl.createEl("span", { cls: "ginkgo-snap-file-size", text: this.plugin.formatBytes(entry.size) });
+        } else if (entry.file_count > 0) {
+          rightEl.createEl("span", { cls: "ginkgo-snap-file-count", text: `${entry.file_count} \u6587\u4EF6` });
+        }
+        if (entry.type !== "dir") {
+          rowEl.addEventListener("click", () => {
+            if (this.plugin.vaultSourceId > 0) {
+              const filePath = entry.path || entry.name;
+              this.close();
+              this.plugin.showFileHistoryByPath(filePath);
+            }
+          });
+        }
+      }
+      if (result.has_more) {
+        listEl.createEl("div", { cls: "ginkgo-snap-file-more", text: `\u8FD8\u6709\u66F4\u591A\u6587\u4EF6\uFF08\u5171 ${result.total} \u9879\uFF09` });
+      }
     } catch (err) {
       loadingEl.remove();
       const msg = err instanceof Error ? err.message : String(err);
-      detailEl.createEl("div", { cls: "ginkgo-error", text: `\u52A0\u8F7D\u5931\u8D25: ${msg}` });
-    }
-  }
-  renderSnapshotDetailInline(container, snap) {
-    const statsEl = container.createEl("div", { cls: "ginkgo-detail-stats" });
-    const time = new Date(snap.timestamp / 1e3);
-    const statItems = [
-      { icon: "clock", text: time.toLocaleString() },
-      { icon: "files", text: `${snap.file_count} \u6587\u4EF6 \xB7 ${snap.dir_count} \u76EE\u5F55` },
-      { icon: "hard-drive", text: this.plugin.formatBytes(snap.total_size) }
-    ];
-    if (snap.new_files > 0) {
-      statItems.push({ icon: "plus-circle", text: `${snap.new_files} \u65B0\u589E` });
-    }
-    if (snap.changed_files > 0) {
-      statItems.push({ icon: "refresh-cw", text: `${snap.changed_files} \u4FEE\u6539` });
-    }
-    if (snap.deleted_count > 0) {
-      statItems.push({ icon: "minus-circle", text: `${snap.deleted_count} \u5220\u9664` });
-    }
-    if (snap.duration_ms > 0) {
-      const sec = Math.round(snap.duration_ms / 1e3);
-      statItems.push({ icon: "timer", text: `${sec}s` });
-    }
-    for (const item of statItems) {
-      const statEl = statsEl.createEl("div", { cls: "ginkgo-detail-stat" });
-      const iconSpan = statEl.createEl("span", { cls: "ginkgo-detail-stat-icon" });
-      (0, import_obsidian3.setIcon)(iconSpan, item.icon);
-      statEl.createEl("span", { text: item.text });
-    }
-  }
-  renderFileList(container, snap) {
-    if (this.snapshotFiles.length === 0) {
-      const emptyEl = container.createEl("div", { cls: "ginkgo-detail-empty" });
-      const iconEl = emptyEl.createEl("span", { cls: "ginkgo-detail-empty-icon" });
-      (0, import_obsidian3.setIcon)(iconEl, "folder-open");
-      emptyEl.createEl("span", { text: "\u6839\u76EE\u5F55\u4E3A\u7A7A" });
-      return;
-    }
-    const dirs = this.snapshotFiles.filter((e) => e.type === "dir");
-    const files = this.snapshotFiles.filter((e) => e.type !== "dir");
-    const sorted = [...dirs, ...files];
-    const listEl = container.createEl("div", { cls: "ginkgo-detail-file-list" });
-    for (const entry of sorted) {
-      const fileEl = listEl.createEl("div", { cls: `ginkgo-detail-file ${entry.is_deleted ? "is-deleted" : ""}` });
-      const iconCls = entry.type === "dir" ? "folder" : this.getFileIcon(entry.name);
-      const iconEl = fileEl.createEl("span", { cls: "ginkgo-detail-file-icon" });
-      (0, import_obsidian3.setIcon)(iconEl, iconCls);
-      const nameEl = fileEl.createEl("span", { cls: "ginkgo-detail-file-name", text: entry.name });
-      if (entry.is_deleted) {
-        nameEl.createEl("span", { cls: "ginkgo-detail-file-deleted-badge", text: "\u5DF2\u5220\u9664" });
-      }
-      const rightEl = fileEl.createEl("span", { cls: "ginkgo-detail-file-right" });
-      if (entry.type !== "dir") {
-        rightEl.createEl("span", { cls: "ginkgo-detail-file-size", text: this.plugin.formatBytes(entry.size) });
-      } else if (entry.file_count > 0 || entry.dir_count > 0) {
-        rightEl.createEl("span", { cls: "ginkgo-detail-file-count", text: `${entry.file_count} \u6587\u4EF6` });
-      }
-      if (entry.type !== "dir") {
-        fileEl.addEventListener("click", () => {
-          if (this.plugin.vaultSourceId > 0) {
-            const filePath = entry.path || entry.name;
-            this.plugin.showFileHistoryByPath(filePath);
-          }
-        });
-      }
-    }
-    if (this.snapshotHasMore) {
-      const moreEl = container.createEl("div", { cls: "ginkgo-detail-more" });
-      moreEl.createEl("span", { text: "\u66F4\u591A\u6587\u4EF6\u672A\u663E\u793A..." });
+      listEl.createEl("div", { cls: "ginkgo-error", text: `\u52A0\u8F7D\u5931\u8D25: ${msg}` });
     }
   }
   getFileIcon(name) {
@@ -1956,7 +1939,8 @@ var FileHistoryView = class extends import_obsidian3.ItemView {
     };
     return (_c = iconMap[ext]) != null ? _c : "file";
   }
-  async onClose() {
+  onClose() {
+    this.contentEl.empty();
   }
 };
 
