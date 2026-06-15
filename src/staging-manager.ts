@@ -18,8 +18,9 @@ export class StagingManager {
 	pendingModifiedFiles: Set<string> = new Set();
 	private lastPushedHashes: Map<string, string> = new Map();
 	private debouncedSavePending?: () => void;
-	private debouncedAutoBackup?: () => void;
+	private debouncedStagingPush?: () => void;
 	private modifyEventRef?: EventRef;
+	private autoBackupTimer?: number;
 	private onBackupVault: () => void;
 	private registerEvent: (ref: EventRef) => void;
 
@@ -57,6 +58,14 @@ export class StagingManager {
 			this.app.vault.offref(this.modifyEventRef);
 			this.modifyEventRef = undefined;
 		}
+		this.stopAutoBackupTimer();
+	}
+
+	private stopAutoBackupTimer() {
+		if (this.autoBackupTimer) {
+			window.clearTimeout(this.autoBackupTimer);
+			this.autoBackupTimer = undefined;
+		}
 	}
 
 	async persist() {
@@ -71,21 +80,20 @@ export class StagingManager {
 			this.app.vault.offref(this.modifyEventRef);
 			this.modifyEventRef = undefined;
 		}
+		this.stopAutoBackupTimer();
 
-		this.debouncedAutoBackup = debounce(
+		this.debouncedStagingPush = debounce(
 			async () => {
 				const sourceId = this.getVaultSourceId();
 				if (sourceId === 0) return;
 				if (this.settings.stagingPushOnSave) {
 					await this.stagingPushPendingFiles();
-				} else if (this.settings.autoBackupOnSave) {
-					this.onBackupVault();
 				}
 			},
 			this.settings.autoBackupDebounceMs
 		);
 
-		if (this.settings.stagingPushOnSave || this.settings.autoBackupOnSave) {
+		if (this.settings.stagingPushOnSave) {
 			this.modifyEventRef = this.app.vault.on("modify", async (file) => {
 				if (!(file instanceof TFile)) return;
 				if (this.isExcluded(file.path)) return;
@@ -99,12 +107,27 @@ export class StagingManager {
 				if (this.debouncedSavePending) {
 					this.debouncedSavePending();
 				}
-				if (this.debouncedAutoBackup) {
-					this.debouncedAutoBackup();
+				if (this.debouncedStagingPush) {
+					this.debouncedStagingPush();
 				}
 			});
 			this.registerEvent(this.modifyEventRef);
 		}
+
+		if (this.settings.autoBackup) {
+			this.scheduleAutoBackup();
+		}
+	}
+
+	private scheduleAutoBackup() {
+		const intervalMs = this.settings.autoBackupIntervalMinutes * 60 * 1000;
+		this.autoBackupTimer = window.setTimeout(async () => {
+			const sourceId = this.getVaultSourceId();
+			if (sourceId > 0) {
+				this.onBackupVault();
+			}
+			this.scheduleAutoBackup();
+		}, intervalMs);
 	}
 
 	private isExcluded(filePath: string): boolean {

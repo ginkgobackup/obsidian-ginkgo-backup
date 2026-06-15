@@ -109,8 +109,9 @@ export type I18nKey =
 	| "setting.reconfigure"
 	| "setting.oneClickConfig"
 	| "setting.autoBackup"
-	| "setting.fullBackup"
-	| "setting.fullBackupDesc"
+	| "setting.autoBackupDesc"
+	| "setting.autoBackupInterval"
+	| "setting.autoBackupIntervalDesc"
 	| "setting.debounceDelay"
 	| "setting.debounceDelayDesc"
 	| "setting.watchExtensionsDesc2"
@@ -336,11 +337,12 @@ const translations: Record<Locale, Record<I18nKey, string>> = {
 		"setting.sourceNotConfigured": "未配置，点击一键配置选择仓库",
 		"setting.reconfigure": "重新配置",
 		"setting.oneClickConfig": "一键配置",
-		"setting.autoBackup": "即时推送",
-		"setting.fullBackup": "全量备份",
-		"setting.fullBackupDesc": "文件保存后触发全量备份（较慢，与即时推送互斥）",
-		"setting.debounceDelay": "防抖延迟",
-		"setting.debounceDelayDesc": "文件保存后等待多久再触发推送（毫秒）",
+		"setting.autoBackup": "定时全量备份",
+		"setting.autoBackupDesc": "按设定间隔自动执行全量备份（与即时推送互不冲突）",
+		"setting.autoBackupInterval": "全量备份间隔（分钟）",
+		"setting.autoBackupIntervalDesc": "自动全量备份的触发间隔，默认 60 分钟",
+		"setting.debounceDelay": "即时推送防抖延迟",
+		"setting.debounceDelayDesc": "文件保存后等待多久再触发即时推送（毫秒）",
 		"setting.watchExtensionsDesc2": "即时推送的文件扩展名，逗号或换行分隔（如 md, canvas, base）。其他文件由兜底备份覆盖",
 		"setting.excludePathsDesc2": "不备份的路径前缀，每行一个（如 .obsidian, .trash）",
 		"setting.refreshIntervalDesc2": "状态栏刷新间隔（秒）",
@@ -350,7 +352,7 @@ const translations: Record<Locale, Record<I18nKey, string>> = {
 		"setting.openAppDesc": "在浏览器中打开 Ginkgo Backup",
 		"setting.helpLine1": "确保 Ginkgo Backup 桌面应用正在运行，并且当前 Vault 已添加到备份源。",
 		"setting.helpLine2": "使用命令面板（Ctrl/Cmd + P）搜索 Ginkgo 查看所有可用命令。",
-		"setting.helpLine3": "即时推送模式：笔记保存后即时推送到暂存区，后台自动完成备份，不阻塞编辑。图片等附件由兜底备份覆盖。",
+		"setting.helpLine3": "即时推送：笔记保存后即时推送到暂存区。定时全量备份：按设定间隔自动执行完整备份。图片等附件由兜底备份覆盖。",
 		"setting.largeFileThreshold": "大文件阈值（MB）",
 		"setting.largeFileThresholdDesc": "超过此大小的文件不执行即时推送，避免卡顿，由全量备份处理",
 		"btn.save": "保存",
@@ -563,11 +565,12 @@ const translations: Record<Locale, Record<I18nKey, string>> = {
 		"setting.sourceNotConfigured": "Not configured, click one-click config to select repositories",
 		"setting.reconfigure": "Reconfigure",
 		"setting.oneClickConfig": "One-click config",
-		"setting.autoBackup": "Instant push",
-		"setting.fullBackup": "Full backup",
-		"setting.fullBackupDesc": "Trigger a full backup after save (slower, mutually exclusive with instant push)",
-		"setting.debounceDelay": "Debounce delay",
-		"setting.debounceDelayDesc": "How long to wait after save before pushing (milliseconds)",
+		"setting.autoBackup": "Scheduled full backup",
+		"setting.autoBackupDesc": "Automatically run a full backup at the configured interval (independent of instant push)",
+		"setting.autoBackupInterval": "Full backup interval (minutes)",
+		"setting.autoBackupIntervalDesc": "How often to trigger an automatic full backup, default 60 minutes",
+		"setting.debounceDelay": "Instant push debounce delay",
+		"setting.debounceDelayDesc": "How long to wait after save before triggering instant push (milliseconds)",
 		"setting.watchExtensionsDesc2": "Extensions for instant push, comma or newline separated (e.g. md, canvas, base). Other files are covered by periodic full backup",
 		"setting.excludePathsDesc2": "Path prefixes to exclude, one per line (e.g. .obsidian, .trash)",
 		"setting.refreshIntervalDesc2": "Status bar refresh interval (seconds)",
@@ -577,7 +580,7 @@ const translations: Record<Locale, Record<I18nKey, string>> = {
 		"setting.openAppDesc": "Open Ginkgo Backup in browser",
 		"setting.helpLine1": "Make sure Ginkgo Backup is running and the current vault is added as a backup source.",
 		"setting.helpLine2": "Use the command palette (Ctrl/Cmd + P) and search for Ginkgo to see all available commands.",
-		"setting.helpLine3": "Instant push mode: notes are pushed to staging immediately after save and backed up in the background without blocking editing. Images and attachments are covered by periodic full backup.",
+		"setting.helpLine3": "Instant push: notes are pushed to staging immediately after save. Scheduled full backup: a complete backup runs automatically at the configured interval. Images and attachments are covered by periodic full backup.",
 		"setting.largeFileThreshold": "Large file threshold (MB)",
 		"setting.largeFileThresholdDesc": "Files larger than this are not pushed instantly to avoid lag; they are handled by full backup",
 		"btn.save": "Save",

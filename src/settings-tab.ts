@@ -258,33 +258,13 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 		containerEl.createEl("h3", { text: t("setting.backupStrategy") });
 
 		new Setting(containerEl)
-			.setName(t("setting.autoBackup"))
+			.setName(t("setting.stagingPushOnSave"))
 			.setDesc(t("setting.stagingPushOnSaveDesc"))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.stagingPushOnSave)
 					.onChange(async (value) => {
 						this.plugin.settings.stagingPushOnSave = value;
-						if (value) {
-							this.plugin.settings.autoBackupOnSave = false;
-						}
-						await this.plugin.saveSettings();
-						this.display();
-					})
-			);
-
-		new Setting(containerEl)
-			.setName(t("setting.fullBackup"))
-			.setDesc(t("setting.fullBackupDesc"))
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.autoBackupOnSave)
-					.setDisabled(this.plugin.settings.stagingPushOnSave)
-					.onChange(async (value) => {
-						this.plugin.settings.autoBackupOnSave = value;
-						if (value) {
-							this.plugin.settings.stagingPushOnSave = false;
-						}
 						await this.plugin.saveSettings();
 						this.display();
 					})
@@ -293,6 +273,7 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName(t("setting.debounceDelay"))
 			.setDesc(t("setting.debounceDelayDesc"))
+			.setDisabled(!this.plugin.settings.stagingPushOnSave)
 			.addSlider((slider) =>
 				slider
 					.setLimits(5000, 120000, 5000)
@@ -300,6 +281,34 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 					.setDynamicTooltip()
 					.onChange(async (value) => {
 						this.plugin.settings.autoBackupDebounceMs = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName(t("setting.autoBackup"))
+			.setDesc(t("setting.autoBackupDesc"))
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.autoBackup)
+					.onChange(async (value) => {
+						this.plugin.settings.autoBackup = value;
+						await this.plugin.saveSettings();
+						this.display();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName(t("setting.autoBackupInterval"))
+			.setDesc(t("setting.autoBackupIntervalDesc"))
+			.setDisabled(!this.plugin.settings.autoBackup)
+			.addSlider((slider) =>
+				slider
+					.setLimits(5, 1440, 5)
+					.setValue(this.plugin.settings.autoBackupIntervalMinutes)
+					.setDynamicTooltip()
+					.onChange(async (value) => {
+						this.plugin.settings.autoBackupIntervalMinutes = value;
 						await this.plugin.saveSettings();
 					})
 			);

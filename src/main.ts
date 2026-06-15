@@ -95,7 +95,12 @@ export default class GinkgoBackupPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const data = await this.loadData();
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+		if (data && typeof data.autoBackupOnSave === "boolean") {
+			this.settings.autoBackup = data.autoBackupOnSave;
+			delete (this.settings as unknown as Record<string, unknown>).autoBackupOnSave;
+		}
 	}
 
 	async saveSettings() {

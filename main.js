@@ -171,11 +171,12 @@ var init_i18n = __esm({
         "setting.sourceNotConfigured": "\u672A\u914D\u7F6E\uFF0C\u70B9\u51FB\u4E00\u952E\u914D\u7F6E\u9009\u62E9\u4ED3\u5E93",
         "setting.reconfigure": "\u91CD\u65B0\u914D\u7F6E",
         "setting.oneClickConfig": "\u4E00\u952E\u914D\u7F6E",
-        "setting.autoBackup": "\u5373\u65F6\u63A8\u9001",
-        "setting.fullBackup": "\u5168\u91CF\u5907\u4EFD",
-        "setting.fullBackupDesc": "\u6587\u4EF6\u4FDD\u5B58\u540E\u89E6\u53D1\u5168\u91CF\u5907\u4EFD\uFF08\u8F83\u6162\uFF0C\u4E0E\u5373\u65F6\u63A8\u9001\u4E92\u65A5\uFF09",
-        "setting.debounceDelay": "\u9632\u6296\u5EF6\u8FDF",
-        "setting.debounceDelayDesc": "\u6587\u4EF6\u4FDD\u5B58\u540E\u7B49\u5F85\u591A\u4E45\u518D\u89E6\u53D1\u63A8\u9001\uFF08\u6BEB\u79D2\uFF09",
+        "setting.autoBackup": "\u5B9A\u65F6\u5168\u91CF\u5907\u4EFD",
+        "setting.autoBackupDesc": "\u6309\u8BBE\u5B9A\u95F4\u9694\u81EA\u52A8\u6267\u884C\u5168\u91CF\u5907\u4EFD\uFF08\u4E0E\u5373\u65F6\u63A8\u9001\u4E92\u4E0D\u51B2\u7A81\uFF09",
+        "setting.autoBackupInterval": "\u5168\u91CF\u5907\u4EFD\u95F4\u9694\uFF08\u5206\u949F\uFF09",
+        "setting.autoBackupIntervalDesc": "\u81EA\u52A8\u5168\u91CF\u5907\u4EFD\u7684\u89E6\u53D1\u95F4\u9694\uFF0C\u9ED8\u8BA4 60 \u5206\u949F",
+        "setting.debounceDelay": "\u5373\u65F6\u63A8\u9001\u9632\u6296\u5EF6\u8FDF",
+        "setting.debounceDelayDesc": "\u6587\u4EF6\u4FDD\u5B58\u540E\u7B49\u5F85\u591A\u4E45\u518D\u89E6\u53D1\u5373\u65F6\u63A8\u9001\uFF08\u6BEB\u79D2\uFF09",
         "setting.watchExtensionsDesc2": "\u5373\u65F6\u63A8\u9001\u7684\u6587\u4EF6\u6269\u5C55\u540D\uFF0C\u9017\u53F7\u6216\u6362\u884C\u5206\u9694\uFF08\u5982 md, canvas, base\uFF09\u3002\u5176\u4ED6\u6587\u4EF6\u7531\u515C\u5E95\u5907\u4EFD\u8986\u76D6",
         "setting.excludePathsDesc2": "\u4E0D\u5907\u4EFD\u7684\u8DEF\u5F84\u524D\u7F00\uFF0C\u6BCF\u884C\u4E00\u4E2A\uFF08\u5982 .obsidian, .trash\uFF09",
         "setting.refreshIntervalDesc2": "\u72B6\u6001\u680F\u5237\u65B0\u95F4\u9694\uFF08\u79D2\uFF09",
@@ -185,7 +186,7 @@ var init_i18n = __esm({
         "setting.openAppDesc": "\u5728\u6D4F\u89C8\u5668\u4E2D\u6253\u5F00 Ginkgo Backup",
         "setting.helpLine1": "\u786E\u4FDD Ginkgo Backup \u684C\u9762\u5E94\u7528\u6B63\u5728\u8FD0\u884C\uFF0C\u5E76\u4E14\u5F53\u524D Vault \u5DF2\u6DFB\u52A0\u5230\u5907\u4EFD\u6E90\u3002",
         "setting.helpLine2": "\u4F7F\u7528\u547D\u4EE4\u9762\u677F\uFF08Ctrl/Cmd + P\uFF09\u641C\u7D22 Ginkgo \u67E5\u770B\u6240\u6709\u53EF\u7528\u547D\u4EE4\u3002",
-        "setting.helpLine3": "\u5373\u65F6\u63A8\u9001\u6A21\u5F0F\uFF1A\u7B14\u8BB0\u4FDD\u5B58\u540E\u5373\u65F6\u63A8\u9001\u5230\u6682\u5B58\u533A\uFF0C\u540E\u53F0\u81EA\u52A8\u5B8C\u6210\u5907\u4EFD\uFF0C\u4E0D\u963B\u585E\u7F16\u8F91\u3002\u56FE\u7247\u7B49\u9644\u4EF6\u7531\u515C\u5E95\u5907\u4EFD\u8986\u76D6\u3002",
+        "setting.helpLine3": "\u5373\u65F6\u63A8\u9001\uFF1A\u7B14\u8BB0\u4FDD\u5B58\u540E\u5373\u65F6\u63A8\u9001\u5230\u6682\u5B58\u533A\u3002\u5B9A\u65F6\u5168\u91CF\u5907\u4EFD\uFF1A\u6309\u8BBE\u5B9A\u95F4\u9694\u81EA\u52A8\u6267\u884C\u5B8C\u6574\u5907\u4EFD\u3002\u56FE\u7247\u7B49\u9644\u4EF6\u7531\u515C\u5E95\u5907\u4EFD\u8986\u76D6\u3002",
         "setting.largeFileThreshold": "\u5927\u6587\u4EF6\u9608\u503C\uFF08MB\uFF09",
         "setting.largeFileThresholdDesc": "\u8D85\u8FC7\u6B64\u5927\u5C0F\u7684\u6587\u4EF6\u4E0D\u6267\u884C\u5373\u65F6\u63A8\u9001\uFF0C\u907F\u514D\u5361\u987F\uFF0C\u7531\u5168\u91CF\u5907\u4EFD\u5904\u7406",
         "btn.save": "\u4FDD\u5B58",
@@ -398,11 +399,12 @@ var init_i18n = __esm({
         "setting.sourceNotConfigured": "Not configured, click one-click config to select repositories",
         "setting.reconfigure": "Reconfigure",
         "setting.oneClickConfig": "One-click config",
-        "setting.autoBackup": "Instant push",
-        "setting.fullBackup": "Full backup",
-        "setting.fullBackupDesc": "Trigger a full backup after save (slower, mutually exclusive with instant push)",
-        "setting.debounceDelay": "Debounce delay",
-        "setting.debounceDelayDesc": "How long to wait after save before pushing (milliseconds)",
+        "setting.autoBackup": "Scheduled full backup",
+        "setting.autoBackupDesc": "Automatically run a full backup at the configured interval (independent of instant push)",
+        "setting.autoBackupInterval": "Full backup interval (minutes)",
+        "setting.autoBackupIntervalDesc": "How often to trigger an automatic full backup, default 60 minutes",
+        "setting.debounceDelay": "Instant push debounce delay",
+        "setting.debounceDelayDesc": "How long to wait after save before triggering instant push (milliseconds)",
         "setting.watchExtensionsDesc2": "Extensions for instant push, comma or newline separated (e.g. md, canvas, base). Other files are covered by periodic full backup",
         "setting.excludePathsDesc2": "Path prefixes to exclude, one per line (e.g. .obsidian, .trash)",
         "setting.refreshIntervalDesc2": "Status bar refresh interval (seconds)",
@@ -412,7 +414,7 @@ var init_i18n = __esm({
         "setting.openAppDesc": "Open Ginkgo Backup in browser",
         "setting.helpLine1": "Make sure Ginkgo Backup is running and the current vault is added as a backup source.",
         "setting.helpLine2": "Use the command palette (Ctrl/Cmd + P) and search for Ginkgo to see all available commands.",
-        "setting.helpLine3": "Instant push mode: notes are pushed to staging immediately after save and backed up in the background without blocking editing. Images and attachments are covered by periodic full backup.",
+        "setting.helpLine3": "Instant push: notes are pushed to staging immediately after save. Scheduled full backup: a complete backup runs automatically at the configured interval. Images and attachments are covered by periodic full backup.",
         "setting.largeFileThreshold": "Large file threshold (MB)",
         "setting.largeFileThresholdDesc": "Files larger than this are not pushed instantly to avoid lag; they are handled by full backup",
         "btn.save": "Save",
@@ -1205,7 +1207,8 @@ var DEFAULT_SETTINGS = {
   apiToken: "",
   refreshInterval: 60,
   showStatusBar: true,
-  autoBackupOnSave: false,
+  autoBackup: false,
+  autoBackupIntervalMinutes: 60,
   autoBackupDebounceMs: 3e4,
   stagingPushOnSave: true,
   sourceId: 0,
@@ -1643,29 +1646,29 @@ var GinkgoBackupSettingTab = class extends import_obsidian2.PluginSettingTab {
   }
   renderAutoBackupSection(containerEl) {
     containerEl.createEl("h3", { text: t("setting.backupStrategy") });
-    new import_obsidian2.Setting(containerEl).setName(t("setting.autoBackup")).setDesc(t("setting.stagingPushOnSaveDesc")).addToggle(
+    new import_obsidian2.Setting(containerEl).setName(t("setting.stagingPushOnSave")).setDesc(t("setting.stagingPushOnSaveDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.stagingPushOnSave).onChange(async (value) => {
         this.plugin.settings.stagingPushOnSave = value;
-        if (value) {
-          this.plugin.settings.autoBackupOnSave = false;
-        }
         await this.plugin.saveSettings();
         this.display();
       })
     );
-    new import_obsidian2.Setting(containerEl).setName(t("setting.fullBackup")).setDesc(t("setting.fullBackupDesc")).addToggle(
-      (toggle) => toggle.setValue(this.plugin.settings.autoBackupOnSave).setDisabled(this.plugin.settings.stagingPushOnSave).onChange(async (value) => {
-        this.plugin.settings.autoBackupOnSave = value;
-        if (value) {
-          this.plugin.settings.stagingPushOnSave = false;
-        }
-        await this.plugin.saveSettings();
-        this.display();
-      })
-    );
-    new import_obsidian2.Setting(containerEl).setName(t("setting.debounceDelay")).setDesc(t("setting.debounceDelayDesc")).addSlider(
+    new import_obsidian2.Setting(containerEl).setName(t("setting.debounceDelay")).setDesc(t("setting.debounceDelayDesc")).setDisabled(!this.plugin.settings.stagingPushOnSave).addSlider(
       (slider) => slider.setLimits(5e3, 12e4, 5e3).setValue(this.plugin.settings.autoBackupDebounceMs).setDynamicTooltip().onChange(async (value) => {
         this.plugin.settings.autoBackupDebounceMs = value;
+        await this.plugin.saveSettings();
+      })
+    );
+    new import_obsidian2.Setting(containerEl).setName(t("setting.autoBackup")).setDesc(t("setting.autoBackupDesc")).addToggle(
+      (toggle) => toggle.setValue(this.plugin.settings.autoBackup).onChange(async (value) => {
+        this.plugin.settings.autoBackup = value;
+        await this.plugin.saveSettings();
+        this.display();
+      })
+    );
+    new import_obsidian2.Setting(containerEl).setName(t("setting.autoBackupInterval")).setDesc(t("setting.autoBackupIntervalDesc")).setDisabled(!this.plugin.settings.autoBackup).addSlider(
+      (slider) => slider.setLimits(5, 1440, 5).setValue(this.plugin.settings.autoBackupIntervalMinutes).setDynamicTooltip().onChange(async (value) => {
+        this.plugin.settings.autoBackupIntervalMinutes = value;
         await this.plugin.saveSettings();
       })
     );
@@ -2343,6 +2346,13 @@ var StagingManager = class {
       this.app.vault.offref(this.modifyEventRef);
       this.modifyEventRef = void 0;
     }
+    this.stopAutoBackupTimer();
+  }
+  stopAutoBackupTimer() {
+    if (this.autoBackupTimer) {
+      window.clearTimeout(this.autoBackupTimer);
+      this.autoBackupTimer = void 0;
+    }
   }
   async persist() {
     await this.saveHashCache();
@@ -2355,20 +2365,19 @@ var StagingManager = class {
       this.app.vault.offref(this.modifyEventRef);
       this.modifyEventRef = void 0;
     }
-    this.debouncedAutoBackup = (0, import_obsidian5.debounce)(
+    this.stopAutoBackupTimer();
+    this.debouncedStagingPush = (0, import_obsidian5.debounce)(
       async () => {
         const sourceId = this.getVaultSourceId();
         if (sourceId === 0)
           return;
         if (this.settings.stagingPushOnSave) {
           await this.stagingPushPendingFiles();
-        } else if (this.settings.autoBackupOnSave) {
-          this.onBackupVault();
         }
       },
       this.settings.autoBackupDebounceMs
     );
-    if (this.settings.stagingPushOnSave || this.settings.autoBackupOnSave) {
+    if (this.settings.stagingPushOnSave) {
       this.modifyEventRef = this.app.vault.on("modify", async (file) => {
         if (!(file instanceof import_obsidian5.TFile))
           return;
@@ -2386,12 +2395,25 @@ var StagingManager = class {
         if (this.debouncedSavePending) {
           this.debouncedSavePending();
         }
-        if (this.debouncedAutoBackup) {
-          this.debouncedAutoBackup();
+        if (this.debouncedStagingPush) {
+          this.debouncedStagingPush();
         }
       });
       this.registerEvent(this.modifyEventRef);
     }
+    if (this.settings.autoBackup) {
+      this.scheduleAutoBackup();
+    }
+  }
+  scheduleAutoBackup() {
+    const intervalMs = this.settings.autoBackupIntervalMinutes * 60 * 1e3;
+    this.autoBackupTimer = window.setTimeout(async () => {
+      const sourceId = this.getVaultSourceId();
+      if (sourceId > 0) {
+        this.onBackupVault();
+      }
+      this.scheduleAutoBackup();
+    }, intervalMs);
   }
   isExcluded(filePath) {
     for (const pattern of this.settings.excludePaths) {
@@ -2696,7 +2718,12 @@ var GinkgoBackupPlugin = class extends import_obsidian8.Plugin {
     this.app.workspace.detachLeavesOfType(TIMELINE_VIEW_TYPE);
   }
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const data = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+    if (data && typeof data.autoBackupOnSave === "boolean") {
+      this.settings.autoBackup = data.autoBackupOnSave;
+      delete this.settings.autoBackupOnSave;
+    }
   }
   async saveSettings() {
     await this.saveData(this.settings);

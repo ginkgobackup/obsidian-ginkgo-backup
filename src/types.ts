@@ -12,7 +12,8 @@ export interface GinkgoBackupSettings {
 	apiToken: string;
 	refreshInterval: number;
 	showStatusBar: boolean;
-	autoBackupOnSave: boolean;
+	autoBackup: boolean;
+	autoBackupIntervalMinutes: number;
 	autoBackupDebounceMs: number;
 	stagingPushOnSave: boolean;
 	sourceId: number;
@@ -29,7 +30,8 @@ export const DEFAULT_SETTINGS: GinkgoBackupSettings = {
 	apiToken: "",
 	refreshInterval: 60,
 	showStatusBar: true,
-	autoBackupOnSave: false,
+	autoBackup: false,
+	autoBackupIntervalMinutes: 60,
 	autoBackupDebounceMs: 30000,
 	stagingPushOnSave: true,
 	sourceId: 0,
