@@ -13,7 +13,6 @@ export class StagingManager {
 	private client: GinkgoBackupClient;
 	private settings: GinkgoBackupSettings;
 	private getVaultSourceId: () => number;
-	private getVaultRepoPath: () => string;
 
 	pendingModifiedFiles: Set<string> = new Set();
 	private lastPushedHashes: Map<string, string> = new Map();
@@ -29,7 +28,6 @@ export class StagingManager {
 		client: GinkgoBackupClient,
 		settings: GinkgoBackupSettings,
 		getVaultSourceId: () => number,
-		getVaultRepoPath: () => string,
 		onBackupVault: () => void,
 		registerEvent: (ref: EventRef) => void
 	) {
@@ -37,7 +35,6 @@ export class StagingManager {
 		this.client = client;
 		this.settings = settings;
 		this.getVaultSourceId = getVaultSourceId;
-		this.getVaultRepoPath = getVaultRepoPath;
 		this.onBackupVault = onBackupVault;
 		this.registerEvent = registerEvent;
 	}
@@ -235,7 +232,7 @@ export class StagingManager {
 		}
 
 		try {
-			const result = await this.client.stagingPush({
+			await this.client.stagingPush({
 				source_id: sourceId,
 				message: `Obsidian: ${files.length} file${files.length > 1 ? "s" : ""}`,
 				files,

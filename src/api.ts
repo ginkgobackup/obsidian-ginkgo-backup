@@ -101,9 +101,11 @@ export class GinkgoBackupClient {
 		}
 
 		if (resp.text === "" || resp.text === undefined || resp.text === null) {
+			// 已知类型安全妥协:空响应返回 undefined,调用方需自行处理可能的空值
 			return undefined as unknown as T;
 		}
 
+		// 信任服务端返回的 JSON 结构,未做运行时 schema 校验
 		return resp.json as T;
 	}
 

@@ -514,7 +514,6 @@ export class FileHistoryModal extends Modal {
 		const diffSec = Math.floor(diffMs / 1000);
 		const diffMin = Math.floor(diffSec / 60);
 		const diffHour = Math.floor(diffMin / 60);
-		const diffDay = Math.floor(diffHour / 24);
 
 		if (diffSec < 60) return t("time.justNow");
 		if (diffMin < 60) return t("time.minutesAgo", { count: diffMin });

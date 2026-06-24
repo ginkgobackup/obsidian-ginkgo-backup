@@ -1,14 +1,12 @@
-import { App, Modal, Notice } from "obsidian";
+import { App, Modal } from "obsidian";
 import { GinkgoBackupClient } from "./api";
 
 export class SetupGuideModal extends Modal {
 	private client: GinkgoBackupClient;
-	private onSetupComplete?: () => void;
 
-	constructor(app: App, client: GinkgoBackupClient, onSetupComplete?: () => void) {
+	constructor(app: App, client: GinkgoBackupClient) {
 		super(app);
 		this.client = client;
-		this.onSetupComplete = onSetupComplete;
 	}
 
 	async onOpen() {

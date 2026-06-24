@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, Modal, Notice, setIcon } from "obsidian";
+import { ItemView, WorkspaceLeaf, Modal, setIcon } from "obsidian";
 import GinkgoBackupPlugin from "./main";
 import { t } from "./i18n";
 import type { Snapshot, DirectoryEntry } from "./types";

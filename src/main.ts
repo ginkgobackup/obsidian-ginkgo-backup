@@ -70,7 +70,6 @@ export default class GinkgoBackupPlugin extends Plugin {
 			this.client,
 			this.settings,
 			() => this.connectionManager.vaultSourceId,
-			() => this.connectionManager.vaultRepoPath,
 			() => this.backupVault(),
 			(ref: EventRef) => this.registerEvent(ref)
 		);
