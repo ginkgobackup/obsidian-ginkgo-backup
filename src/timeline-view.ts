@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, Modal, setIcon } from "obsidian";
+import { App, ItemView, WorkspaceLeaf, Modal, setIcon } from "obsidian";
 import GinkgoBackupPlugin from "./main";
 import { t } from "./i18n";
 import type { Snapshot, DirectoryEntry } from "./types";
@@ -209,7 +209,7 @@ class SnapshotDetailModal extends Modal {
 	private plugin: GinkgoBackupPlugin;
 	private snap: Snapshot;
 
-	constructor(app: any, plugin: GinkgoBackupPlugin, snap: Snapshot) {
+	constructor(app: App, plugin: GinkgoBackupPlugin, snap: Snapshot) {
 		super(app);
 		this.plugin = plugin;
 		this.snap = snap;
