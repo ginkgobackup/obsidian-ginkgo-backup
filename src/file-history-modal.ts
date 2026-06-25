@@ -2,7 +2,9 @@ import { App, Modal, Notice, TFile, setIcon } from "obsidian";
 import { GinkgoBackupClient } from "./api";
 import { encodeText, tryDecodeText } from "./encoding";
 import { t } from "./i18n";
+import { tsToDate, formatBytes, logError, isSentinelTs, effectiveTs, LCS_FALLBACK_THRESHOLD } from "./utils";
 import type { FileHistoryEntry } from "./types";
+import type GinkgoBackupPlugin from "./main";
 
 interface DiffLine {
 	type: "added" | "removed" | "unchanged";
@@ -14,7 +16,7 @@ function computeLCS(oldLines: string[], newLines: string[]): DiffLine[] {
 	const n = newLines.length;
 	if (m === 0) return newLines.map(l => ({ type: "added" as const, text: l }));
 	if (n === 0) return oldLines.map(l => ({ type: "removed" as const, text: l }));
-	if (m * n > 4_000_000) return computeSimpleDiff(oldLines, newLines);
+	if (m * n > LCS_FALLBACK_THRESHOLD) return computeSimpleDiff(oldLines, newLines);
 
 	const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
 	for (let i = 1; i <= m; i++) {
@@ -91,6 +93,7 @@ export class FileHistoryModal extends Modal {
 	private sourceId: number;
 	private filePath: string;
 	private repoPath: string;
+	private plugin: GinkgoBackupPlugin | null;
 	private versions: FileHistoryEntry[] = [];
 	private selectedIdx: number | null = null;
 	private compareIdx: number | null = null;
@@ -99,12 +102,13 @@ export class FileHistoryModal extends Modal {
 	private restoreBtn!: HTMLButtonElement;
 	private listEl!: HTMLElement;
 
-	constructor(app: App, client: GinkgoBackupClient, sourceId: number, filePath: string, repoPath: string) {
+	constructor(app: App, client: GinkgoBackupClient, sourceId: number, filePath: string, repoPath: string, plugin: GinkgoBackupPlugin | null = null) {
 		super(app);
 		this.client = client;
 		this.sourceId = sourceId;
 		this.filePath = filePath;
 		this.repoPath = repoPath;
+		this.plugin = plugin;
 	}
 
 	async onOpen() {
@@ -177,19 +181,15 @@ export class FileHistoryModal extends Modal {
 	}
 
 	private isSentinelTs(ts: number): boolean {
-		return ts > 9000000000000;
+		return isSentinelTs(ts);
 	}
 
 	private effectiveTs(version: FileHistoryEntry): number {
-		if (this.isSentinelTs(version.last_seen)) {
-			return version.first_seen;
-		}
-		return version.last_seen;
+		return effectiveTs(version.first_seen, version.last_seen);
 	}
 
 	private tsToDate(ts: number): Date {
-		if (ts > 1e15) return new Date(ts / 1000000);
-		return new Date(ts);
+		return tsToDate(ts);
 	}
 
 	private renderVersionList() {
@@ -465,6 +465,15 @@ export class FileHistoryModal extends Modal {
 						if (matches.length > 0) file = matches[0];
 					}
 
+					// 恢复前先把当前文件内容推到 staging，避免本地未推送的改动被覆盖丢失
+					if (file instanceof TFile && this.plugin) {
+						await this.plugin.stagingManager.stagingPushFile(file).catch((err) => {
+							logError("pre-restore backup push failed", err);
+							// 推送失败仅告警，不阻塞恢复（用户已通过预览 Modal 确认）
+							new Notice(t("restore.warning"), 5000);
+						});
+					}
+
 					if (file instanceof TFile) {
 						await this.app.vault.modify(file, versionContent);
 					} else {
@@ -540,19 +549,11 @@ export class FileHistoryModal extends Modal {
 	}
 
 	private formatBytes(bytes: number): string {
-		if (!bytes || isNaN(bytes)) return "0 B";
-		const sign = bytes < 0 ? "-" : "";
-		bytes = Math.abs(bytes);
-		if (bytes === 0) return "0 B";
-		const k = 1024;
-		const sizes = ["B", "KB", "MB", "GB"];
-		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return sign + parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[Math.min(i, sizes.length - 1)];
+		return formatBytes(bytes);
 	}
 
 	private logError(context: string, err: unknown) {
-		const msg = err instanceof Error ? err.message : String(err);
-		console.error(`[Ginkgo Backup] ${context}: ${msg}`, err);
+		logError(context, err);
 	}
 
 	onClose() {

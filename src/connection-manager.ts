@@ -1,6 +1,7 @@
 import { Notice } from "obsidian";
 import { GinkgoBackupClient } from "./api";
 import { t } from "./i18n";
+import { tsToDate, logError } from "./utils";
 import type { GinkgoBackupSettings, Source } from "./types";
 
 export type BackupProgress = import("./types").BackupProgress;
@@ -110,7 +111,7 @@ export class ConnectionManager {
 				if (vaultSource) {
 					const fileCount = vaultSource.file_count ?? 0;
 					const lastBackup = vaultSource.last_backup > 0
-						? this.formatRelativeTime(new Date(vaultSource.last_backup / 1000000))
+						? this.formatRelativeTime(tsToDate(vaultSource.last_backup))
 						: t("status.never");
 					this.statusBarUpdater("connected", t("status.fileCount", { count: fileCount, time: lastBackup }));
 					return;
@@ -119,7 +120,7 @@ export class ConnectionManager {
 
 			this.statusBarUpdater("connected");
 		} catch (err) {
-			this.logError("refresh status failed", err);
+			logError("refresh status failed", err);
 			this.connected = false;
 			this.statusBarUpdater("disconnected");
 		} finally {
@@ -136,7 +137,7 @@ export class ConnectionManager {
 					this.vaultRepoPath = source.repo_paths[0];
 				}
 			} catch (err) {
-				this.logError("detect source by id failed", err);
+				logError("detect source by id failed", err);
 			}
 			return;
 		}
@@ -153,7 +154,7 @@ export class ConnectionManager {
 				await this.persistSettings();
 			}
 		} catch (err) {
-			this.logError("find source by path failed", err);
+			logError("find source by path failed", err);
 		}
 	}
 
@@ -227,7 +228,7 @@ export class ConnectionManager {
 				this.statusBarUpdater("backing_up", `${pct}%`);
 				this.pollProgress();
 			} catch (err) {
-				this.logError("progress polling failed", err);
+				logError("progress polling failed", err);
 				this.pollProgress();
 			}
 		}, 3000);
@@ -248,10 +249,5 @@ export class ConnectionManager {
 		if (diffHours < 24) return t("time.hoursAgo", { count: diffHours });
 		const diffDays = Math.floor(diffHours / 24);
 		return t("time.daysAgo", { count: diffDays });
-	}
-
-	private logError(context: string, err: unknown) {
-		const msg = err instanceof Error ? err.message : String(err);
-		console.error(`[Ginkgo Backup] ${context}: ${msg}`, err);
 	}
 }

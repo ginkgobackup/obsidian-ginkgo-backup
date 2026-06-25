@@ -22,6 +22,7 @@ export interface GinkgoBackupSettings {
 	vaultIdentifier: string;
 	language: "auto" | "zh-CN" | "en";
 	largeFileThresholdBytes: number;
+	setupGuideSeen: boolean;
 }
 
 export const DEFAULT_SETTINGS: GinkgoBackupSettings = {
@@ -40,6 +41,7 @@ export const DEFAULT_SETTINGS: GinkgoBackupSettings = {
 	vaultIdentifier: "",
 	language: "auto",
 	largeFileThresholdBytes: 5 * 1024 * 1024,
+	setupGuideSeen: false,
 };
 
 export interface HealthResponse {

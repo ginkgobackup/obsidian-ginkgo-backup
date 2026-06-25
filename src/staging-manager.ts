@@ -2,11 +2,25 @@ import { Notice, TFile, debounce, type EventRef } from "obsidian";
 import { GinkgoBackupClient } from "./api";
 import { encodeText, encodeBinary } from "./encoding";
 import { t } from "./i18n";
+import { formatBytes, logError, isPathExcluded } from "./utils";
+import { handleError } from "./ui-utils";
 import type { GinkgoBackupSettings, FilePush } from "./types";
-import { GinkgoApiError } from "./types";
 
-const PENDING_CACHE_PATH = ".obsidian/plugins/ginkgo-backup/pending.json";
-const HASH_CACHE_PATH = ".obsidian/plugins/ginkgo-backup/hash-cache.json";
+const PENDING_CACHE_FILENAME = "pending.json";
+const HASH_CACHE_FILENAME = "hash-cache.json";
+const CACHE_DIR = ".obsidian/plugins/ginkgo-backup";
+
+/**
+ * 按设备/标识符隔离缓存路径。
+ * 默认放在 vault 内的 `.obsidian/plugins/ginkgo-backup/`，
+ * 但若用户设置了 vaultIdentifier，则追加一个子目录避免跨设备同步时互相覆盖。
+ * 这样多设备同步 vault 也不会让 hash/pending 缓存互相污染。
+ */
+function resolveCacheDir(vaultIdentifier: string): string {
+	const safe = (vaultIdentifier || "").replace(/[^A-Za-z0-9_-]/g, "_").trim();
+	if (!safe) return CACHE_DIR;
+	return `${CACHE_DIR}/${safe}`;
+}
 
 export class StagingManager {
 	private app: import("obsidian").App;
@@ -37,6 +51,14 @@ export class StagingManager {
 		this.getVaultSourceId = getVaultSourceId;
 		this.onBackupVault = onBackupVault;
 		this.registerEvent = registerEvent;
+	}
+
+	private get pendingCachePath(): string {
+		return `${resolveCacheDir(this.settings.vaultIdentifier)}/${PENDING_CACHE_FILENAME}`;
+	}
+
+	private get hashCachePath(): string {
+		return `${resolveCacheDir(this.settings.vaultIdentifier)}/${HASH_CACHE_FILENAME}`;
 	}
 
 	async initialize() {
@@ -93,10 +115,10 @@ export class StagingManager {
 		if (this.settings.stagingPushOnSave) {
 			this.modifyEventRef = this.app.vault.on("modify", async (file) => {
 				if (!(file instanceof TFile)) return;
-				if (this.isExcluded(file.path)) return;
+				if (isPathExcluded(file.path, this.settings.excludePaths)) return;
 				if (!this.isWatchedExtension(file)) return;
 				if (await this.isLargeFile(file)) {
-					new Notice(t("notice.largeFileSkipped", { name: file.name, size: this.formatBytes(this.settings.largeFileThresholdBytes) }), 5000);
+					new Notice(t("notice.largeFileSkipped", { name: file.name, size: formatBytes(this.settings.largeFileThresholdBytes) }), 5000);
 					return;
 				}
 				if (!(await this.hasContentChanged(file))) return;
@@ -127,15 +149,6 @@ export class StagingManager {
 		}, intervalMs);
 	}
 
-	private isExcluded(filePath: string): boolean {
-		for (const pattern of this.settings.excludePaths) {
-			if (filePath.startsWith(pattern) || filePath.includes("/" + pattern + "/") || filePath.includes("\\" + pattern + "\\")) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	private isWatchedExtension(file: TFile): boolean {
 		return this.settings.watchExtensions.includes(file.extension);
 	}
@@ -145,7 +158,7 @@ export class StagingManager {
 			const stat = await this.app.vault.adapter.stat(file.path);
 			return (stat?.size ?? 0) > this.settings.largeFileThresholdBytes;
 		} catch (err) {
-			this.logError("stat file failed", err);
+			logError("stat file failed", err);
 			return false;
 		}
 	}
@@ -170,7 +183,7 @@ export class StagingManager {
 			this.lastPushedHashes.set(file.path, hash);
 			return true;
 		} catch (err) {
-			this.logError("hasContentChanged failed", err);
+			logError("hasContentChanged failed", err);
 			return true;
 		}
 	}
@@ -205,7 +218,7 @@ export class StagingManager {
 				const file = this.app.vault.getAbstractFileByPath(filePath);
 				if (!(file instanceof TFile)) continue;
 				if (await this.isLargeFile(file)) {
-					new Notice(t("notice.largeFileSkipped", { name: file.name, size: this.formatBytes(this.settings.largeFileThresholdBytes) }), 5000);
+					new Notice(t("notice.largeFileSkipped", { name: file.name, size: formatBytes(this.settings.largeFileThresholdBytes) }), 5000);
 					continue;
 				}
 
@@ -220,7 +233,7 @@ export class StagingManager {
 					mtime: (stat?.mtime ?? Date.now()) * 1000,
 				});
 			} catch (err) {
-				this.logError("encode pending file failed", err);
+				logError("encode pending file failed", err);
 				failedPaths.push(filePath);
 			}
 		}
@@ -246,7 +259,7 @@ export class StagingManager {
 				await this.savePendingCache();
 			}
 		} catch (err) {
-			this.handleError(err, t("error.pushFailed"));
+			handleError(err, t("error.pushFailed"));
 			for (const p of filePaths) this.pendingModifiedFiles.add(p);
 			await this.savePendingCache();
 		}
@@ -260,7 +273,7 @@ export class StagingManager {
 		}
 
 		if (await this.isLargeFile(file)) {
-			new Notice(t("notice.largeFileSkipped", { name: file.name, size: this.formatBytes(this.settings.largeFileThresholdBytes) }), 5000);
+			new Notice(t("notice.largeFileSkipped", { name: file.name, size: formatBytes(this.settings.largeFileThresholdBytes) }), 5000);
 			return;
 		}
 
@@ -296,40 +309,40 @@ export class StagingManager {
 			}
 			await this.saveHashCache();
 		} catch (err) {
-			this.handleError(err, t("error.pushFailed"));
+			handleError(err, t("error.pushFailed"));
 		}
 	}
 
 	private async savePendingCache() {
 		try {
 			const data = Array.from(this.pendingModifiedFiles);
-			await this.app.vault.adapter.write(PENDING_CACHE_PATH, JSON.stringify(data));
+			await this.app.vault.adapter.write(this.pendingCachePath, JSON.stringify(data));
 		} catch (err) {
-			this.logError("save pending cache failed", err);
+			logError("save pending cache failed", err);
 		}
 	}
 
 	private async loadPendingCache() {
 		try {
-			const data = await this.app.vault.adapter.read(PENDING_CACHE_PATH);
+			const data = await this.app.vault.adapter.read(this.pendingCachePath);
 			const paths: string[] = JSON.parse(data);
 			if (Array.isArray(paths)) {
 				for (const p of paths) {
-					if (!this.isExcluded(p)) {
+					if (!isPathExcluded(p, this.settings.excludePaths)) {
 						this.pendingModifiedFiles.add(p);
 					}
 				}
 			}
 		} catch (err) {
-			this.logError("load pending cache failed", err);
+			logError("load pending cache failed", err);
 		}
 	}
 
 	private async clearPendingCache() {
 		try {
-			await this.app.vault.adapter.remove(PENDING_CACHE_PATH);
+			await this.app.vault.adapter.remove(this.pendingCachePath);
 		} catch (err) {
-			this.logError("clear pending cache failed", err);
+			logError("clear pending cache failed", err);
 		}
 	}
 
@@ -343,42 +356,21 @@ export class StagingManager {
 				}
 			}
 			this.lastPushedHashes = new Map(Object.entries(data));
-			await this.app.vault.adapter.write(HASH_CACHE_PATH, JSON.stringify(data));
+			await this.app.vault.adapter.write(this.hashCachePath, JSON.stringify(data));
 		} catch (err) {
-			this.logError("save hash cache failed", err);
+			logError("save hash cache failed", err);
 		}
 	}
 
 	private async loadHashCache() {
 		try {
-			const data = await this.app.vault.adapter.read(HASH_CACHE_PATH);
+			const data = await this.app.vault.adapter.read(this.hashCachePath);
 			const cache: Record<string, string> = JSON.parse(data);
 			for (const [path, hash] of Object.entries(cache)) {
 				this.lastPushedHashes.set(path, hash);
 			}
 		} catch (err) {
-			this.logError("load hash cache failed", err);
+			logError("load hash cache failed", err);
 		}
-	}
-
-	private handleError(err: unknown, prefix: string) {
-		if (err instanceof GinkgoApiError) {
-			new Notice(`Ginkgo: ${prefix} — ${err.userMessage}`, 8000);
-		} else {
-			const msg = err instanceof Error ? err.message : String(err);
-			new Notice(`Ginkgo: ${prefix} — ${msg}`, 8000);
-		}
-	}
-
-	private formatBytes(bytes: number): string {
-		if (bytes < 1024) return `${bytes} B`;
-		if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
-		if (bytes < 1073741824) return `${(bytes / 1048576).toFixed(1)} MB`;
-		return `${(bytes / 1073741824).toFixed(1)} GB`;
-	}
-
-	private logError(context: string, err: unknown) {
-		const msg = err instanceof Error ? err.message : String(err);
-		console.error(`[Ginkgo Backup] ${context}: ${msg}`, err);
 	}
 }

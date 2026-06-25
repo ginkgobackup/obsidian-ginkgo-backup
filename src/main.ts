@@ -13,13 +13,14 @@ import { GinkgoBackupClient } from "./api";
 import {
 	DEFAULT_SETTINGS,
 	type GinkgoBackupSettings,
-	GinkgoApiError,
 } from "./types";
 import { GinkgoBackupSettingTab } from "./settings-tab";
 import { FileHistoryView, TIMELINE_VIEW_TYPE } from "./timeline-view";
 import { t, setActiveLocale } from "./i18n";
 import { ConnectionManager } from "./connection-manager";
 import { StagingManager } from "./staging-manager";
+import { formatBytes, logError as utilLogError, defaultSchemeForHost } from "./utils";
+import { handleError as utilHandleError } from "./ui-utils";
 
 export default class GinkgoBackupPlugin extends Plugin {
 	settings!: GinkgoBackupSettings;
@@ -77,19 +78,47 @@ export default class GinkgoBackupPlugin extends Plugin {
 		await this.connectionManager.initialize();
 		await this.stagingManager.initialize();
 		this.connectionManager.startStatusRefresh();
+
+		// 首次启用 / Token 未配置时弹出引导
+		this.maybeShowSetupGuide();
+	}
+
+	/**
+	 * 检测是否需要弹出首次引导：
+	 * 1. 没有保存过 "已看过引导" 标记，且
+	 * 2. API Token 为空 或 与服务端无连接
+	 */
+	private maybeShowSetupGuide() {
+		const seen = this.settings.setupGuideSeen === true;
+		const needsSetup = !this.settings.apiToken || !this.connectionManager.connected;
+		if (seen || !needsSetup) return;
+
+		// 标记已展示，避免每次启动都弹
+		this.settings.setupGuideSeen = true;
+		this.saveSettings().catch((err) => utilLogError("persist setupGuideSeen failed", err));
+
+		import("./setup-guide-modal").then(({ SetupGuideModal }) => {
+			new SetupGuideModal(this.app, this.client, this).open();
+		}).catch((err) => utilLogError("load setup guide modal failed", err));
 	}
 
 	onunload() {
+		// 同步清理 + 异步落地 pending 数据；Obsidian 不会 await onunload，
+		// 但 setTimeout(0) 让落地任务先排队进入事件循环，争取在卸载完成前写出。
 		this.connectionManager.stopStatusRefresh();
 		this.connectionManager.stopProgressPolling();
 		this.stagingManager.teardown();
 		const finalize = async () => {
-			if (this.connectionManager.connected && this.connectionManager.vaultSourceId > 0 && this.stagingManager.pendingModifiedFiles.size > 0) {
-				await this.stagingManager.stagingPushPendingFiles();
+			try {
+				if (this.connectionManager.connected && this.connectionManager.vaultSourceId > 0 && this.stagingManager.pendingModifiedFiles.size > 0) {
+					await this.stagingManager.stagingPushPendingFiles();
+				}
+				await this.stagingManager.persist();
+			} catch (err) {
+				utilLogError("finalize on unload failed", err);
 			}
-			await this.stagingManager.persist();
 		};
-		finalize();
+		void finalize();
 		this.app.workspace.detachLeavesOfType(TIMELINE_VIEW_TYPE);
 	}
 
@@ -231,8 +260,7 @@ export default class GinkgoBackupPlugin extends Plugin {
 	}
 
 	logError(context: string, err: unknown) {
-		const msg = err instanceof Error ? err.message : String(err);
-		console.error(`[Ginkgo Backup] ${context}: ${msg}`, err);
+		utilLogError(context, err);
 	}
 
 	async backupVault() {
@@ -306,7 +334,7 @@ export default class GinkgoBackupPlugin extends Plugin {
 		}
 
 		const { FileHistoryModal } = await import("./file-history-modal");
-		const modal = new FileHistoryModal(this.app, this.client, this.connectionManager.vaultSourceId, file.path, this.connectionManager.vaultRepoPath);
+		const modal = new FileHistoryModal(this.app, this.client, this.connectionManager.vaultSourceId, file.path, this.connectionManager.vaultRepoPath, this);
 		modal.open();
 	}
 
@@ -317,7 +345,7 @@ export default class GinkgoBackupPlugin extends Plugin {
 		}
 
 		const { FileHistoryModal } = await import("./file-history-modal");
-		const modal = new FileHistoryModal(this.app, this.client, this.connectionManager.vaultSourceId, filePath, this.connectionManager.vaultRepoPath);
+		const modal = new FileHistoryModal(this.app, this.client, this.connectionManager.vaultSourceId, filePath, this.connectionManager.vaultRepoPath, this);
 		modal.open();
 	}
 
@@ -332,7 +360,9 @@ export default class GinkgoBackupPlugin extends Plugin {
 			}
 			url = u.origin;
 		} else {
-			url = `http://${host}:${port}`;
+			// 与 API 客户端保持一致的 scheme 选择，避免打开 http 页面而 API 走 https
+			const scheme = defaultSchemeForHost(host);
+			url = `${scheme}://${host}:${port}`;
 		}
 		window.open(url, "_blank");
 	}
@@ -421,18 +451,10 @@ export default class GinkgoBackupPlugin extends Plugin {
 	}
 
 	private handleError(err: unknown, prefix: string) {
-		if (err instanceof GinkgoApiError) {
-			new Notice(`Ginkgo: ${prefix} — ${err.userMessage}`, 8000);
-		} else {
-			const msg = err instanceof Error ? err.message : String(err);
-			new Notice(`Ginkgo: ${prefix} — ${msg}`, 8000);
-		}
+		utilHandleError(err, prefix);
 	}
 
 	formatBytes(bytes: number): string {
-		if (bytes < 1024) return `${bytes} B`;
-		if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
-		if (bytes < 1073741824) return `${(bytes / 1048576).toFixed(1)} MB`;
-		return `${(bytes / 1073741824).toFixed(1)} GB`;
+		return formatBytes(bytes);
 	}
 }

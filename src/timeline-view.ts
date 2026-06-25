@@ -1,6 +1,7 @@
 import { App, ItemView, WorkspaceLeaf, Modal, setIcon } from "obsidian";
 import GinkgoBackupPlugin from "./main";
 import { t } from "./i18n";
+import { tsToDate, formatBytes } from "./utils";
 import type { Snapshot, DirectoryEntry } from "./types";
 
 export const TIMELINE_VIEW_TYPE = "ginkgo-backup-timeline";
@@ -33,7 +34,7 @@ export class FileHistoryView extends ItemView {
 	}
 
 	async onOpen() {
-		const container = this.containerEl.children[1] as HTMLElement;
+		const container = this.contentEl;
 		container.empty();
 		container.addClass("ginkgo-timeline-container");
 
@@ -105,7 +106,7 @@ export class FileHistoryView extends ItemView {
 				const cardEl = itemEl.createEl("div", { cls: "ginkgo-timeline-card" });
 				cardEl.addEventListener("click", () => this.openSnapshotDetail(snap));
 
-				const time = new Date(snap.timestamp / 1000);
+				const time = tsToDate(snap.timestamp);
 				cardEl.createEl("div", {
 					cls: "ginkgo-card-time",
 					text: time.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }),
@@ -113,7 +114,7 @@ export class FileHistoryView extends ItemView {
 
 				const metaEl = cardEl.createEl("div", { cls: "ginkgo-card-meta" });
 				metaEl.createEl("span", { text: `${snap.file_count} ${t("timeline.files")}` });
-				metaEl.createEl("span", { text: this.plugin.formatBytes(snap.total_size) });
+				metaEl.createEl("span", { text: formatBytes(snap.total_size) });
 
 				if (snap.new_files > 0) {
 					metaEl.createEl("span", {
@@ -155,12 +156,12 @@ export class FileHistoryView extends ItemView {
 		const totalSize = this.snapshots.reduce((sum, s) => sum + s.total_size, 0);
 		const latestSnap = this.snapshots[0];
 		const lastTime = latestSnap
-			? new Date(latestSnap.timestamp / 1000).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+			? tsToDate(latestSnap.timestamp).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
 			: "-";
 
 		const items = [
 			{ value: String(this.snapshots.length), label: t("timeline.snapshots") },
-			{ value: this.plugin.formatBytes(totalSize), label: t("timeline.totalSize") },
+			{ value: formatBytes(totalSize), label: t("timeline.totalSize") },
 			{ value: lastTime, label: t("timeline.lastBackup") },
 		];
 
@@ -186,7 +187,7 @@ export class FileHistoryView extends ItemView {
 	private groupByDate(snapshots: Snapshot[]): Record<string, Snapshot[]> {
 		const grouped: Record<string, Snapshot[]> = {};
 		for (const snap of snapshots) {
-			const date = new Date(snap.timestamp / 1000).toLocaleDateString(undefined, {
+			const date = tsToDate(snap.timestamp).toLocaleDateString(undefined, {
 				year: "numeric",
 				month: "long",
 				day: "numeric",
@@ -219,7 +220,7 @@ class SnapshotDetailModal extends Modal {
 		const { contentEl } = this;
 		contentEl.addClass("ginkgo-snapshot-modal");
 
-		const time = new Date(this.snap.timestamp / 1000);
+		const time = tsToDate(this.snap.timestamp);
 
 		const headerEl = contentEl.createEl("div", { cls: "ginkgo-snap-header" });
 		const titleEl = headerEl.createEl("div", { cls: "ginkgo-snap-title" });
@@ -230,7 +231,7 @@ class SnapshotDetailModal extends Modal {
 		const statsEl = contentEl.createEl("div", { cls: "ginkgo-snap-stats" });
 		const statItems: { icon: string; label: string; value: string; cls?: string }[] = [
 			{ icon: "files", label: t("snapshot.files"), value: `${this.snap.file_count} ${t("timeline.files")} · ${this.snap.dir_count} ${t("snapshot.dirs")}` },
-			{ icon: "hard-drive", label: t("snapshot.size"), value: this.plugin.formatBytes(this.snap.total_size) },
+			{ icon: "hard-drive", label: t("snapshot.size"), value: formatBytes(this.snap.total_size) },
 		];
 		if (this.snap.new_files > 0) {
 			statItems.push({ icon: "plus-circle", label: t("snapshot.new"), value: `${this.snap.new_files} ${t("timeline.files")}`, cls: "ginkgo-stat-new" });
@@ -304,7 +305,7 @@ class SnapshotDetailModal extends Modal {
 
 				const rightEl = rowEl.createEl("span", { cls: "ginkgo-snap-file-right" });
 				if (entry.type !== "dir") {
-					rightEl.createEl("span", { cls: "ginkgo-snap-file-size", text: this.plugin.formatBytes(entry.size) });
+					rightEl.createEl("span", { cls: "ginkgo-snap-file-size", text: formatBytes(entry.size) });
 				} else if (entry.file_count > 0) {
 					rightEl.createEl("span", { cls: "ginkgo-snap-file-count", text: `${entry.file_count} ${t("timeline.files")}` });
 				}

@@ -14,6 +14,7 @@ import {
 	GinkgoApiError,
 	GinkgoErrorType,
 } from "./types";
+import { defaultSchemeForHost } from "./utils";
 
 export class GinkgoBackupClient {
 	private baseURL: string;
@@ -37,7 +38,10 @@ export class GinkgoBackupClient {
 			}
 			return `${url.origin}/api/v1`;
 		}
-		return `http://${host}:${port}/api/v1`;
+		// 非 localhost 且未显式声明协议时强制 HTTPS，避免 Token 明文走 HTTP。
+		// localhost / 127.0.0.1 / 0.0.0.0 / 内网 IP 仍允许 HTTP。
+		const scheme = defaultSchemeForHost(host);
+		return `${scheme}://${host}:${port}/api/v1`;
 	}
 
 	private async request<T>(

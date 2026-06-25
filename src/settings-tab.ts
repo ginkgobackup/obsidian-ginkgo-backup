@@ -133,7 +133,7 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 		setIcon(iconEl, "leaf");
 		const titleEl = bannerLeft.createEl("div", { cls: "ginkgo-settings-banner-text" });
 		titleEl.createEl("div", { cls: "ginkgo-settings-banner-title", text: t("plugin.name") });
-		titleEl.createEl("div", { cls: "ginkgo-settings-banner-version", text: "Ginkgo Backup · Obsidian Plugin v0.3.0" });
+		titleEl.createEl("div", { cls: "ginkgo-settings-banner-version", text: `Ginkgo Backup · Obsidian Plugin v${this.plugin.manifest.version}` });
 		const statusDot = bannerEl.createEl("div", { cls: "ginkgo-settings-banner-status" });
 		this.checkBannerStatus(statusDot);
 

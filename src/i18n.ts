@@ -226,7 +226,23 @@ export type I18nKey =
 	| "error.backupFailed"
 	| "error.cancelBackupFailed"
 	| "error.configureSourceFailed"
-	| "error.getStatusFailed";
+	| "error.getStatusFailed"
+	| "setup.title"
+	| "setup.subtitle"
+	| "setup.step1Title"
+	| "setup.step1Desc"
+	| "setup.step2Title"
+	| "setup.step2Desc"
+	| "setup.step3Title"
+	| "setup.step3Desc"
+	| "setup.step4Title"
+	| "setup.step4Desc"
+	| "setup.download"
+	| "setup.checkConnection"
+	| "setup.checking"
+	| "setup.connected"
+	| "setup.connectFailed"
+	| "setup.openSettings";
 
 const translations: Record<Locale, Record<I18nKey, string>> = {
 	"zh-CN": {
@@ -456,6 +472,22 @@ const translations: Record<Locale, Record<I18nKey, string>> = {
 		"error.cancelBackupFailed": "取消备份失败",
 		"error.configureSourceFailed": "配置备份源失败",
 		"error.getStatusFailed": "获取状态失败",
+		"setup.title": "欢迎使用 Ginkgo Backup",
+		"setup.subtitle": "几步即可开启 Vault 时光机：版本对比、一键恢复、即时推送。",
+		"setup.step1Title": "1. 下载 Ginkgo Backup 桌面端",
+		"setup.step1Desc": "在 macOS / Windows / Linux 上安装 Ginkgo Backup 应用，启动后会在本地开启 9275 端口的备份服务。",
+		"setup.download": "前往下载",
+		"setup.step2Title": "2. 复制 API Token",
+		"setup.step2Desc": "在 Ginkgo Backup 桌面端「设置 → API」中创建一个 Token，粘贴到本插件设置页的 Token 输入框。",
+		"setup.step3Title": "3. 配置 Vault 标识（推荐）",
+		"setup.step3Desc": "在设置页填写 vaultIdentifier（例如机器名），可避免多设备同步 Vault 时哈希缓存互相覆盖。",
+		"setup.step4Title": "4. 启用即时推送 / 自动备份",
+		"setup.step4Desc": "开启「保存时推送」即可在每次保存时即时上传；或在设置页开启定时全量备份。",
+		"setup.checkConnection": "测试连接",
+		"setup.checking": "检测中...",
+		"setup.connected": "✅ 已连接 Ginkgo Backup v{{version}}",
+		"setup.connectFailed": "❌ 连接失败，请确认桌面端已启动且 Token 正确",
+		"setup.openSettings": "打开 Ginkgo 设置",
 	},
 	en: {
 		"plugin.name": "Ginkgo Backup",
@@ -684,6 +716,22 @@ const translations: Record<Locale, Record<I18nKey, string>> = {
 		"error.cancelBackupFailed": "Cancel backup failed",
 		"error.configureSourceFailed": "Configure source failed",
 		"error.getStatusFailed": "Get status failed",
+		"setup.title": "Welcome to Ginkgo Backup",
+		"setup.subtitle": "Set up your Vault time machine in a few steps: version diff, one-click restore, instant push.",
+		"setup.step1Title": "1. Install Ginkgo Backup desktop",
+		"setup.step1Desc": "Install the Ginkgo Backup app on macOS / Windows / Linux. It starts a local backup service on port 9275.",
+		"setup.download": "Download",
+		"setup.step2Title": "2. Copy your API token",
+		"setup.step2Desc": "Create a token under Settings → API in the Ginkgo Backup desktop app, then paste it into this plugin's Token field.",
+		"setup.step3Title": "3. Configure Vault identifier (recommended)",
+		"setup.step3Desc": "Set vaultIdentifier (e.g. machine name) in settings to prevent hash-cache collisions when the Vault is synced across devices.",
+		"setup.step4Title": "4. Enable instant push / auto backup",
+		"setup.step4Desc": "Turn on \"Push on save\" for instant uploads on every save, or schedule periodic full backups in settings.",
+		"setup.checkConnection": "Test connection",
+		"setup.checking": "Checking...",
+		"setup.connected": "✅ Connected to Ginkgo Backup v{{version}}",
+		"setup.connectFailed": "❌ Connection failed. Make sure the desktop app is running and your token is correct.",
+		"setup.openSettings": "Open Ginkgo settings",
 	},
 };
 

@@ -2,6 +2,7 @@ import { App, Modal, Notice } from "obsidian";
 import { GinkgoBackupClient } from "./api";
 import { tryDecodeText } from "./encoding";
 import { t } from "./i18n";
+import { formatBytes, isSentinelTs } from "./utils";
 import type { FileHistoryEntry } from "./types";
 
 export class RestorePreviewModal extends Modal {
@@ -44,7 +45,7 @@ export class RestorePreviewModal extends Modal {
 		const infoEl = contentEl.createEl("div", { cls: "ginkgo-restore-info" });
 		infoEl.createEl("div", { text: t("restore.file", { path: this.filePath }), cls: "ginkgo-restore-path" });
 		infoEl.createEl("div", { text: t("restore.version", { version: this.versionLabel }), cls: "ginkgo-restore-version" });
-		infoEl.createEl("div", { text: t("restore.size", { size: this.formatBytes(this.version.size) }), cls: "ginkgo-restore-size" });
+		infoEl.createEl("div", { text: t("restore.size", { size: formatBytes(this.version.size) }), cls: "ginkgo-restore-size" });
 
 		if (this.version.is_deleted) {
 			infoEl.createEl("div", { text: t("restore.deleted"), cls: "ginkgo-restore-deleted" });
@@ -55,7 +56,7 @@ export class RestorePreviewModal extends Modal {
 
 		let content = "";
 		try {
-			const snapshotTime = this.version.last_seen > 9000000000000
+			const snapshotTime = isSentinelTs(this.version.last_seen)
 				? this.version.first_seen
 				: this.version.last_seen;
 			const resp = await this.client.getFileContent(
@@ -121,14 +122,6 @@ export class RestorePreviewModal extends Modal {
 
 		footerEl.createEl("button", { cls: "ginkgo-close-btn", text: t("btn.cancel") })
 			.addEventListener("click", () => this.close());
-	}
-
-	private formatBytes(bytes: number): string {
-		if (!bytes || isNaN(bytes)) return "0 B";
-		if (bytes < 1024) return `${bytes} B`;
-		if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
-		if (bytes < 1073741824) return `${(bytes / 1048576).toFixed(1)} MB`;
-		return `${(bytes / 1073741824).toFixed(1)} GB`;
 	}
 
 	onClose() {

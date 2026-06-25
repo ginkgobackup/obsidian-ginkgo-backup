@@ -5,12 +5,12 @@
  * argument limits.
  */
 
-const CHUNK_SIZE = 0x8000; // 32 KB
+import { BASE64_CHUNK_SIZE } from "./utils";
 
 function uint8ToBase64(bytes: Uint8Array): string {
 	let binary = "";
-	for (let i = 0; i < bytes.byteLength; i += CHUNK_SIZE) {
-		const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+	for (let i = 0; i < bytes.byteLength; i += BASE64_CHUNK_SIZE) {
+		const chunk = bytes.subarray(i, i + BASE64_CHUNK_SIZE);
 		binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
 	}
 	return btoa(binary);

@@ -1,12 +1,13 @@
 {
 	"name": "ginkgo-backup",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"description": "Obsidian 知识库的时光机 — 自动备份、版本对比、一键恢复",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"lint": "tsc -noEmit -skipLibCheck"
+		"lint": "tsc -noEmit -skipLibCheck",
+		"test": "node --test --experimental-strip-types tests/utils.test.ts"
 	},
 	"keywords": [
 		"obsidian",
@@ -16,15 +17,11 @@
 	"author": "Ginkgo Backup",
 	"license": "MIT",
 	"devDependencies": {
-		"@types/diff": "^7.0.2",
 		"@types/node": "^16.11.6",
 		"builtin-modules": "^3.3.0",
 		"esbuild": "0.17.3",
 		"obsidian": "1.13.1",
 		"tslib": "2.4.0",
 		"typescript": "5.4.5"
-	},
-	"dependencies": {
-		"diff": "^9.0.0"
 	}
 }
