@@ -96,10 +96,28 @@ export function isPrivateLanHost(host: string): boolean {
 
 /**
  * 根据主机名决定默认 scheme：
- * - loopback / 内网 IP → http（本地服务，避免 TLS 证书麻烦）
+ * - loopback（127.0.0.1 / localhost）→ https（服务端默认启用 TLS 自签名）
+ * - 内网 IP → http（LAN 部署常无 TLS，避免误伤）
  * - 其他（公网域名 / 公网 IP）→ https（避免 Token 明文）
- * 用户若显式在 host 中带 http(s):// 前缀，则以前缀为准。
+ * 用户若显式在 host 中带 http(s):// 前缀，则以前缀为准（逃生通道）。
  */
 export function defaultSchemeForHost(host: string): "http" | "https" {
-	return isLoopbackHost(host) || isPrivateLanHost(host) ? "http" : "https";
+	if (isLoopbackHost(host)) return "https";
+	return isPrivateLanHost(host) ? "http" : "https";
+}
+
+/**
+ * 安全解析 JSON 文本。解析失败（或输入为空/非字符串）时返回 null，绝不抛错。
+ * 用于处理服务端/代理返回的非 JSON 响应（如 Nginx 的
+ * "Client sent an HTTP request to an HTTPS server" 纯文本错误）。
+ */
+export function safeParseJson(text: unknown): unknown | null {
+	if (typeof text !== "string") return null;
+	const trimmed = text.trim();
+	if (trimmed === "") return null;
+	try {
+		return JSON.parse(trimmed);
+	} catch {
+		return null;
+	}
 }

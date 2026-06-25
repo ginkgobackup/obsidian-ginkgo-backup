@@ -12,6 +12,7 @@ import {
 	isLoopbackHost,
 	isPrivateLanHost,
 	defaultSchemeForHost,
+	safeParseJson,
 	NS_THRESHOLD,
 	US_THRESHOLD,
 } from "../src/utils.ts";
@@ -139,9 +140,12 @@ test("isPrivateLanHost: 公网地址返回 false", () => {
 });
 
 // defaultSchemeForHost
-test("defaultSchemeForHost: loopback / 内网 → http", () => {
-	assert.equal(defaultSchemeForHost("localhost"), "http");
-	assert.equal(defaultSchemeForHost("127.0.0.1"), "http");
+test("defaultSchemeForHost: loopback → https（服务端默认启用 TLS）", () => {
+	assert.equal(defaultSchemeForHost("localhost"), "https");
+	assert.equal(defaultSchemeForHost("127.0.0.1"), "https");
+});
+
+test("defaultSchemeForHost: 内网 IP → http（LAN 部署常无 TLS）", () => {
 	assert.equal(defaultSchemeForHost("10.0.0.1"), "http");
 	assert.equal(defaultSchemeForHost("192.168.1.1"), "http");
 });
@@ -150,4 +154,29 @@ test("defaultSchemeForHost: 公网域名 / 公网 IP → https", () => {
 	assert.equal(defaultSchemeForHost("example.com"), "https");
 	assert.equal(defaultSchemeForHost("8.8.8.8"), "https");
 	assert.equal(defaultSchemeForHost("backup.example.com"), "https");
+});
+
+// safeParseJson
+test("safeParseJson: 合法 JSON 返回解析结果", () => {
+	assert.deepEqual(safeParseJson('{"a":1}'), { a: 1 });
+	assert.deepEqual(safeParseJson('[1,2,3]'), [1, 2, 3]);
+	assert.equal(safeParseJson("null"), null);
+	assert.equal(safeParseJson('"text"'), "text");
+	assert.equal(safeParseJson("42"), 42);
+});
+
+test("safeParseJson: 非 JSON 文本返回 null（不抛错）", () => {
+	// 模拟 Nginx 的纯文本错误
+	assert.equal(safeParseJson("Client sent an HTTP request to an HTTPS server"), null);
+	assert.equal(safeParseJson("Not Found"), null);
+	assert.equal(safeParseJson("<html>404</html>"), null);
+});
+
+test("safeParseJson: 空输入与非字符串返回 null", () => {
+	assert.equal(safeParseJson(""), null);
+	assert.equal(safeParseJson("   "), null);
+	assert.equal(safeParseJson(null), null);
+	assert.equal(safeParseJson(undefined), null);
+	assert.equal(safeParseJson(123), null);
+	assert.equal(safeParseJson({}), null);
 });

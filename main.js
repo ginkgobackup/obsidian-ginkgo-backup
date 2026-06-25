@@ -77,7 +77,21 @@ function isPrivateLanHost(host) {
   return /^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host);
 }
 function defaultSchemeForHost(host) {
-  return isLoopbackHost(host) || isPrivateLanHost(host) ? "http" : "https";
+  if (isLoopbackHost(host))
+    return "https";
+  return isPrivateLanHost(host) ? "http" : "https";
+}
+function safeParseJson(text) {
+  if (typeof text !== "string")
+    return null;
+  const trimmed = text.trim();
+  if (trimmed === "")
+    return null;
+  try {
+    return JSON.parse(trimmed);
+  } catch (e) {
+    return null;
+  }
 }
 var NS_THRESHOLD, US_THRESHOLD, NS_TO_MS, US_TO_MS, SENTINEL_TS_THRESHOLD, LCS_FALLBACK_THRESHOLD, BASE64_CHUNK_SIZE;
 var init_utils = __esm({
@@ -201,7 +215,7 @@ var init_i18n = __esm({
         "setting.languageZh": "\u4E2D\u6587",
         "setting.languageEn": "English",
         "setting.serverUrl": "Ginkgo \u670D\u52A1\u5668\u5730\u5740",
-        "setting.serverUrlDesc": "\u4F8B\u5982 http://127.0.0.1:9275",
+        "setting.serverUrlDesc": "\u4F8B\u5982 https://127.0.0.1:9275",
         "setting.apiToken": "API Token",
         "setting.apiTokenDesc": "\u5728 Ginkgo Web UI \u7684\u201C\u8BBE\u7F6E \u203A API Token\u201D\u4E2D\u751F\u6210",
         "setting.refreshInterval": "\u72B6\u6001\u5237\u65B0\u95F4\u9694\uFF08\u79D2\uFF09",
@@ -361,7 +375,7 @@ var init_i18n = __esm({
         "error.configureSourceFailed": "\u914D\u7F6E\u5907\u4EFD\u6E90\u5931\u8D25",
         "error.getStatusFailed": "\u83B7\u53D6\u72B6\u6001\u5931\u8D25",
         "setup.title": "\u6B22\u8FCE\u4F7F\u7528 Ginkgo Backup",
-        "setup.subtitle": "\u51E0\u6B65\u5373\u53EF\u5F00\u542F Vault \u65F6\u5149\u673A\uFF1A\u7248\u672C\u5BF9\u6BD4\u3001\u4E00\u952E\u6062\u590D\u3001\u5373\u65F6\u63A8\u9001\u3002",
+        "setup.subtitle": "\u51E0\u6B65\u5373\u53EF\u5F00\u542F Vault \u65F6\u5149\u673A\uFF1A\u7248\u672C\u5BF9\u6BD4\u3001\u4E00\u952E\u6062\u590D\u3001\u5B9A\u65F6\u5907\u4EFD\u3002",
         "setup.step1Title": "1. \u4E0B\u8F7D Ginkgo Backup \u684C\u9762\u7AEF",
         "setup.step1Desc": "\u5728 macOS / Windows / Linux \u4E0A\u5B89\u88C5 Ginkgo Backup \u5E94\u7528\uFF0C\u542F\u52A8\u540E\u4F1A\u5728\u672C\u5730\u5F00\u542F 9275 \u7AEF\u53E3\u7684\u5907\u4EFD\u670D\u52A1\u3002",
         "setup.download": "\u524D\u5F80\u4E0B\u8F7D",
@@ -369,8 +383,8 @@ var init_i18n = __esm({
         "setup.step2Desc": "\u5728 Ginkgo Backup \u684C\u9762\u7AEF\u300C\u8BBE\u7F6E \u2192 API\u300D\u4E2D\u521B\u5EFA\u4E00\u4E2A Token\uFF0C\u7C98\u8D34\u5230\u672C\u63D2\u4EF6\u8BBE\u7F6E\u9875\u7684 Token \u8F93\u5165\u6846\u3002",
         "setup.step3Title": "3. \u914D\u7F6E Vault \u6807\u8BC6\uFF08\u63A8\u8350\uFF09",
         "setup.step3Desc": "\u5728\u8BBE\u7F6E\u9875\u586B\u5199 vaultIdentifier\uFF08\u4F8B\u5982\u673A\u5668\u540D\uFF09\uFF0C\u53EF\u907F\u514D\u591A\u8BBE\u5907\u540C\u6B65 Vault \u65F6\u54C8\u5E0C\u7F13\u5B58\u4E92\u76F8\u8986\u76D6\u3002",
-        "setup.step4Title": "4. \u542F\u7528\u5373\u65F6\u63A8\u9001 / \u81EA\u52A8\u5907\u4EFD",
-        "setup.step4Desc": "\u5F00\u542F\u300C\u4FDD\u5B58\u65F6\u63A8\u9001\u300D\u5373\u53EF\u5728\u6BCF\u6B21\u4FDD\u5B58\u65F6\u5373\u65F6\u4E0A\u4F20\uFF1B\u6216\u5728\u8BBE\u7F6E\u9875\u5F00\u542F\u5B9A\u65F6\u5168\u91CF\u5907\u4EFD\u3002",
+        "setup.step4Title": "4. \u5907\u4EFD\u7B56\u7565",
+        "setup.step4Desc": "\u9ED8\u8BA4\u6BCF\u5C0F\u65F6\u7531 Ginkgo Backup \u684C\u9762\u7AEF\u81EA\u52A8\u6267\u884C\u5168\u91CF\u5907\u4EFD\u3002\u5982\u9700\u6BCF\u6B21\u4FDD\u5B58\u5373\u65F6\u4E0A\u4F20\uFF0C\u53EF\u5728\u8BBE\u7F6E\u9875\u5F00\u542F\u300C\u4FDD\u5B58\u65F6\u63A8\u9001\u300D\u3002",
         "setup.checkConnection": "\u6D4B\u8BD5\u8FDE\u63A5",
         "setup.checking": "\u68C0\u6D4B\u4E2D...",
         "setup.connected": "\u2705 \u5DF2\u8FDE\u63A5 Ginkgo Backup v{{version}}",
@@ -605,7 +619,7 @@ var init_i18n = __esm({
         "error.configureSourceFailed": "Configure source failed",
         "error.getStatusFailed": "Get status failed",
         "setup.title": "Welcome to Ginkgo Backup",
-        "setup.subtitle": "Set up your Vault time machine in a few steps: version diff, one-click restore, instant push.",
+        "setup.subtitle": "Set up your Vault time machine in a few steps: version diff, one-click restore, scheduled backup.",
         "setup.step1Title": "1. Install Ginkgo Backup desktop",
         "setup.step1Desc": "Install the Ginkgo Backup app on macOS / Windows / Linux. It starts a local backup service on port 9275.",
         "setup.download": "Download",
@@ -613,8 +627,8 @@ var init_i18n = __esm({
         "setup.step2Desc": "Create a token under Settings \u2192 API in the Ginkgo Backup desktop app, then paste it into this plugin's Token field.",
         "setup.step3Title": "3. Configure Vault identifier (recommended)",
         "setup.step3Desc": "Set vaultIdentifier (e.g. machine name) in settings to prevent hash-cache collisions when the Vault is synced across devices.",
-        "setup.step4Title": "4. Enable instant push / auto backup",
-        "setup.step4Desc": 'Turn on "Push on save" for instant uploads on every save, or schedule periodic full backups in settings.',
+        "setup.step4Title": "4. Backup strategy",
+        "setup.step4Desc": 'By default, Ginkgo Backup desktop runs a full backup every hour. For instant uploads on every save, enable "Push on save" in settings.',
         "setup.checkConnection": "Test connection",
         "setup.checking": "Checking...",
         "setup.connected": "\u2705 Connected to Ginkgo Backup v{{version}}",
@@ -1389,7 +1403,7 @@ var DEFAULT_SETTINGS = {
   autoBackup: false,
   autoBackupIntervalMinutes: 60,
   autoBackupDebounceMs: 3e4,
-  stagingPushOnSave: true,
+  stagingPushOnSave: false,
   sourceId: 0,
   excludePaths: [".obsidian", ".trash", ".DS_Store"],
   watchExtensions: ["md", "canvas", "base", "json", "css"],
@@ -1449,7 +1463,7 @@ var GinkgoBackupClient = class {
     return `${scheme}://${host}:${port}/api/v1`;
   }
   async request(method, path, body) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c;
     const opts = {
       url: `${this.baseURL}${path}`,
       method,
@@ -1483,9 +1497,9 @@ var GinkgoBackupClient = class {
       throw new GinkgoApiError("rate_limited" /* RATE_LIMITED */, "Too many requests", 429, "rate_limited");
     }
     if (status >= 400) {
-      const errData = resp.json;
+      const errData = safeParseJson(resp.text);
       const code = (_b = (_a = errData == null ? void 0 : errData.error) == null ? void 0 : _a.code) != null ? _b : "";
-      const message = (_d = (_c = errData == null ? void 0 : errData.error) == null ? void 0 : _c.message) != null ? _d : `HTTP ${status}`;
+      const message = ((_c = errData == null ? void 0 : errData.error) == null ? void 0 : _c.message) || resp.text && resp.text.trim() || `HTTP ${status}`;
       if (status === 404) {
         throw new GinkgoApiError("not_found" /* NOT_FOUND */, message, 404, code);
       }
@@ -1500,7 +1514,11 @@ var GinkgoBackupClient = class {
     if (resp.text === "" || resp.text === void 0 || resp.text === null) {
       return void 0;
     }
-    return resp.json;
+    const parsed = safeParseJson(resp.text);
+    if (parsed === null) {
+      return void 0;
+    }
+    return parsed;
   }
   async health() {
     return this.request("GET", "/health");
