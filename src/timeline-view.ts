@@ -98,9 +98,9 @@ export class FileHistoryView extends ItemView {
 
 		const btnGroup = headerEl.createEl("div", { cls: "ginkgo-timeline-header-actions" });
 		const refreshBtn = btnGroup.createEl("button", { text: t("timeline.refresh"), cls: "ginkgo-refresh-btn" });
-		refreshBtn.addEventListener("click", () => this.onOpen());
+		refreshBtn.addEventListener("click", () => { void this.onOpen(); });
 		const backupBtn = btnGroup.createEl("button", { text: t("timeline.backupNow"), cls: "ginkgo-backup-btn" });
-		backupBtn.addEventListener("click", () => this.plugin.backupVault());
+		backupBtn.addEventListener("click", () => { void this.plugin.backupVault(); });
 	}
 
 	private renderNotConfigured(container: HTMLElement) {
@@ -415,7 +415,7 @@ class SnapshotDetailModal extends Modal {
 
 		const fileListEl = fileSectionEl.createEl("div", { cls: "ginkgo-snap-file-list" });
 
-		this.loadFiles(fileListEl, loadingEl);
+		void this.loadFiles(fileListEl, loadingEl);
 	}
 
 	private async loadFiles(listEl: HTMLElement, loadingEl: HTMLElement) {
@@ -467,7 +467,7 @@ class SnapshotDetailModal extends Modal {
 						if (this.plugin.vaultSourceId > 0) {
 							const filePath = entry.path || entry.name;
 							this.close();
-							this.plugin.showFileHistoryByPath(filePath);
+							void this.plugin.showFileHistoryByPath(filePath);
 						}
 					});
 				}

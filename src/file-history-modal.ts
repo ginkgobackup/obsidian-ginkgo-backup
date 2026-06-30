@@ -18,7 +18,7 @@ function computeLCS(oldLines: string[], newLines: string[]): DiffLine[] {
 	if (n === 0) return oldLines.map(l => ({ type: "removed" as const, text: l }));
 	if (m * n > LCS_FALLBACK_THRESHOLD) return computeSimpleDiff(oldLines, newLines);
 
-	const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+	const dp: number[][] = Array.from({ length: m + 1 }, () => new Array<number>(n + 1).fill(0));
 	for (let i = 1; i <= m; i++) {
 		for (let j = 1; j <= n; j++) {
 			dp[i][j] = oldLines[i - 1] === newLines[j - 1]
@@ -173,7 +173,7 @@ export class FileHistoryModal extends Modal {
 			text: t("history.restoreThisVersion"),
 		});
 		this.restoreBtn.disabled = true;
-		this.restoreBtn.addEventListener("click", () => this.restoreSelectedVersion());
+		this.restoreBtn.addEventListener("click", () => { void this.restoreSelectedVersion(); });
 
 		footerEl.createEl("button", { cls: "ginkgo-close-btn", text: t("history.close") })
 			.addEventListener("click", () => this.close());
@@ -283,9 +283,9 @@ export class FileHistoryModal extends Modal {
 		this.restoreBtn.disabled = this.selectedIdx === null;
 
 		if (this.selectedIdx !== null && this.compareIdx !== null && this.selectedIdx !== this.compareIdx) {
-			this.loadCompareDiff();
+			void this.loadCompareDiff();
 		} else if (this.selectedIdx !== null) {
-			this.loadCurrentDiff();
+			void this.loadCurrentDiff();
 		} else {
 			this.diffEl.empty();
 			this.diffEl.createEl("div", { cls: "ginkgo-fh-diff-empty", text: t("history.diffHint") });
@@ -301,9 +301,9 @@ export class FileHistoryModal extends Modal {
 		this.renderVersionList();
 
 		if (this.selectedIdx !== null && this.compareIdx !== null && this.selectedIdx !== this.compareIdx) {
-			this.loadCompareDiff();
+			void this.loadCompareDiff();
 		} else if (this.selectedIdx !== null) {
-			this.loadCurrentDiff();
+			void this.loadCurrentDiff();
 		}
 	}
 
@@ -483,13 +483,13 @@ export class FileHistoryModal extends Modal {
 					await this.app.vault.create(this.filePath, versionContent);
 				}
 
-					this.currentContent = versionContent;
-					new Notice(t("history.restored"));
-					this.close();
-				} catch (err) {
-					const msg = err instanceof Error ? err.message : String(err);
-					new Notice(t("restore.failed", { message: msg }));
-				}
+				this.currentContent = versionContent;
+				new Notice(t("history.restored"));
+				this.close();
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				new Notice(t("restore.failed", { message: msg }));
+			}
 			}
 		);
 		modal.open();

@@ -69,7 +69,7 @@ export class ConnectionManager {
 	}
 
 	private scheduleNextRefresh(delay: number) {
-		this.refreshTimer = window.setTimeout(() => this.refreshStatus(), delay);
+		this.refreshTimer = window.setTimeout(() => { void this.refreshStatus(); }, delay);
 	}
 
 	private async refreshStatus() {
@@ -94,7 +94,7 @@ export class ConnectionManager {
 				this.onReconnected();
 			}
 
-			const progressArr = await this.client.getProgress() as BackupProgress | BackupProgress[];
+			const progressArr = await this.client.getProgress();
 			const progress = Array.isArray(progressArr) ? progressArr[0] : progressArr;
 
 			if (progress && progress.phase && progress.phase !== "complete" && progress.phase !== "error" && progress.phase !== "cancelled") {
@@ -204,33 +204,35 @@ export class ConnectionManager {
 	}
 
 	private pollProgress() {
-		this.progressTimer = window.setTimeout(async () => {
-			try {
-				const progress = await this.client.getProgress(this.vaultSourceId) as BackupProgress;
-				if (!progress || progress.phase === "complete" || progress.phase === "error" || progress.phase === "cancelled") {
-					this.progressTimer = undefined;
+		this.progressTimer = window.setTimeout(() => {
+			void (async () => {
+				try {
+					const progress = await this.client.getProgress(this.vaultSourceId) as BackupProgress;
+					if (!progress || progress.phase === "complete" || progress.phase === "error" || progress.phase === "cancelled") {
+						this.progressTimer = undefined;
 
-					if (progress?.phase === "complete") {
-						new Notice(t("notice.backupComplete"));
-						this.statusBarUpdater("connected");
-					} else if (progress?.phase === "error") {
-						new Notice(t("notice.backupError"));
-						this.statusBarUpdater("error");
-					} else {
-						this.statusBarUpdater("connected");
+						if (progress?.phase === "complete") {
+							new Notice(t("notice.backupComplete"));
+							this.statusBarUpdater("connected");
+						} else if (progress?.phase === "error") {
+							new Notice(t("notice.backupError"));
+							this.statusBarUpdater("error");
+						} else {
+							this.statusBarUpdater("connected");
+						}
+						return;
 					}
-					return;
-				}
 
-				const pct = progress.total_files > 0
-					? Math.round((progress.processed_files / progress.total_files) * 100)
-					: 0;
-				this.statusBarUpdater("backing_up", `${pct}%`);
-				this.pollProgress();
-			} catch (err) {
-				logError("progress polling failed", err);
-				this.pollProgress();
-			}
+					const pct = progress.total_files > 0
+						? Math.round((progress.processed_files / progress.total_files) * 100)
+						: 0;
+					this.statusBarUpdater("backing_up", `${pct}%`);
+					this.pollProgress();
+				} catch (err) {
+					logError("progress polling failed", err);
+					this.pollProgress();
+				}
+			})();
 		}, 3000);
 	}
 

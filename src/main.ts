@@ -71,7 +71,7 @@ export default class GinkgoBackupPlugin extends Plugin {
 			this.client,
 			this.settings,
 			() => this.connectionManager.vaultSourceId,
-			() => this.backupVault(),
+			() => { void this.backupVault(); },
 			(ref: EventRef) => this.registerEvent(ref)
 		);
 
@@ -122,11 +122,16 @@ export default class GinkgoBackupPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		const data = await this.loadData();
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+		const data = await this.loadData() as Record<string, unknown> | null;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, data) as GinkgoBackupSettings;
 		if (data && typeof data.autoBackupOnSave === "boolean") {
 			this.settings.autoBackup = data.autoBackupOnSave;
 			delete (this.settings as unknown as Record<string, unknown>).autoBackupOnSave;
+		}
+		// 始终排除 Obsidian 配置目录（位置可被用户自定义，不硬编码 .obsidian）
+		const configDir = this.app.vault.configDir;
+		if (!this.settings.excludePaths.includes(configDir)) {
+			this.settings.excludePaths = [configDir, ...this.settings.excludePaths];
 		}
 	}
 
@@ -173,7 +178,7 @@ export default class GinkgoBackupPlugin extends Plugin {
 			id: "staging-push",
 			name: t("command.pushCurrentFile"),
 			editorCallback: (_editor, view) => {
-				if (view.file) this.stagingManager.stagingPushFile(view.file);
+				if (view.file) void this.stagingManager.stagingPushFile(view.file);
 			},
 		});
 
@@ -199,7 +204,7 @@ export default class GinkgoBackupPlugin extends Plugin {
 			id: "file-history",
 			name: t("command.fileHistory"),
 			editorCallback: (_editor, view) => {
-				if (view.file) this.showFileHistory(view.file);
+				if (view.file) void this.showFileHistory(view.file);
 			},
 		});
 
@@ -220,10 +225,11 @@ export default class GinkgoBackupPlugin extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on("file-menu", (menu, file) => {
 				if (file instanceof TFolder) return;
+				if (!(file instanceof TFile)) return;
 				menu.addItem((item: MenuItem) => {
 					item.setTitle(t("menu.fileHistory"))
 						.setIcon("history")
-						.onClick(() => this.showFileHistory(file as TFile));
+						.onClick(() => void this.showFileHistory(file));
 				});
 			})
 		);
@@ -317,16 +323,16 @@ export default class GinkgoBackupPlugin extends Plugin {
 		}
 	}
 
-	private openTimeline() {
+	private async openTimeline() {
 		const existing = this.app.workspace.getLeavesOfType(TIMELINE_VIEW_TYPE);
 		if (existing.length > 0) {
-			this.app.workspace.revealLeaf(existing[0]);
+			await this.app.workspace.revealLeaf(existing[0]);
 			return;
 		}
 		const rightLeaf = this.app.workspace.getRightLeaf(false);
 		if (rightLeaf) {
-			rightLeaf.setViewState({ type: TIMELINE_VIEW_TYPE, active: true });
-			this.app.workspace.revealLeaf(rightLeaf);
+			await rightLeaf.setViewState({ type: TIMELINE_VIEW_TYPE, active: true });
+			await this.app.workspace.revealLeaf(rightLeaf);
 		}
 	}
 
@@ -372,7 +378,7 @@ export default class GinkgoBackupPlugin extends Plugin {
 
 	private onReconnected() {
 		if (this.settings.stagingPushOnSave && this.stagingManager.pendingModifiedFiles.size > 0) {
-			this.stagingManager.stagingPushPendingFiles();
+			void this.stagingManager.stagingPushPendingFiles();
 		}
 	}
 
@@ -414,33 +420,33 @@ export default class GinkgoBackupPlugin extends Plugin {
 		const menu = new Menu();
 
 		menu.addItem((item) => {
-			item.setTitle(t("menu.backupNow")).setIcon("upload").onClick(() => this.backupVault());
+			item.setTitle(t("menu.backupNow")).setIcon("upload").onClick(() => { void this.backupVault(); });
 		});
 
 		menu.addItem((item) => {
-			item.setTitle(t("menu.cancelBackup")).setIcon("x").onClick(() => this.cancelBackup());
+			item.setTitle(t("menu.cancelBackup")).setIcon("x").onClick(() => { void this.cancelBackup(); });
 		});
 
 		menu.addItem((item) => {
 			item.setTitle(t("menu.pushCurrentFile")).setIcon("file-plus").onClick(() => {
 				const file = this.app.workspace.getActiveFile();
-				if (file) this.stagingManager.stagingPushFile(file);
+				if (file) void this.stagingManager.stagingPushFile(file);
 			});
 		});
 
 		menu.addItem((item) => {
-			item.setTitle(t("menu.openTimeline")).setIcon("calendar").onClick(() => this.openTimeline());
+			item.setTitle(t("menu.openTimeline")).setIcon("calendar").onClick(() => { void this.openTimeline(); });
 		});
 
 		menu.addSeparator();
 
 		menu.addItem((item) => {
-			item.setTitle(t("menu.checkStatus")).setIcon("activity").onClick(() => this.checkStatus());
+			item.setTitle(t("menu.checkStatus")).setIcon("activity").onClick(() => { void this.checkStatus(); });
 		});
 
 		if (this.connectionManager.vaultSourceId === 0) {
 			menu.addItem((item) => {
-				item.setTitle(t("menu.configureBackup")).setIcon("settings").onClick(() => this.setupSource());
+				item.setTitle(t("menu.configureBackup")).setIcon("settings").onClick(() => { void this.setupSource(); });
 			});
 		}
 

@@ -12,7 +12,7 @@ export class RestorePreviewModal extends Modal {
 	private version: FileHistoryEntry;
 	private versionLabel: string;
 	private repoPath: string;
-	private onRestore: () => void;
+	private onRestore: () => void | Promise<void>;
 
 	constructor(
 		app: App,
@@ -22,7 +22,7 @@ export class RestorePreviewModal extends Modal {
 		version: FileHistoryEntry,
 		versionLabel: string,
 		repoPath: string,
-		onRestore: () => void
+		onRestore: () => void | Promise<void>
 	) {
 		super(app);
 		this.client = client;
@@ -106,18 +106,20 @@ export class RestorePreviewModal extends Modal {
 			cls: "ginkgo-btn-restore",
 			text: t("restore.confirm"),
 		});
-		restoreBtn.addEventListener("click", async () => {
-			restoreBtn.disabled = true;
-			restoreBtn.textContent = t("restore.restoring");
-			try {
-				await this.onRestore();
-				this.close();
-			} catch (err) {
-				const msg = err instanceof Error ? err.message : String(err);
-				new Notice(t("restore.failed", { message: msg }));
-				restoreBtn.disabled = false;
-				restoreBtn.textContent = t("restore.confirm");
-			}
+		restoreBtn.addEventListener("click", () => {
+			void (async () => {
+				restoreBtn.disabled = true;
+				restoreBtn.textContent = t("restore.restoring");
+				try {
+					await this.onRestore();
+					this.close();
+				} catch (err) {
+					const msg = err instanceof Error ? err.message : String(err);
+					new Notice(t("restore.failed", { message: msg }));
+					restoreBtn.disabled = false;
+					restoreBtn.textContent = t("restore.confirm");
+				}
+			})();
 		});
 
 		footerEl.createEl("button", { cls: "ginkgo-close-btn", text: t("btn.cancel") })

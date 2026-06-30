@@ -127,7 +127,7 @@ export function defaultSchemeForHost(host: string): "http" | "https" {
  * 用于处理服务端/代理返回的非 JSON 响应（如 Nginx 的
  * "Client sent an HTTP request to an HTTPS server" 纯文本错误）。
  */
-export function safeParseJson(text: unknown): unknown | null {
+export function safeParseJson(text: unknown): unknown {
 	if (typeof text !== "string") return null;
 	const trimmed = text.trim();
 	if (trimmed === "") return null;

@@ -36,7 +36,7 @@ export const DEFAULT_SETTINGS: GinkgoBackupSettings = {
 	autoBackupDebounceMs: 30000,
 	stagingPushOnSave: true,
 	sourceId: 0,
-	excludePaths: [".obsidian", ".trash", ".DS_Store"],
+	excludePaths: [".trash", ".DS_Store"],
 	watchExtensions: ["md", "canvas", "base", "json", "css"],
 	vaultIdentifier: "",
 	language: "auto",

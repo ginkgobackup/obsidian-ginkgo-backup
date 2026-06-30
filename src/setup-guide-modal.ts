@@ -59,27 +59,29 @@ export class SetupGuideModal extends Modal {
 		actionsEl.createEl("button", { text: t("btn.cancel"), cls: "ginkgo-close-btn" })
 			.addEventListener("click", () => this.close());
 
-		checkBtn.addEventListener("click", async () => {
-			checkBtn.disabled = true;
-			checkBtn.textContent = t("setup.checking");
-			statusEl.empty();
+		checkBtn.addEventListener("click", () => {
+			void (async () => {
+				checkBtn.disabled = true;
+				checkBtn.textContent = t("setup.checking");
+				statusEl.empty();
 
-			try {
-				const health = await this.client.health();
-				statusEl.createEl("div", {
-					cls: "ginkgo-setup-ok",
-					text: t("setup.connected", { version: health.version }),
-				});
-			} catch (err) {
-				logError("setup guide connection check failed", err);
-				statusEl.createEl("div", {
-					cls: "ginkgo-setup-err",
-					text: t("setup.connectFailed"),
-				});
-			}
+				try {
+					const health = await this.client.health();
+					statusEl.createEl("div", {
+						cls: "ginkgo-setup-ok",
+						text: t("setup.connected", { version: health.version }),
+					});
+				} catch (err) {
+					logError("setup guide connection check failed", err);
+					statusEl.createEl("div", {
+						cls: "ginkgo-setup-err",
+						text: t("setup.connectFailed"),
+					});
+				}
 
-			checkBtn.disabled = false;
-			checkBtn.textContent = t("setup.checkConnection");
+				checkBtn.disabled = false;
+				checkBtn.textContent = t("setup.checkConnection");
+			})();
 		});
 
 		openSettingsBtn.addEventListener("click", () => {

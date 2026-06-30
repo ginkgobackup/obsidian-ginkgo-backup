@@ -142,7 +142,7 @@ export class StagingManager {
 
 	private scheduleAutoBackup() {
 		const intervalMs = this.settings.autoBackupIntervalMinutes * 60 * 1000;
-		this.autoBackupTimer = window.setTimeout(async () => {
+		this.autoBackupTimer = window.setTimeout(() => {
 			const sourceId = this.getVaultSourceId();
 			if (sourceId > 0) {
 				this.onBackupVault();
@@ -327,10 +327,10 @@ export class StagingManager {
 	private async loadPendingCache() {
 		try {
 			const data = await this.app.vault.adapter.read(this.pendingCachePath);
-			const paths: string[] = JSON.parse(data);
-			if (Array.isArray(paths)) {
-				for (const p of paths) {
-					if (!isPathExcluded(p, this.settings.excludePaths)) {
+			const parsed: unknown = JSON.parse(data);
+			if (Array.isArray(parsed)) {
+				for (const p of parsed) {
+					if (typeof p === "string" && !isPathExcluded(p, this.settings.excludePaths)) {
 						this.pendingModifiedFiles.add(p);
 					}
 				}
@@ -367,9 +367,14 @@ export class StagingManager {
 	private async loadHashCache() {
 		try {
 			const data = await this.app.vault.adapter.read(this.hashCachePath);
-			const cache: Record<string, string> = JSON.parse(data);
-			for (const [path, hash] of Object.entries(cache)) {
-				this.lastPushedHashes.set(path, hash);
+			const parsed: unknown = JSON.parse(data);
+			if (parsed && typeof parsed === "object") {
+				const cache = parsed as Record<string, unknown>;
+				for (const [path, hash] of Object.entries(cache)) {
+					if (typeof hash === "string") {
+						this.lastPushedHashes.set(path, hash);
+					}
+				}
 			}
 		} catch (err) {
 			if (!isENOENT(err)) logError("load hash cache failed", err);

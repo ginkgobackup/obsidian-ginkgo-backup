@@ -6,12 +6,12 @@ import type { Repository } from "./types";
 class RepoMultiSelectModal extends Modal {
 	private repos: Repository[];
 	private selected: Set<number> = new Set();
-	private onConfirm: (repos: Repository[]) => void;
+	private onConfirm: (repos: Repository[]) => void | Promise<void>;
 	private listEl!: HTMLElement;
 	private countEl!: HTMLElement;
 	private confirmBtn!: HTMLButtonElement;
 
-	constructor(app: App, repos: Repository[], preselectedPaths: string[], onConfirm: (repos: Repository[]) => void) {
+	constructor(app: App, repos: Repository[], preselectedPaths: string[], onConfirm: (repos: Repository[]) => void | Promise<void>) {
 		super(app);
 		this.repos = repos;
 		this.onConfirm = onConfirm;
@@ -133,7 +133,7 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 		titleEl.createEl("div", { cls: "ginkgo-settings-banner-title", text: t("plugin.name") });
 		titleEl.createEl("div", { cls: "ginkgo-settings-banner-version", text: `Ginkgo Backup · Obsidian Plugin v${this.plugin.manifest.version}` });
 		const statusEl = bannerEl.createEl("div", { cls: "ginkgo-settings-status" });
-		this.checkAndDisplayStatus(statusEl);
+		void this.checkAndDisplayStatus(statusEl);
 
 		this.renderConnectionSection(containerEl);
 		this.renderAutoBackupSection(containerEl);
@@ -272,7 +272,6 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 				slider
 					.setLimits(5000, 120000, 5000)
 					.setValue(this.plugin.settings.autoBackupDebounceMs)
-					.setDynamicTooltip()
 					.onChange(async (value) => {
 						this.plugin.settings.autoBackupDebounceMs = value;
 						await this.plugin.saveSettings();
@@ -300,7 +299,6 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 				slider
 					.setLimits(5, 1440, 5)
 					.setValue(this.plugin.settings.autoBackupIntervalMinutes)
-					.setDynamicTooltip()
 					.onChange(async (value) => {
 						this.plugin.settings.autoBackupIntervalMinutes = value;
 						await this.plugin.saveSettings();
@@ -332,7 +330,7 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 			.setDesc(t("setting.excludePathsDesc2"))
 			.addTextArea((text) =>
 				text
-					.setPlaceholder(".obsidian\n.trash\n.DS_Store")
+					.setPlaceholder(`${this.app.vault.configDir}\n.trash\n.DS_Store`)
 					.setValue(this.plugin.settings.excludePaths.join("\n"))
 					.onChange(async (value) => {
 						this.plugin.settings.excludePaths = value
@@ -362,7 +360,6 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 				slider
 					.setLimits(10, 300, 10)
 					.setValue(this.plugin.settings.refreshInterval)
-					.setDynamicTooltip()
 					.onChange(async (value) => {
 						this.plugin.settings.refreshInterval = value;
 						await this.plugin.saveSettings();
@@ -376,7 +373,6 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 				slider
 					.setLimits(1, 50, 1)
 					.setValue(Math.round(this.plugin.settings.largeFileThresholdBytes / 1024 / 1024))
-					.setDynamicTooltip()
 					.onChange(async (value) => {
 						this.plugin.settings.largeFileThresholdBytes = value * 1024 * 1024;
 						await this.plugin.saveSettings();
