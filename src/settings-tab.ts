@@ -43,7 +43,7 @@ class RepoMultiSelectModal extends Modal {
 		this.confirmBtn.addEventListener("click", () => {
 			const selectedRepos = this.repos.filter((r) => this.selected.has(r.id));
 			if (selectedRepos.length === 0) return;
-			this.onConfirm(selectedRepos);
+			void this.onConfirm(selectedRepos);
 			this.close();
 		});
 
