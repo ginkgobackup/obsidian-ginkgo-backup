@@ -296,6 +296,10 @@ export default class GinkgoBackupPlugin extends Plugin {
 		if (source) {
 			this.vaultPath = this.getVaultPath();
 			await this.saveSettings();
+			// 配置完成后立即触发一次全量备份，避免用户等待下一个调度周期。
+			this.backupVault().catch((err) => {
+				this.handleError(err, t("error.backupFailed"));
+			});
 		}
 	}
 
@@ -445,6 +449,15 @@ export default class GinkgoBackupPlugin extends Plugin {
 
 		menu.addItem((item) => {
 			item.setTitle(t("menu.openApp")).setIcon("globe").onClick(() => this.openGinkgoApp());
+		});
+
+		menu.addItem((item) => {
+			item.setTitle(t("menu.openSettings")).setIcon("gear").onClick(() => {
+				// Obsidian 运行时提供 app.setting.open / openTabById，类型定义未暴露
+				const app = this.app as unknown as { setting: { open: () => void; openTabById: (id: string) => void } };
+				app.setting.open();
+				app.setting.openTabById(this.manifest.id);
+			});
 		});
 
 		menu.showAtMouseEvent(event);

@@ -4,7 +4,7 @@
 >
 > A time machine for your Obsidian vault — instant push, version diff, and one-click restore, powered by the [Ginkgo Backup](https://ginkgobackup.com) desktop engine.
 
-[![Version](https://img.shields.io/badge/version-0.4.2-d4a056)](./manifest.json)
+[![Version](https://img.shields.io/badge/version-0.5.0-d4a056)](./manifest.json)
 [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-1.0%2B-7c3aed)](https://obsidian.md)
 [![Platform](https://img.shields.io/badge/platform-desktop%20only-4a4a4a)](./manifest.json)

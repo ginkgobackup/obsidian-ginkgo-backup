@@ -3,9 +3,12 @@
  * 这些函数可被单元测试覆盖。
  */
 
-// 时间戳单位阈值（ns > 1e15 > µs > 1e12 > ms > 1e9）
-export const NS_THRESHOLD = 1e15;
-export const US_THRESHOLD = 1e12;
+// 时间戳单位阈值。
+// 旧值 ns>1e15 / µs>1e12 在 2001 年后失效（2026 年微秒 ≈ 1.78e15 > 1e15 会被
+// 误判为纳秒，返回 1970 年）。新阈值基于"当前微秒远小于 1e16、当前毫秒远小于 1e13"
+// 划定，可支撑到约 2285 年。
+export const NS_THRESHOLD = 1e16;
+export const US_THRESHOLD = 1e13;
 export const NS_TO_MS = 1_000_000;
 export const US_TO_MS = 1_000;
 

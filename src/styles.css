@@ -40,52 +40,6 @@
 	50% { opacity: 0.4; }
 }
 
-.ginkgo-settings-status {
-	padding: 10px 14px;
-	border-radius: 8px;
-	margin-bottom: 16px;
-	font-size: 14px;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.ginkgo-settings-status::before {
-	content: "";
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
-	flex-shrink: 0;
-}
-
-.ginkgo-settings-status.ginkgo-status-ok {
-	background: var(--background-modifier-success, rgba(76, 175, 80, 0.1));
-	color: var(--text-success, #4caf50);
-}
-
-.ginkgo-settings-status.ginkgo-status-ok::before {
-	background: var(--text-success, #4caf50);
-	box-shadow: 0 0 6px var(--text-success, #4caf50);
-}
-
-.ginkgo-settings-status.ginkgo-status-err {
-	background: var(--background-modifier-error, rgba(239, 83, 80, 0.1));
-	color: var(--text-error, #ef5350);
-}
-
-.ginkgo-settings-status.ginkgo-status-err::before {
-	background: var(--text-error, #ef5350);
-}
-
-.ginkgo-settings-status.ginkgo-status-warn {
-	background: var(--background-modifier-warning, rgba(255, 152, 0, 0.1));
-	color: var(--text-warning, #ff9800);
-}
-
-.ginkgo-settings-status.ginkgo-status-warn::before {
-	background: var(--text-warning, #ff9800);
-}
-
 .ginkgo-settings-help {
 	padding: 14px;
 	border-radius: 8px;
@@ -117,22 +71,6 @@
 	gap: 14px;
 }
 
-.ginkgo-settings-banner-icon {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 40px;
-	height: 40px;
-	border-radius: 10px;
-	background: rgba(var(--interactive-accent-rgb, 124 77 255), 0.12);
-	color: var(--interactive-accent, #7c4dff);
-}
-
-.ginkgo-settings-banner-icon svg {
-	width: 22px;
-	height: 22px;
-}
-
 .ginkgo-settings-banner-text {
 	display: flex;
 	flex-direction: column;
@@ -150,26 +88,60 @@
 	color: var(--text-muted, #999);
 }
 
-.ginkgo-settings-banner-status {
-	width: 10px;
-	height: 10px;
+.ginkgo-settings-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 12px 4px 10px;
+	border-radius: 12px;
+	font-size: 12px;
+	font-weight: 500;
+	background: var(--background-modifier-hover, rgba(0, 0, 0, 0.04));
+	color: var(--text-muted, #888);
+	border: 1px solid var(--background-modifier-border, #eee);
+	transition: all 0.2s;
+	flex-shrink: 0;
+	max-width: 60%;
+}
+
+.ginkgo-settings-status::before {
+	content: "";
+	width: 7px;
+	height: 7px;
 	border-radius: 50%;
 	flex-shrink: 0;
+	background: var(--text-faint, #aaa);
 }
 
-.ginkgo-banner-connected {
+.ginkgo-settings-status.ginkgo-status-ok {
+	background: rgba(var(--text-success-rgb, 76 175 80), 0.08);
+	color: var(--text-success, #4caf50);
+	border-color: rgba(var(--text-success-rgb, 76 175 80), 0.25);
+}
+
+.ginkgo-settings-status.ginkgo-status-ok::before {
 	background: var(--text-success, #4caf50);
-	box-shadow: 0 0 8px var(--text-success, #4caf50);
-	animation: ginkgo-status-glow 2s ease-in-out infinite;
+	box-shadow: 0 0 6px rgba(var(--text-success-rgb, 76 175 80), 0.6);
 }
 
-.ginkgo-banner-disconnected {
+.ginkgo-settings-status.ginkgo-status-err {
+	background: rgba(var(--text-error-rgb, 239 83 80), 0.08);
+	color: var(--text-error, #ef5350);
+	border-color: rgba(var(--text-error-rgb, 239 83 80), 0.25);
+}
+
+.ginkgo-settings-status.ginkgo-status-err::before {
 	background: var(--text-error, #ef5350);
 }
 
-@keyframes ginkgo-status-glow {
-	0%, 100% { box-shadow: 0 0 4px var(--text-success, #4caf50); }
-	50% { box-shadow: 0 0 12px var(--text-success, #4caf50); }
+.ginkgo-settings-status.ginkgo-status-warn {
+	background: rgba(var(--text-warning-rgb, 255 152 0), 0.08);
+	color: var(--text-warning, #ff9800);
+	border-color: rgba(var(--text-warning-rgb, 255 152 0), 0.25);
+}
+
+.ginkgo-settings-status.ginkgo-status-warn::before {
+	background: var(--text-warning, #ff9800);
 }
 
 .ginkgo-timeline-container {
@@ -182,6 +154,7 @@
 	justify-content: space-between;
 	margin-bottom: 16px;
 	gap: 8px;
+	flex-wrap: wrap;
 }
 
 .ginkgo-timeline-header h3 {
@@ -189,6 +162,12 @@
 	align-items: center;
 	margin: 0;
 	font-size: 16px;
+}
+
+.ginkgo-timeline-header-actions {
+	display: flex;
+	gap: 8px;
+	flex-shrink: 0;
 }
 
 .ginkgo-timeline-header button {
@@ -205,6 +184,205 @@
 .ginkgo-timeline-header button:hover {
 	background: var(--interactive-hover, #f0f0f0);
 	border-color: var(--interactive-accent, #7c4dff);
+}
+
+/* ===== 日历 ===== */
+.ginkgo-calendar {
+	margin-bottom: 16px;
+	padding: 12px;
+	border-radius: 8px;
+	background: var(--background-secondary, #f5f5f5);
+	border: 1px solid var(--background-modifier-border, #eee);
+}
+
+.ginkgo-calendar-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.ginkgo-calendar-nav {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.ginkgo-cal-nav-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	border-radius: 6px;
+	border: 1px solid var(--background-modifier-border, #ddd);
+	background: var(--interactive-normal, #fff);
+	color: var(--text-normal, #333);
+	cursor: pointer;
+	transition: all 0.15s;
+}
+
+.ginkgo-cal-nav-btn svg {
+	width: 14px;
+	height: 14px;
+}
+
+.ginkgo-cal-nav-btn:hover {
+	background: var(--interactive-hover, #f0f0f0);
+	border-color: var(--interactive-accent, #7c4dff);
+	color: var(--interactive-accent, #7c4dff);
+}
+
+.ginkgo-calendar-title {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--text-normal, #333);
+	flex: 1;
+	text-align: center;
+}
+
+.ginkgo-cal-today-btn,
+.ginkgo-cal-latest-btn {
+	padding: 3px 10px;
+	border-radius: 6px;
+	border: 1px solid var(--background-modifier-border, #ddd);
+	background: var(--interactive-normal, #fff);
+	color: var(--text-muted, #888);
+	cursor: pointer;
+	font-size: 11px;
+	transition: all 0.15s;
+	white-space: nowrap;
+}
+
+.ginkgo-cal-today-btn:hover,
+.ginkgo-cal-latest-btn:hover {
+	background: var(--interactive-hover, #f0f0f0);
+	border-color: var(--interactive-accent, #7c4dff);
+	color: var(--interactive-accent, #7c4dff);
+}
+
+.ginkgo-calendar-weekdays {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 2px;
+	margin-bottom: 4px;
+}
+
+.ginkgo-calendar-weekday {
+	text-align: center;
+	font-size: 10px;
+	font-weight: 600;
+	color: var(--text-faint, #aaa);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	padding: 4px 0;
+}
+
+.ginkgo-calendar-grid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 2px;
+}
+
+.ginkgo-calendar-day {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	min-height: 34px;
+	padding: 4px 2px;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: background 0.12s, border-color 0.12s;
+	border: 1px solid transparent;
+}
+
+.ginkgo-calendar-day.is-blank {
+	cursor: default;
+	pointer-events: none;
+}
+
+.ginkgo-calendar-day:hover:not(.is-blank) {
+	background: var(--background-modifier-hover, rgba(0, 0, 0, 0.04));
+}
+
+.ginkgo-cal-day-num {
+	font-size: 12px;
+	color: var(--text-normal, #333);
+	line-height: 1;
+}
+
+.ginkgo-cal-day-badge {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 6px;
+	font-size: 0;
+}
+
+/* 多个快照：数字角标 */
+.ginkgo-cal-day-badge:not(:empty) {
+	font-size: 9px;
+	font-weight: 600;
+	min-width: 14px;
+	height: 14px;
+	padding: 0 3px;
+	border-radius: 7px;
+	background: rgba(var(--interactive-accent-rgb, 124 77 255), 0.15);
+	color: var(--interactive-accent, #7c4dff);
+}
+
+/* 单个快照：纯圆点（badge 为空元素时通过 ::before 渲染） */
+.ginkgo-calendar-day.has-backup .ginkgo-cal-day-badge:empty::before {
+	content: "";
+	display: block;
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: var(--interactive-accent, #7c4dff);
+}
+
+.ginkgo-calendar-day.is-selected {
+	background: rgba(var(--interactive-accent-rgb, 124 77 255), 0.18);
+	border-color: var(--interactive-accent, #7c4dff);
+}
+
+.ginkgo-calendar-day.is-selected .ginkgo-cal-day-num {
+	font-weight: 700;
+	color: var(--interactive-accent, #7c4dff);
+}
+
+/* 当天空状态 */
+.ginkgo-day-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	padding: 24px 16px;
+	color: var(--text-muted, #999);
+}
+
+.ginkgo-day-empty .ginkgo-empty-icon svg {
+	width: 32px;
+	height: 32px;
+}
+
+.ginkgo-day-empty .ginkgo-empty-title {
+	font-size: 14px;
+}
+
+.ginkgo-day-empty .ginkgo-empty-desc {
+	font-size: 12px;
+	color: var(--text-faint, #aaa);
+}
+
+/* 当天 summary（在日历下方） */
+.ginkgo-day-summary {
+	margin-bottom: 12px;
 }
 
 .ginkgo-backup-btn {
@@ -920,7 +1098,7 @@
 }
 
 .ginkgo-setup-status {
-	margin: 12px 0;
+	margin: 12px 0 8px;
 	font-size: 14px;
 }
 
@@ -930,6 +1108,14 @@
 
 .ginkgo-setup-err {
 	color: var(--text-error, #ef5350);
+}
+
+/* 操作行：测试连接 | 打开设置 | 取消 同行 */
+.ginkgo-setup-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
 }
 
 .ginkgo-setup-check-btn {
@@ -946,6 +1132,24 @@
 
 .ginkgo-setup-check-btn:hover {
 	opacity: 0.9;
+}
+
+.ginkgo-setup-secondary-btn {
+	padding: 8px 16px;
+	border-radius: 6px;
+	border: 1px solid var(--background-modifier-border, #ddd);
+	background: var(--interactive-normal, #fff);
+	color: var(--text-normal, #333);
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 500;
+	transition: all 0.15s;
+}
+
+.ginkgo-setup-secondary-btn:hover {
+	background: var(--interactive-hover, #f0f0f0);
+	border-color: var(--interactive-accent, #7c4dff);
+	color: var(--interactive-accent, #7c4dff);
 }
 
 .ginkgo-repo-select-modal .ginkgo-repo-header {

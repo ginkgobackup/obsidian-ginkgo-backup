@@ -1,4 +1,4 @@
-import { App, Modal, setIcon } from "obsidian";
+import { App, Modal } from "obsidian";
 import { GinkgoBackupClient } from "./api";
 import { t } from "./i18n";
 import { logError } from "./utils";
@@ -20,8 +20,6 @@ export class SetupGuideModal extends Modal {
 		contentEl.addClass("ginkgo-setup-modal");
 
 		const headerEl = contentEl.createEl("div", { cls: "ginkgo-setup-header" });
-		const iconSpan = headerEl.createEl("span", { cls: "ginkgo-setup-header-icon" });
-		setIcon(iconSpan, "leaf");
 		headerEl.createEl("h2", { text: t("setup.title") });
 		headerEl.createEl("p", { cls: "ginkgo-setup-subtitle", text: t("setup.subtitle") });
 
@@ -47,10 +45,19 @@ export class SetupGuideModal extends Modal {
 		}
 
 		const statusEl = contentEl.createEl("div", { cls: "ginkgo-setup-status" });
-		const checkBtn = contentEl.createEl("button", {
+
+		// 操作行：测试连接 | 打开设置 | 取消
+		const actionsEl = contentEl.createEl("div", { cls: "ginkgo-setup-actions" });
+		const checkBtn = actionsEl.createEl("button", {
 			text: t("setup.checkConnection"),
 			cls: "ginkgo-setup-check-btn",
 		});
+		const openSettingsBtn = actionsEl.createEl("button", {
+			text: t("setup.openSettings"),
+			cls: "ginkgo-setup-secondary-btn",
+		});
+		actionsEl.createEl("button", { text: t("btn.cancel"), cls: "ginkgo-close-btn" })
+			.addEventListener("click", () => this.close());
 
 		checkBtn.addEventListener("click", async () => {
 			checkBtn.disabled = true;
@@ -75,23 +82,15 @@ export class SetupGuideModal extends Modal {
 			checkBtn.textContent = t("setup.checkConnection");
 		});
 
-		const footerEl = contentEl.createEl("div", { cls: "ginkgo-modal-footer" });
-		const openSettingsBtn = footerEl.createEl("button", {
-			text: t("setup.openSettings"),
-			cls: "ginkgo-btn-restore",
-		});
 		openSettingsBtn.addEventListener("click", () => {
 			this.close();
 			if (this.plugin) {
-				// Obsidian 的 Setting 面板可通过 app.setting.open() 打开；
-				// 打开后会自动选中已注册的 tab，无需手动 openTabById（该 API 非公开）。
-				const appWithSetting = this.app as unknown as { setting?: { open: () => void } };
-				appWithSetting.setting?.open();
+				// Obsidian 运行时提供 app.setting.open / openTabById，类型定义未暴露
+				const app = this.app as unknown as { setting: { open: () => void; openTabById: (id: string) => void } };
+				app.setting.open();
+				app.setting.openTabById(this.plugin.manifest.id);
 			}
 		});
-
-		footerEl.createEl("button", { text: t("btn.cancel"), cls: "ginkgo-close-btn" })
-			.addEventListener("click", () => this.close());
 	}
 
 	onClose() {

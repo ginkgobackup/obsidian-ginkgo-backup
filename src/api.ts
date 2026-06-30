@@ -14,7 +14,7 @@ import {
 	GinkgoApiError,
 	GinkgoErrorType,
 } from "./types";
-import { defaultSchemeForHost } from "./utils";
+import { defaultSchemeForHost, safeParseJson } from "./utils";
 
 export class GinkgoBackupClient {
 	private baseURL: string;
@@ -88,9 +88,16 @@ export class GinkgoBackupClient {
 		}
 
 		if (status >= 400) {
-			const errData = resp.json as { error?: { code?: string; message?: string } } | null;
+			// 服务端可能返回非 JSON 错误（如 Nginx 的
+			// "Client sent an HTTP request to an HTTPS server" 纯文本），
+			// 必须用 safeParseJson 容错，否则访问 resp.json 会抛出
+			// "Unexpected token ..." 混乱错误。
+			const errData = safeParseJson(resp.text) as
+				| { error?: { code?: string; message?: string } }
+				| null;
 			const code = errData?.error?.code ?? "";
-			const message = errData?.error?.message ?? `HTTP ${status}`;
+			// 优先用 JSON 里的 message；没有则回退到纯文本 body；都没有才用 HTTP 状态
+			const message = errData?.error?.message || (resp.text && resp.text.trim()) || `HTTP ${status}`;
 
 			if (status === 404) {
 				throw new GinkgoApiError(GinkgoErrorType.NOT_FOUND, message, 404, code);
@@ -109,8 +116,14 @@ export class GinkgoBackupClient {
 			return undefined as unknown as T;
 		}
 
-		// 信任服务端返回的 JSON 结构,未做运行时 schema 校验
-		return resp.json as T;
+		// 信任服务端返回的 JSON 结构,未做运行时 schema 校验。
+		// 用 safeParseJson 避免非 JSON 响应（代理错误页等）抛错。
+		const parsed = safeParseJson(resp.text);
+		if (parsed === null) {
+			// 响应非 JSON 但状态码 2xx——视为空响应
+			return undefined as unknown as T;
+		}
+		return parsed as T;
 	}
 
 	async health(): Promise<HealthResponse> {
@@ -139,7 +152,16 @@ export class GinkgoBackupClient {
 	}
 
 	async createSource(path: string, name: string, repoPaths: string[], schedule = "daily", excludes?: string[]): Promise<Source> {
-		const body: Record<string, unknown> = { path, name, schedule, repo_paths: repoPaths };
+		// enabled=true 创建即启用；watch_mode=disabled 关闭实时文件监控，
+		// 仅靠 schedule 定时触发全量备份（每小时一次）。
+		const body: Record<string, unknown> = {
+			path,
+			name,
+			schedule,
+			repo_paths: repoPaths,
+			watch_mode: "disabled",
+			enabled: true,
+		};
 		if (excludes && excludes.length > 0) {
 			body.excludes = excludes;
 		}

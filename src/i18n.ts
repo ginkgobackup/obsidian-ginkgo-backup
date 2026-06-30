@@ -185,6 +185,16 @@ export type I18nKey =
 	| "timeline.snapshots"
 	| "timeline.totalSize"
 	| "timeline.lastBackup"
+	| "timeline.dayCount"
+	| "timeline.dayNewBytes"
+	| "timeline.dayNewFiles"
+	| "timeline.dayChangedFiles"
+	| "timeline.noBackupOnDay"
+	| "timeline.noBackupOnDayHint"
+	| "timeline.prevMonth"
+	| "timeline.nextMonth"
+	| "timeline.jumpToLatest"
+	| "timeline.thisMonth"
 	| "timeline.files"
 	| "timeline.newFiles"
 	| "timeline.changedFiles"
@@ -430,6 +440,16 @@ const translations: Record<Locale, Record<I18nKey, string>> = {
 		"timeline.snapshots": "快照",
 		"timeline.totalSize": "总大小",
 		"timeline.lastBackup": "最近备份",
+		"timeline.dayCount": "当天备份",
+		"timeline.dayNewBytes": "当天新增",
+		"timeline.dayNewFiles": "当天新文件",
+		"timeline.dayChangedFiles": "当天修改",
+		"timeline.noBackupOnDay": "当天无备份",
+		"timeline.noBackupOnDayHint": "选择有标记的日期查看备份",
+		"timeline.prevMonth": "上一月",
+		"timeline.nextMonth": "下一月",
+		"timeline.jumpToLatest": "跳到最新",
+		"timeline.thisMonth": "本月",
 		"timeline.files": "文件",
 		"timeline.newFiles": "新增",
 		"timeline.changedFiles": "修改",
@@ -674,6 +694,16 @@ const translations: Record<Locale, Record<I18nKey, string>> = {
 		"timeline.snapshots": "Snapshots",
 		"timeline.totalSize": "Total size",
 		"timeline.lastBackup": "Last backup",
+		"timeline.dayCount": "Day backups",
+		"timeline.dayNewBytes": "Day new data",
+		"timeline.dayNewFiles": "Day new files",
+		"timeline.dayChangedFiles": "Day changed",
+		"timeline.noBackupOnDay": "No backup on this day",
+		"timeline.noBackupOnDayHint": "Pick a marked date to view backups",
+		"timeline.prevMonth": "Previous month",
+		"timeline.nextMonth": "Next month",
+		"timeline.jumpToLatest": "Jump to latest",
+		"timeline.thisMonth": "This month",
 		"timeline.files": "files",
 		"timeline.newFiles": "new",
 		"timeline.changedFiles": "changed",

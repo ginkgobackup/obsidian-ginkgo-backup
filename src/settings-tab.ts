@@ -1,4 +1,4 @@
-import { App, Modal, Notice, PluginSettingTab, Setting, setIcon } from "obsidian";
+import { App, Modal, Notice, PluginSettingTab, Setting } from "obsidian";
 import GinkgoBackupPlugin from "./main";
 import { t, setStoredLocale, setActiveLocale } from "./i18n";
 import type { Repository } from "./types";
@@ -129,13 +129,11 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 
 		const bannerEl = containerEl.createEl("div", { cls: "ginkgo-settings-banner" });
 		const bannerLeft = bannerEl.createEl("div", { cls: "ginkgo-settings-banner-left" });
-		const iconEl = bannerLeft.createEl("span", { cls: "ginkgo-settings-banner-icon" });
-		setIcon(iconEl, "leaf");
 		const titleEl = bannerLeft.createEl("div", { cls: "ginkgo-settings-banner-text" });
 		titleEl.createEl("div", { cls: "ginkgo-settings-banner-title", text: t("plugin.name") });
 		titleEl.createEl("div", { cls: "ginkgo-settings-banner-version", text: `Ginkgo Backup · Obsidian Plugin v${this.plugin.manifest.version}` });
-		const statusDot = bannerEl.createEl("div", { cls: "ginkgo-settings-banner-status" });
-		this.checkBannerStatus(statusDot);
+		const statusEl = bannerEl.createEl("div", { cls: "ginkgo-settings-status" });
+		this.checkAndDisplayStatus(statusEl);
 
 		this.renderConnectionSection(containerEl);
 		this.renderAutoBackupSection(containerEl);
@@ -145,10 +143,6 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 	}
 
 	private renderConnectionSection(containerEl: HTMLElement) {
-		containerEl.createEl("h3", { text: t("setting.connection") });
-
-		const statusEl = containerEl.createEl("div", { cls: "ginkgo-settings-status" });
-		this.checkAndDisplayStatus(statusEl);
 
 		new Setting(containerEl)
 			.setName(t("setting.serverUrl"))
@@ -461,22 +455,6 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
 			new Notice(t("setting.loadReposFailed", { message: msg }));
-		}
-	}
-
-	private async checkBannerStatus(el: HTMLElement) {
-		try {
-			const connected = await this.plugin.client.isConnected();
-			if (connected) {
-				el.addClass("ginkgo-banner-connected");
-				el.setAttribute("aria-label", t("status.connected"));
-			} else {
-				el.addClass("ginkgo-banner-disconnected");
-				el.setAttribute("aria-label", t("status.disconnected"));
-			}
-		} catch (err) {
-			this.plugin.logError("check banner status failed", err);
-			el.addClass("ginkgo-banner-disconnected");
 		}
 	}
 

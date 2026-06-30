@@ -12,9 +12,22 @@ interface DirectoryPage {
 	has_more: boolean;
 }
 
+// 把 Date 格式化为 YYYY-MM-DD（本地时区），用作日历单元格的 key。
+function formatDateKey(d: Date): string {
+	const y = d.getFullYear();
+	const m = String(d.getMonth() + 1).padStart(2, "0");
+	const day = String(d.getDate()).padStart(2, "0");
+	return `${y}-${m}-${day}`;
+}
+
 export class FileHistoryView extends ItemView {
 	plugin: GinkgoBackupPlugin;
-	snapshots: Snapshot[] = [];
+	// 全量缓存：onOpen 时一次性拉取，后续日历交互只在前端过滤
+	allSnapshots: Snapshot[] = [];
+	// 当前选中日期（YYYY-MM-DD）
+	selectedDate: string = formatDateKey(new Date());
+	// 日历当前显示的月份（指向该月 1 号）
+	calendarMonth: Date = new Date();
 
 	constructor(leaf: WorkspaceLeaf, plugin: GinkgoBackupPlugin) {
 		super(leaf);
@@ -38,25 +51,10 @@ export class FileHistoryView extends ItemView {
 		container.empty();
 		container.addClass("ginkgo-timeline-container");
 
-		const headerEl = container.createEl("div", { cls: "ginkgo-timeline-header" });
-		const h3 = headerEl.createEl("h3");
-		const iconSpan = h3.createSpan({ cls: "ginkgo-timeline-icon" });
-		setIcon(iconSpan, "hard-drive");
-		iconSpan.style.marginRight = "8px";
-		h3.createSpan({ text: t("timeline.title") });
-
-		const refreshBtn = headerEl.createEl("button", { text: t("timeline.refresh"), cls: "ginkgo-refresh-btn" });
-		refreshBtn.addEventListener("click", () => this.onOpen());
-
-		const backupBtn = headerEl.createEl("button", { text: t("timeline.backupNow"), cls: "ginkgo-backup-btn" });
-		backupBtn.addEventListener("click", () => this.plugin.backupVault());
+		this.renderHeader(container);
 
 		if (this.plugin.vaultSourceId === 0) {
-			const emptyEl = container.createEl("div", { cls: "ginkgo-empty-state" });
-			const iconEl = emptyEl.createEl("div", { cls: "ginkgo-empty-icon" });
-			setIcon(iconEl, "hard-drive");
-			emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: t("timeline.notConfigured") });
-			emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: t("timeline.configureHint") });
+			this.renderNotConfigured(container);
 			return;
 		}
 
@@ -64,10 +62,25 @@ export class FileHistoryView extends ItemView {
 		loadingEl.createEl("span", { text: t("timeline.loading") });
 
 		try {
-			const result = await this.plugin.client.getSnapshots(this.plugin.vaultSourceId, 50);
-			this.snapshots = result.items;
+			const result = await this.plugin.client.getSnapshots(this.plugin.vaultSourceId, 500);
+			this.allSnapshots = result.items;
 			loadingEl.remove();
-			this.renderTimeline(container);
+
+			if (this.allSnapshots.length === 0) {
+				this.renderNoRecords(container);
+				return;
+			}
+
+			// 默认定位到今天；今天无备份则跳到最新一次备份的日期
+			const todayKey = formatDateKey(new Date());
+			const hasToday = this.allSnapshots.some(s => formatDateKey(tsToDate(s.timestamp)) === todayKey);
+			this.selectedDate = hasToday
+				? todayKey
+				: formatDateKey(tsToDate(this.allSnapshots[0].timestamp));
+			this.calendarMonth = new Date(this.selectedDate + "T00:00:00");
+
+			this.renderCalendar(container);
+			this.renderDayList(container);
 		} catch (err) {
 			loadingEl.remove();
 			const msg = err instanceof Error ? err.message : String(err);
@@ -75,100 +88,253 @@ export class FileHistoryView extends ItemView {
 		}
 	}
 
-	private renderTimeline(container: HTMLElement) {
-		container.findAll(".ginkgo-timeline-summary, .ginkgo-timeline-list, .ginkgo-empty-state").forEach(el => el.remove());
+	private renderHeader(container: HTMLElement) {
+		const headerEl = container.createEl("div", { cls: "ginkgo-timeline-header" });
+		const h3 = headerEl.createEl("h3");
+		const iconSpan = h3.createSpan({ cls: "ginkgo-timeline-icon" });
+		setIcon(iconSpan, "hard-drive");
+		iconSpan.style.marginRight = "8px";
+		h3.createSpan({ text: t("timeline.title") });
 
-		if (this.snapshots.length === 0) {
-			const emptyEl = container.createEl("div", { cls: "ginkgo-empty-state" });
-			const iconEl = emptyEl.createEl("div", { cls: "ginkgo-empty-icon" });
-			setIcon(iconEl, "archive");
-			emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: t("timeline.noRecords") });
-			emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: t("timeline.firstBackupHint") });
-			return;
+		const btnGroup = headerEl.createEl("div", { cls: "ginkgo-timeline-header-actions" });
+		const refreshBtn = btnGroup.createEl("button", { text: t("timeline.refresh"), cls: "ginkgo-refresh-btn" });
+		refreshBtn.addEventListener("click", () => this.onOpen());
+		const backupBtn = btnGroup.createEl("button", { text: t("timeline.backupNow"), cls: "ginkgo-backup-btn" });
+		backupBtn.addEventListener("click", () => this.plugin.backupVault());
+	}
+
+	private renderNotConfigured(container: HTMLElement) {
+		const emptyEl = container.createEl("div", { cls: "ginkgo-empty-state" });
+		const iconEl = emptyEl.createEl("div", { cls: "ginkgo-empty-icon" });
+		setIcon(iconEl, "hard-drive");
+		emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: t("timeline.notConfigured") });
+		emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: t("timeline.configureHint") });
+	}
+
+	private renderNoRecords(container: HTMLElement) {
+		const emptyEl = container.createEl("div", { cls: "ginkgo-empty-state" });
+		const iconEl = emptyEl.createEl("div", { cls: "ginkgo-empty-icon" });
+		setIcon(iconEl, "archive");
+		emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: t("timeline.noRecords") });
+		emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: t("timeline.firstBackupHint") });
+	}
+
+	// 按 YYYY-MM-DD 分组并按时间倒序排序
+	private groupByDateKey(): Map<string, Snapshot[]> {
+		const grouped = new Map<string, Snapshot[]>();
+		for (const snap of this.allSnapshots) {
+			const key = formatDateKey(tsToDate(snap.timestamp));
+			const arr = grouped.get(key);
+			if (arr) arr.push(snap);
+			else grouped.set(key, [snap]);
+		}
+		// 每天内按时间倒序（最新在前）。allSnapshots 已是时间倒序，但保险起见再排一次。
+		for (const arr of grouped.values()) {
+			arr.sort((a, b) => b.timestamp - a.timestamp);
+		}
+		return grouped;
+	}
+
+	private renderCalendar(container: HTMLElement) {
+		container.findAll(".ginkgo-calendar").forEach(el => el.remove());
+
+		const calendarEl = container.createEl("div", { cls: "ginkgo-calendar" });
+		const grouped = this.groupByDateKey();
+
+		// 头部：上一月 / 月份标题 / 下一月 + 跳到最新
+		const headerEl = calendarEl.createEl("div", { cls: "ginkgo-calendar-header" });
+
+		const leftEl = headerEl.createEl("div", { cls: "ginkgo-calendar-nav" });
+		const prevBtn = leftEl.createEl("button", { cls: "ginkgo-cal-nav-btn" });
+		setIcon(prevBtn, "chevron-left");
+		prevBtn.setAttr("aria-label", t("timeline.prevMonth"));
+		prevBtn.addEventListener("click", () => {
+			this.calendarMonth = new Date(this.calendarMonth.getFullYear(), this.calendarMonth.getMonth() - 1, 1);
+			this.renderCalendar(container);
+			this.renderDayList(container);
+		});
+
+		const titleEl = headerEl.createEl("div", { cls: "ginkgo-calendar-title" });
+		const monthLabel = this.calendarMonth.toLocaleDateString(undefined, { year: "numeric", month: "long" });
+		titleEl.createSpan({ text: monthLabel });
+
+		const rightEl = headerEl.createEl("div", { cls: "ginkgo-calendar-nav" });
+		const todayBtn = rightEl.createEl("button", { text: t("timeline.thisMonth"), cls: "ginkgo-cal-today-btn" });
+		todayBtn.addEventListener("click", () => {
+			this.calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+			this.selectedDate = formatDateKey(new Date());
+			this.renderCalendar(container);
+			this.renderDayList(container);
+		});
+
+		const latestBtn = rightEl.createEl("button", { text: t("timeline.jumpToLatest"), cls: "ginkgo-cal-latest-btn" });
+		latestBtn.addEventListener("click", () => {
+			if (this.allSnapshots.length === 0) return;
+			const latest = this.allSnapshots[0];
+			const latestKey = formatDateKey(tsToDate(latest.timestamp));
+			this.selectedDate = latestKey;
+			this.calendarMonth = new Date(latestKey + "T00:00:00");
+			this.renderCalendar(container);
+			this.renderDayList(container);
+		});
+
+		const nextBtn = rightEl.createEl("button", { cls: "ginkgo-cal-nav-btn" });
+		setIcon(nextBtn, "chevron-right");
+		nextBtn.setAttr("aria-label", t("timeline.nextMonth"));
+		nextBtn.addEventListener("click", () => {
+			this.calendarMonth = new Date(this.calendarMonth.getFullYear(), this.calendarMonth.getMonth() + 1, 1);
+			this.renderCalendar(container);
+			this.renderDayList(container);
+		});
+
+		// 星期标题行（日 一 二 三 四 五 六）
+		const weekdayEl = calendarEl.createEl("div", { cls: "ginkgo-calendar-weekdays" });
+		const weekdays = this.getWeekdayLabels();
+		for (const w of weekdays) {
+			weekdayEl.createEl("div", { cls: "ginkgo-calendar-weekday", text: w });
 		}
 
-		this.renderSummary(container);
+		// 日期网格
+		const gridEl = calendarEl.createEl("div", { cls: "ginkgo-calendar-grid" });
+		const year = this.calendarMonth.getFullYear();
+		const month = this.calendarMonth.getMonth();
+		const firstDay = new Date(year, month, 1);
+		const startWeekday = firstDay.getDay(); // 0=周日
+		const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-		const grouped = this.groupByDate(this.snapshots);
-		const listEl = container.createEl("div", { cls: "ginkgo-timeline-list" });
+		// 1 号之前的空白格
+		for (let i = 0; i < startWeekday; i++) {
+			gridEl.createEl("div", { cls: "ginkgo-calendar-day is-blank" });
+		}
 
-		for (const [date, daySnapshots] of Object.entries(grouped)) {
-			const dateEl = listEl.createEl("div", { cls: "ginkgo-date-group" });
-			dateEl.createEl("h4", { text: date });
+		for (let day = 1; day <= daysInMonth; day++) {
+			const dateObj = new Date(year, month, day);
+			const dateKey = formatDateKey(dateObj);
+			const daySnaps = grouped.get(dateKey) ?? [];
+			const hasBackup = daySnaps.length > 0;
 
-			for (const snap of daySnapshots) {
-				const itemEl = dateEl.createEl("div", { cls: "ginkgo-timeline-item" });
+			const dayEl = gridEl.createEl("div", {
+				cls: `ginkgo-calendar-day${hasBackup ? " has-backup" : ""}${dateKey === this.selectedDate ? " is-selected" : ""}`,
+			});
+			dayEl.createEl("span", { cls: "ginkgo-cal-day-num", text: String(day) });
 
-				const trackEl = itemEl.createEl("div", { cls: "ginkgo-timeline-track" });
-				const dotCls = this.getDotClass(snap, daySnapshots);
-				trackEl.createEl("div", { cls: dotCls });
-
-				const cardEl = itemEl.createEl("div", { cls: "ginkgo-timeline-card" });
-				cardEl.addEventListener("click", () => this.openSnapshotDetail(snap));
-
-				const time = tsToDate(snap.timestamp);
-				cardEl.createEl("div", {
-					cls: "ginkgo-card-time",
-					text: time.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }),
-				});
-
-				const metaEl = cardEl.createEl("div", { cls: "ginkgo-card-meta" });
-				metaEl.createEl("span", { text: `${snap.file_count} ${t("timeline.files")}` });
-				metaEl.createEl("span", { text: formatBytes(snap.total_size) });
-
-				if (snap.new_files > 0) {
-					metaEl.createEl("span", {
-						text: `+${snap.new_files}`,
-						cls: "ginkgo-meta-new",
-					});
-				}
-
-				if (snap.changed_files > 0) {
-					metaEl.createEl("span", {
-						text: `~${snap.changed_files}`,
-						cls: "ginkgo-meta-changed",
-					});
-				}
-
-				if (snap.tags && snap.tags.length > 0) {
-					const tagsEl = cardEl.createEl("div", { cls: "ginkgo-card-tags" });
-					for (const tag of snap.tags) {
-						tagsEl.createEl("span", {
-							text: tag,
-							cls: `ginkgo-tag ginkgo-tag-${tag}`,
-						});
-					}
-				}
-
-				if (snap.status !== "complete") {
-					cardEl.createEl("span", {
-						text: snap.status,
-						cls: "ginkgo-badge-status",
-					});
+			if (hasBackup) {
+				// 多个快照显示数字角标，单个显示圆点
+				const badgeEl = dayEl.createEl("span", { cls: "ginkgo-cal-day-badge" });
+				if (daySnaps.length > 1) {
+					badgeEl.createSpan({ text: String(daySnaps.length) });
 				}
 			}
+
+			dayEl.addEventListener("click", () => {
+				this.selectedDate = dateKey;
+				this.renderCalendar(container);
+				this.renderDayList(container);
+			});
 		}
 	}
 
-	private renderSummary(container: HTMLElement) {
-		const summaryEl = container.createEl("div", { cls: "ginkgo-timeline-summary" });
+	private getWeekdayLabels(): string[] {
+		// 始终以周日为列首，与 getDay() 对齐
+		const locale = navigator.language || "en";
+		const base = new Date(2024, 0, 7); // 2024-01-07 是周日
+		const labels: string[] = [];
+		for (let i = 0; i < 7; i++) {
+			const d = new Date(base);
+			d.setDate(base.getDate() + i);
+			labels.push(d.toLocaleDateString(locale, { weekday: "narrow" }));
+		}
+		return labels;
+	}
 
-		const totalSize = this.snapshots.reduce((sum, s) => sum + s.total_size, 0);
-		const latestSnap = this.snapshots[0];
-		const lastTime = latestSnap
-			? tsToDate(latestSnap.timestamp).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
-			: "-";
+	private renderDayList(container: HTMLElement) {
+		container.findAll(".ginkgo-day-list, .ginkgo-day-empty, .ginkgo-day-summary").forEach(el => el.remove());
+
+		const grouped = this.groupByDateKey();
+		const daySnaps = grouped.get(this.selectedDate) ?? [];
+
+		if (daySnaps.length === 0) {
+			// 方案 2B：当天无备份隐藏列表，只显示日历
+			const emptyEl = container.createEl("div", { cls: "ginkgo-day-empty" });
+			const iconEl = emptyEl.createEl("div", { cls: "ginkgo-empty-icon" });
+			setIcon(iconEl, "calendar-x");
+			emptyEl.createEl("div", { cls: "ginkgo-empty-title", text: t("timeline.noBackupOnDay") });
+			emptyEl.createEl("div", { cls: "ginkgo-empty-desc", text: t("timeline.noBackupOnDayHint") });
+			return;
+		}
+
+		// 当天统计 summary
+		const summaryEl = container.createEl("div", { cls: "ginkgo-timeline-summary ginkgo-day-summary" });
+		// new_bytes = 每个快照相对前一次的增量字节数，累加 = 当天真正产生的数据量
+		// 注意：total_size 是 vault 全量大小，累加会误导（3 次 100MB 快照会显示 300MB）
+		const newBytes = daySnaps.reduce((sum, s) => sum + s.new_bytes, 0);
+		const newFiles = daySnaps.reduce((sum, s) => sum + s.new_files, 0);
+		const changedFiles = daySnaps.reduce((sum, s) => sum + s.changed_files, 0);
 
 		const items = [
-			{ value: String(this.snapshots.length), label: t("timeline.snapshots") },
-			{ value: formatBytes(totalSize), label: t("timeline.totalSize") },
-			{ value: lastTime, label: t("timeline.lastBackup") },
+			{ value: String(daySnaps.length), label: t("timeline.dayCount") },
+			{ value: formatBytes(newBytes), label: t("timeline.dayNewBytes") },
+			{ value: `+${newFiles}`, label: t("timeline.dayNewFiles") },
+			{ value: `~${changedFiles}`, label: t("timeline.dayChangedFiles") },
 		];
-
 		for (const item of items) {
 			const itemEl = summaryEl.createEl("div", { cls: "ginkgo-summary-item" });
 			itemEl.createEl("div", { cls: "ginkgo-summary-value", text: item.value });
 			itemEl.createEl("div", { cls: "ginkgo-summary-label", text: item.label });
+		}
+
+		// 当天列表（不再按日期分组，所有项都属于 selectedDate）
+		const listEl = container.createEl("div", { cls: "ginkgo-timeline-list ginkgo-day-list" });
+		for (const snap of daySnaps) {
+			const itemEl = listEl.createEl("div", { cls: "ginkgo-timeline-item" });
+
+			const trackEl = itemEl.createEl("div", { cls: "ginkgo-timeline-track" });
+			const dotCls = this.getDotClass(snap, daySnaps);
+			trackEl.createEl("div", { cls: dotCls });
+
+			const cardEl = itemEl.createEl("div", { cls: "ginkgo-timeline-card" });
+			cardEl.addEventListener("click", () => this.openSnapshotDetail(snap));
+
+			const time = tsToDate(snap.timestamp);
+			cardEl.createEl("div", {
+				cls: "ginkgo-card-time",
+				text: time.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }),
+			});
+
+			const metaEl = cardEl.createEl("div", { cls: "ginkgo-card-meta" });
+			metaEl.createEl("span", { text: `${snap.file_count} ${t("timeline.files")}` });
+			metaEl.createEl("span", { text: formatBytes(snap.total_size) });
+
+			if (snap.new_files > 0) {
+				metaEl.createEl("span", {
+					text: `+${snap.new_files}`,
+					cls: "ginkgo-meta-new",
+				});
+			}
+
+			if (snap.changed_files > 0) {
+				metaEl.createEl("span", {
+					text: `~${snap.changed_files}`,
+					cls: "ginkgo-meta-changed",
+				});
+			}
+
+			if (snap.tags && snap.tags.length > 0) {
+				const tagsEl = cardEl.createEl("div", { cls: "ginkgo-card-tags" });
+				for (const tag of snap.tags) {
+					tagsEl.createEl("span", {
+						text: tag,
+						cls: `ginkgo-tag ginkgo-tag-${tag}`,
+					});
+				}
+			}
+
+			if (snap.status !== "complete") {
+				cardEl.createEl("span", {
+					text: snap.status,
+					cls: "ginkgo-badge-status",
+				});
+			}
 		}
 	}
 
@@ -182,20 +348,6 @@ export class FileHistoryView extends ItemView {
 			parts.push("ginkgo-dot-success");
 		}
 		return parts.join(" ");
-	}
-
-	private groupByDate(snapshots: Snapshot[]): Record<string, Snapshot[]> {
-		const grouped: Record<string, Snapshot[]> = {};
-		for (const snap of snapshots) {
-			const date = tsToDate(snap.timestamp).toLocaleDateString(undefined, {
-				year: "numeric",
-				month: "long",
-				day: "numeric",
-			});
-			if (!grouped[date]) grouped[date] = [];
-			grouped[date].push(snap);
-		}
-		return grouped;
 	}
 
 	private openSnapshotDetail(snap: Snapshot) {

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-06-30
+
+### Added
+- **时间线日历视图**：快照列表改为日历选择日期 + 当天快照列表模式，前端拉取 500 条快照缓存后按日过滤。
+- **状态栏「打开设置」菜单项**：右键状态栏图标可直接跳转到本插件设置页。
+- **配置完成后自动触发全量备份**：绑定 Vault 后立即备份，无需等待下一个调度周期。
+
+### Changed
+- **设置页 UI 精简**：移除 Banner logo 图标，保留名称与版本；连接状态改为紧凑胶囊样式（含 7px 状态点）。
+- **时间线「当天大小」指标**：从 `total_size` 累加改为 `new_bytes` 累加，避免误解为中英文标签同步调整。
+- **API 错误响应容错**：用 `safeParseJson` 解析服务端错误体，兼容 Nginx 纯文本错误（如 HTTPS/HTTP 协议错配），不再抛出 "Unexpected token"。
+
+### Fixed
+- **时间线日期显示 1970**：`tsToDate` 时间戳阈值（ns/µs/ms）修正，原阈值在 2026 年后失效。
+- **「跳到最新」重复添加概览卡片**：在 `renderDayList` 中清理 `.ginkgo-day-summary` 元素。
+
 ## [0.4.2] - 2026-06-25
 
 ### Fixed
