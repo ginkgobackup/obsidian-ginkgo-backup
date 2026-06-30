@@ -5,17 +5,25 @@
 [![Version](https://img.shields.io/badge/version-0.5.0-d4a056)](./manifest.json)
 [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-1.0%2B-7c3aed)](https://obsidian.md)
-[![Platform](https://img.shields.io/badge/platform-desktop%20only-4a4a4a)](./manifest.json)
+[![Platform](https://img.shields.io/badge/platform-desktop-4a4a4a)](./manifest.json)
 
 ## Overview
 
-Every note you save is captured into a versioned timeline; any previous state can be diffed and restored in a single click — without leaving Obsidian.
+Ever rewritten a paragraph and wished you could get the original back? Or merged a note by mistake and lost half your work?
+
+Ginkgo Backup captures every save into a versioned timeline, so any previous state is one click away — diff it, preview it, restore it, all without leaving Obsidian.
 
 ![Version diff between any two snapshots](./docs/screenshots/file-history-diff.png)
 
-Unlike cloud-dependent backup plugins or Git-based version control, Ginkgo Backup runs entirely through a local desktop engine — no cloud subscription, no Git knowledge, just instant versioned backups with a visual timeline.
+## Why Ginkgo Backup?
 
-The plugin is desktop-only (it talks to the local Ginkgo Backup service on port `9275`) and ships with bilingual UI (English / 简体中文).
+| | Ginkgo Backup | obsidian-git | Archivist |
+|---|:---:|:---:|:---:|
+| No Git knowledge needed | ✅ | ❌ | ✅ |
+| No cloud subscription | ✅ | ✅ | ❌ (Dropbox) |
+| Diff between any two versions | ✅ | ✅ | ❌ |
+| Visual calendar timeline | ✅ | ❌ | ❌ |
+| Instant push on save | ✅ | ❌ (manual commit) | ❌ (scheduled) |
 
 ## Quick Start
 
@@ -31,33 +39,20 @@ The plugin is desktop-only (it talks to the local Ginkgo Backup service on port 
 
 ## Features
 
-- **Instant Push on Save** — Text notes are pushed to staging the moment you save, with SHA-256 content de-duplication.
-- **Scheduled Full Backup** — Optional time-triggered full vault backup for attachments and binary files.
-- **Visual Timeline** — A dedicated sidebar view with a calendar date picker; select any day to browse that day's snapshots with file counts, sizes, and delta badges (`+added`, `~modified`).
-- **Version History & Diff** — Right-click any file to browse its full history. Two arbitrary versions can be diffed with an LCS-based line comparison (auto-degrades for very large files).
-- **One-Click Restore** — Preview a version before restoring; the current content is auto-pushed to staging first, so an accidental restore never destroys unsaved work.
+- **Instant Push on Save** — Every save is captured within seconds. Identical content is skipped, so only real changes are stored.
+- **Scheduled Full Backup** — Optionally back up the entire vault (including images and attachments) on a timer.
+- **Visual Timeline** — A sidebar calendar lets you jump to any day and browse that day's snapshots with file counts, sizes, and change badges (`+added`, `~modified`).
+- **Version History & Diff** — Right-click any file to see its full history. Pick any two versions and see exactly what changed, line by line.
+- **One-Click Restore** — Preview a version before restoring. Your current content is saved automatically first, so an accidental restore never destroys unsaved work.
 
    ![Restore preview](./docs/screenshots/restore-preview.png)
 
-- **Connection Auto-Recovery** — Transient network drops are retried; pending pushes are flushed on reconnect. The status bar shows live connection state at a glance.
+- **Connection Auto-Recovery** — Network drops are retried automatically; pending pushes flush the moment the link comes back. The status bar shows live connection state at a glance.
 
    ![Status bar menu](./docs/screenshots/status-bar.png)
 
-- **Secure by Default** — Non-loopback hosts are forced to HTTPS; the API token travels in a request header, never in the URL.
-- **Bilingual UI** — English and 简体中文, with automatic locale detection (`navigator.language`).
-
-## How It Works
-
-The plugin runs a **two-track backup model**, so you never have to choose between immediacy and completeness:
-
-| Track | Trigger | What it captures | Latency |
-|-------|---------|-------------------|---------|
-| **Instant Push** (recommended) | File save | Text notes you edit (`md`, `canvas`, `base`, `json`, `css`) | ~seconds, debounced |
-| **Full Backup** | Manual or scheduled | The entire vault, including binary attachments | Minutes, background |
-
-1. On save, the **Staging Manager** computes a SHA-256 hash of the file content and pushes it to the Ginkgo Backup staging area — but only if the content actually changed. Identical saves are de-duplicated.
-2. The **Connection Manager** keeps a heartbeat to the local server, auto-recovers from disconnects, and flushes any pending pushes the moment the link comes back.
-3. The actual snapshot is written by Ginkgo Backup in the background, so your writing flow is never blocked.
+- **Secure by Default** — HTTPS is enforced for non-local hosts; the API token travels in a request header, never in the URL.
+- **Bilingual UI** — English and 简体中文, with automatic locale detection.
 
 ## Timeline & History
 
@@ -69,10 +64,8 @@ The plugin runs a **two-track backup model**, so you never have to choose betwee
 
 ## Requirements
 
-- [Obsidian](https://obsidian.md) **1.0+** (desktop only)
-- [Ginkgo Backup](https://ginkgobackup.com/#download) desktop app installed and running (macOS / Windows / Linux)
-
-The plugin communicates with the Ginkgo Backup local API on `127.0.0.1:9275` by default.
+- [Obsidian](https://obsidian.md) **1.0+** (desktop)
+- [Ginkgo Backup](https://ginkgobackup.com/#download) desktop app (macOS / Windows / Linux) — the backup engine that powers this plugin
 
 ## Commands
 
@@ -143,13 +136,22 @@ If the plugin is not yet available in the community browser, or you want to test
 4. Copy the three downloaded files into `.obsidian/plugins/ginkgo-backup/`.
 5. In Obsidian, open *Settings → Community plugins*, click the **reload** icon, then enable **Ginkgo Backup**.
 
-## Known Limitations
+## FAQ
 
-- **Desktop only** — The plugin requires a local Ginkgo Backup service and is not available on iOS / Android.
-- **Requires the Ginkgo Backup desktop app** — This plugin is a frontend; the actual backup engine runs as a separate application. Download it from [ginkgobackup.com](https://ginkgobackup.com/#download).
-- **Binary files are not diffed** — Instant Push covers text files (`md`, `canvas`, `base`, `json`, `css`); binary attachments are captured by full backups only.
-- **Timeline loads up to 500 snapshots** — For vaults with extremely long history, only the most recent 500 snapshots are loaded for calendar filtering.
-- **No mobile sync** — Since the plugin is desktop-only, vaults synced across desktop and mobile will only be backed up from desktop devices.
+**Does this work on mobile?**
+No — the plugin requires the Ginkgo Backup desktop engine, so it runs on desktop only (macOS / Windows / Linux).
+
+**Why do I need a separate desktop app?**
+The plugin is a lightweight frontend; the actual backup engine (snapshot storage, deduplication, scheduling) runs as a standalone app. This keeps your vault history independent of Obsidian's lifecycle — your backups survive even if Obsidian is closed or the plugin is uninstalled.
+
+**Can I diff binary files like images?**
+No — instant push covers text files (`md`, `canvas`, `base`, `json`, `css`). Binary attachments are captured by full backups and can be restored, but not diffed line-by-line.
+
+**How far back can I go?**
+The timeline loads up to 500 recent snapshots for calendar browsing. Older snapshots remain accessible through the Ginkgo Backup app directly.
+
+**My vault is synced across desktop and mobile. Will mobile changes be backed up?**
+Only desktop changes are backed up (the mobile app can't run the engine). Mobile edits will be captured once they sync to a desktop running Ginkgo Backup.
 
 ## Development
 
