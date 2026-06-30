@@ -8,18 +8,20 @@ import type { GinkgoBackupSettings, FilePush } from "./types";
 
 const PENDING_CACHE_FILENAME = "pending.json";
 const HASH_CACHE_FILENAME = "hash-cache.json";
-const CACHE_DIR = ".obsidian/plugins/ginkgo-backup";
 
 /**
  * 按设备/标识符隔离缓存路径。
- * 默认放在 vault 内的 `.obsidian/plugins/ginkgo-backup/`，
- * 但若用户设置了 vaultIdentifier，则追加一个子目录避免跨设备同步时互相覆盖。
- * 这样多设备同步 vault 也不会让 hash/pending 缓存互相污染。
+ * 默认放在 vault 配置目录（`Vault.configDir`，通常为 `.obsidian`）下的
+ * `plugins/ginkgo-backup/`，但若用户设置了 vaultIdentifier，则追加一个子目录
+ * 避免跨设备同步时互相覆盖。这样多设备同步 vault 也不会让 hash/pending 缓存互相污染。
+ *
+ * 注意：不硬编码 `.obsidian`，因为配置目录位置可被 Obsidian 自定义（见官方插件规范）。
  */
-function resolveCacheDir(vaultIdentifier: string): string {
+function resolveCacheDir(configDir: string, vaultIdentifier: string): string {
+	const base = `${configDir}/plugins/ginkgo-backup`;
 	const safe = (vaultIdentifier || "").replace(/[^A-Za-z0-9_-]/g, "_").trim();
-	if (!safe) return CACHE_DIR;
-	return `${CACHE_DIR}/${safe}`;
+	if (!safe) return base;
+	return `${base}/${safe}`;
 }
 
 export class StagingManager {
@@ -54,11 +56,11 @@ export class StagingManager {
 	}
 
 	private get pendingCachePath(): string {
-		return `${resolveCacheDir(this.settings.vaultIdentifier)}/${PENDING_CACHE_FILENAME}`;
+		return `${resolveCacheDir(this.app.vault.configDir, this.settings.vaultIdentifier)}/${PENDING_CACHE_FILENAME}`;
 	}
 
 	private get hashCachePath(): string {
-		return `${resolveCacheDir(this.settings.vaultIdentifier)}/${HASH_CACHE_FILENAME}`;
+		return `${resolveCacheDir(this.app.vault.configDir, this.settings.vaultIdentifier)}/${HASH_CACHE_FILENAME}`;
 	}
 
 	async initialize() {

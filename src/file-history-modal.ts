@@ -475,12 +475,14 @@ export class FileHistoryModal extends Modal {
 					}
 
 					if (file instanceof TFile) {
-						await this.app.vault.modify(file, versionContent);
-					} else {
-						const dirPath = this.filePath.includes("/") ? this.filePath.substring(0, this.filePath.lastIndexOf("/")) : "";
-						if (dirPath) await this.app.vault.createFolder(dirPath).catch((err) => this.logError("create folder failed", err));
-						await this.app.vault.create(this.filePath, versionContent);
-					}
+					// 用 Vault.process 而非 Vault.modify（官方规范推荐后台改写用 process）。
+					// 返回值为写入后的内容，这里不需要使用。
+					await this.app.vault.process(file, () => versionContent);
+				} else {
+					const dirPath = this.filePath.includes("/") ? this.filePath.substring(0, this.filePath.lastIndexOf("/")) : "";
+					if (dirPath) await this.app.vault.createFolder(dirPath).catch((err) => this.logError("create folder failed", err));
+					await this.app.vault.create(this.filePath, versionContent);
+				}
 
 					this.currentContent = versionContent;
 					new Notice(t("history.restored"));
