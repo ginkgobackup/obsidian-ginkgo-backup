@@ -134,6 +134,11 @@ If the plugin is not yet available in the community browser, or you want to test
 4. Copy the three downloaded files into `.obsidian/plugins/ginkgo-backup/`.
 5. In Obsidian, open *Settings → Community plugins*, click the **reload** icon, then enable **Ginkgo Backup**.
 
+## Disclosures
+
+- **Network use** — This plugin communicates with the [Ginkgo Backup](https://ginkgobackup.com) desktop app running on your machine (default `127.0.0.1:9275`). No data is sent to remote servers.
+- **Free vs paid** — The Ginkgo Backup desktop app is free for local backups, restore, and mesh networking. Cloud backup, Notion backup, and encryption require a [paid license](https://ginkgobackup.com/#pricing). The Obsidian plugin works fully with the free version.
+
 ## FAQ
 
 **Does this work on mobile?**
