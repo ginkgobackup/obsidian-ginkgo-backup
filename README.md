@@ -7,22 +7,6 @@
 [![Obsidian](https://img.shields.io/badge/Obsidian-1.0%2B-7c3aed)](https://obsidian.md)
 [![Platform](https://img.shields.io/badge/platform-desktop%20only-4a4a4a)](./manifest.json)
 
----
-
-## Screenshots
-
-| Timeline (calendar view) | File history & diff |
-|:---:|:---:|
-| ![Timeline calendar view](./docs/screenshots/timeline-calendar.png) | ![File history diff](./docs/screenshots/file-history-diff.png) |
-
-| Restore preview | Setup guide |
-|:---:|:---:|
-| ![Restore preview](./docs/screenshots/restore-preview.png) | ![Setup guide](./docs/screenshots/setup-guide.png) |
-
-| Settings | Status bar menu |
-|:---:|:---:|
-| ![Settings](./docs/screenshots/settings.png) | ![Status bar menu](./docs/screenshots/status-bar.png) |
-
 ## Overview
 
 Every note you save is captured into a versioned timeline; any previous state can be diffed and restored in a single click — without leaving Obsidian.
@@ -30,6 +14,35 @@ Every note you save is captured into a versioned timeline; any previous state ca
 Unlike cloud-dependent backup plugins or Git-based version control, Ginkgo Backup runs entirely through a local desktop engine — no cloud subscription, no Git knowledge, just instant versioned backups with a visual timeline.
 
 The plugin is desktop-only (it talks to the local Ginkgo Backup service on port `9275`) and ships with bilingual UI (English / 简体中文).
+
+## Quick Start
+
+1. **Install Ginkgo Backup** — Download from [ginkgobackup.com](https://ginkgobackup.com/#download), launch it, and copy the API token from *Settings → API*.
+2. **Enable the plugin** — In Obsidian, open *Settings → Community plugins*, install this plugin, and enable it.
+3. **Follow the setup guide** — On first launch the plugin shows a 4-step welcome modal. Paste your API token and click **Test connection**.
+
+   ![Setup guide](./docs/screenshots/setup-guide.png)
+
+4. **Configure the backup source** — Run the command `Ginkgo: Configure source` and pick the repository for this vault. Done — your notes are now versioned.
+
+> Tip: set a **Vault identifier** (e.g. your machine name) in settings when the same vault is synced across multiple devices. This keeps per-device hash caches isolated.
+
+## Features
+
+- **Instant Push on Save** — Text notes are pushed to staging the moment you save, with SHA-256 content de-duplication.
+- **Scheduled Full Backup** — Optional time-triggered full vault backup for attachments and binary files.
+- **Visual Timeline** — A dedicated sidebar view with a calendar date picker; select any day to browse that day's snapshots with file counts, sizes, and delta badges (`+added`, `~modified`).
+- **Version History & Diff** — Right-click any file to browse its full history. Two arbitrary versions can be diffed with an LCS-based line comparison (auto-degrades for very large files).
+- **One-Click Restore** — Preview a version before restoring; the current content is auto-pushed to staging first, so an accidental restore never destroys unsaved work.
+
+   ![Restore preview](./docs/screenshots/restore-preview.png)
+
+- **Connection Auto-Recovery** — Transient network drops are retried; pending pushes are flushed on reconnect. The status bar shows live connection state at a glance.
+
+   ![Status bar menu](./docs/screenshots/status-bar.png)
+
+- **Secure by Default** — Non-loopback hosts are forced to HTTPS; the API token travels in a request header, never in the URL.
+- **Bilingual UI** — English and 简体中文, with automatic locale detection (`navigator.language`).
 
 ## How It Works
 
@@ -44,16 +57,15 @@ The plugin runs a **two-track backup model**, so you never have to choose betwee
 2. The **Connection Manager** keeps a heartbeat to the local server, auto-recovers from disconnects, and flushes any pending pushes the moment the link comes back.
 3. The actual snapshot is written by Ginkgo Backup in the background, so your writing flow is never blocked.
 
-## Features
+## Timeline & History
 
-- **Instant Push on Save** — Text notes are pushed to staging the moment you save, with SHA-256 content de-duplication.
-- **Scheduled Full Backup** — Optional time-triggered full vault backup for attachments and binary files.
-- **Visual Timeline** — A dedicated sidebar view with a calendar date picker; select any day to browse that day's snapshots with file counts, sizes, and delta badges (`+added`, `~modified`).
-- **Version History & Diff** — Right-click any file to browse its full history. Two arbitrary versions can be diffed with an LCS-based line comparison (auto-degrades for very large files).
-- **One-Click Restore** — Preview a version before restoring; the current content is auto-pushed to staging first, so an accidental restore never destroys unsaved work.
-- **Connection Auto-Recovery** — Transient network drops are retried; pending pushes are flushed on reconnect.
-- **Secure by Default** — Non-loopback hosts are forced to HTTPS; the API token travels in a request header, never in the URL.
-- **Bilingual UI** — English and 简体中文, with automatic locale detection (`navigator.language`).
+**Timeline view** — Open via the ribbon icon (hard-drive) or the `Ginkgo: Open timeline` command. A calendar lets you pick any date; the list below shows that day's snapshots with a summary header (snapshot count, total new bytes, last backup time). Click any snapshot card to drill into its file list.
+
+![Timeline calendar view](./docs/screenshots/timeline-calendar.png)
+
+**File history modal** — Right-click any file in the file explorer or editor and choose *Ginkgo → File history*. Browse every version, diff any two (LCS line-level, with context-only mode for large files), or diff a version against the current content. Hit **Restore** to preview and confirm.
+
+![File history diff](./docs/screenshots/file-history-diff.png)
 
 ## Requirements
 
@@ -61,15 +73,6 @@ The plugin runs a **two-track backup model**, so you never have to choose betwee
 - [Ginkgo Backup](https://ginkgobackup.com/#download) desktop app installed and running (macOS / Windows / Linux)
 
 The plugin communicates with the Ginkgo Backup local API on `127.0.0.1:9275` by default.
-
-## Quick Start
-
-1. **Install Ginkgo Backup** — Download from [ginkgobackup.com](https://ginkgobackup.com/#download), launch it, and copy the API token from *Settings → API*.
-2. **Enable the plugin** — In Obsidian, open *Settings → Community plugins*, install this plugin, and enable it.
-3. **Follow the setup guide** — On first launch the plugin shows a 4-step welcome modal. Paste your API token and click **Test connection**.
-4. **Configure the backup source** — Run the command `Ginkgo: Configure source` and pick the repository for this vault. Done — your notes are now versioned.
-
-> Tip: set a **Vault identifier** (e.g. your machine name) in settings when the same vault is synced across multiple devices. This keeps per-device hash caches isolated.
 
 ## Commands
 
@@ -85,6 +88,8 @@ The plugin communicates with the Ginkgo Backup local API on `127.0.0.1:9275` by 
 | `Ginkgo: Cancel backup` | Cancel a running full backup |
 
 ## Settings
+
+![Settings](./docs/screenshots/settings.png)
 
 ### Connection
 | Setting | Default | Description |
@@ -116,16 +121,6 @@ The plugin communicates with the Ginkgo Backup local API on `127.0.0.1:9275` by 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | Language | `auto` | `auto` follows `navigator.language`; force `zh-CN` or `en` |
-
-## Timeline & History
-
-**Timeline view** — Open via the ribbon icon (hard-drive) or the `Ginkgo: Open timeline` command. A calendar lets you pick any date; the list below shows that day's snapshots with a summary header (snapshot count, total new bytes, last backup time). Click any snapshot card to drill into its file list.
-
-![Timeline calendar view](./docs/screenshots/timeline-calendar.png)
-
-**File history modal** — Right-click any file in the file explorer or editor and choose *Ginkgo → File history*. Browse every version, diff any two (LCS line-level, with context-only mode for large files), or diff a version against the current content. Hit **Restore** to preview and confirm.
-
-![File history diff](./docs/screenshots/file-history-diff.png)
 
 ## Security
 
