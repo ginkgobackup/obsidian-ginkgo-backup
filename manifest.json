@@ -1,9 +1,9 @@
 {
 	"id": "ginkgo-backup",
 	"name": "Ginkgo Backup",
-	"version": "0.5.5",
+	"version": "0.5.6",
 	"minAppVersion": "1.7.2",
-	"description": "A time machine for your vault — visual timeline, version diff, one-click restore. Free, open source, local-first.",
+	"description": "A time machine for your vault — visual timeline, version diff, one-click restore. No Git required, free, open source, local-first.",
 	"author": "Ginkgo Backup",
 	"authorUrl": "https://github.com/ginkgobackup",
 	"isDesktopOnly": true
