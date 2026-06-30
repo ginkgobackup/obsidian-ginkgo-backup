@@ -123,7 +123,7 @@ If the plugin is not yet available in the community browser, or you want to test
 ## Disclosures
 
 - **Network use** — This plugin communicates with the [Ginkgo Backup](https://ginkgobackup.com) desktop app running on your machine (default `127.0.0.1:9275`). No data is sent to remote servers.
-- **Free vs paid** — The Ginkgo Backup desktop app is free for local backups, restore, and mesh networking. Cloud backup, Notion backup, and encryption require a [paid license](https://ginkgobackup.com/#pricing). The Obsidian plugin works fully with the free version.
+- **Free vs paid** — The Ginkgo Backup desktop app is free for local backups, restore, encryption, and mesh networking. Cloud backup and Notion backup require a [paid license](https://ginkgobackup.com/#pricing). The Obsidian plugin works fully with the free version.
 
 ## FAQ
 
