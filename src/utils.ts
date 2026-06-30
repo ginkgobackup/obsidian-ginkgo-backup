@@ -57,7 +57,6 @@ export function formatBytes(bytes: number): string {
 
 export function logError(context: string, err: unknown): void {
 	const msg = err instanceof Error ? err.message : String(err);
-	// eslint-disable-next-line no-console
 	console.error(`[Ginkgo Backup] ${context}: ${msg}`, err);
 }
 

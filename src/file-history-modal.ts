@@ -118,8 +118,7 @@ export class FileHistoryModal extends Modal {
 
 		const modalEl = contentEl.closest(".modal") as HTMLElement;
 		if (modalEl) {
-			modalEl.style.width = "800px";
-			modalEl.style.maxWidth = "90vw";
+			modalEl.addClass("ginkgo-file-history-wide");
 		}
 
 		this.renderHeader(contentEl);

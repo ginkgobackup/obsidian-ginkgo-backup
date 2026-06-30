@@ -1603,3 +1603,7 @@
 	font-size: 13px;
 	color: var(--text-faint, #aaa);
 }
+
+.ginkgo-file-history-wide { width: 800px; max-width: 90vw; }
+
+.ginkgo-timeline-icon-margin { margin-right: 8px; }

@@ -93,7 +93,7 @@ export class FileHistoryView extends ItemView {
 		const h3 = headerEl.createEl("h3");
 		const iconSpan = h3.createSpan({ cls: "ginkgo-timeline-icon" });
 		setIcon(iconSpan, "hard-drive");
-		iconSpan.style.marginRight = "8px";
+		iconSpan.addClass("ginkgo-timeline-icon-margin");
 		h3.createSpan({ text: t("timeline.title") });
 
 		const btnGroup = headerEl.createEl("div", { cls: "ginkgo-timeline-header-actions" });

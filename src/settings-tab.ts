@@ -249,7 +249,7 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 	}
 
 	private renderAutoBackupSection(containerEl: HTMLElement) {
-		containerEl.createEl("h3", { text: t("setting.backupStrategy") });
+		new Setting(containerEl).setName(t("setting.backupStrategy")).setHeading();
 
 		new Setting(containerEl)
 			.setName(t("setting.stagingPushOnSave"))
@@ -325,7 +325,7 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 	}
 
 	private renderFilterSection(containerEl: HTMLElement) {
-		containerEl.createEl("h3", { text: t("setting.filterAndDisplay") });
+		new Setting(containerEl).setName(t("setting.filterAndDisplay")).setHeading();
 
 		new Setting(containerEl)
 			.setName(t("setting.excludePaths"))
@@ -385,7 +385,7 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 	}
 
 	private renderActionsSection(containerEl: HTMLElement) {
-		containerEl.createEl("h3", { text: t("setting.quickActions") });
+		new Setting(containerEl).setName(t("setting.quickActions")).setHeading();
 
 		new Setting(containerEl)
 			.setName(t("setting.testConnection"))
@@ -419,7 +419,7 @@ export class GinkgoBackupSettingTab extends PluginSettingTab {
 	}
 
 	private renderHelpSection(containerEl: HTMLElement) {
-		containerEl.createEl("h3", { text: t("setting.help") });
+		new Setting(containerEl).setName(t("setting.help")).setHeading();
 		const helpEl = containerEl.createEl("div", { cls: "ginkgo-settings-help" });
 		helpEl.createEl("p", { text: t("setting.helpLine1") });
 		helpEl.createEl("p", { text: t("setting.helpLine2") });

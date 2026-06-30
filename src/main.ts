@@ -119,7 +119,6 @@ export default class GinkgoBackupPlugin extends Plugin {
 			}
 		};
 		void finalize();
-		this.app.workspace.detachLeavesOfType(TIMELINE_VIEW_TYPE);
 	}
 
 	async loadSettings() {
@@ -165,13 +164,13 @@ export default class GinkgoBackupPlugin extends Plugin {
 
 	private addCommands() {
 		this.addCommand({
-			id: "ginkgo-backup-now",
+			id: "backup-now",
 			name: t("command.backupNow"),
 			callback: () => this.backupVault(),
 		});
 
 		this.addCommand({
-			id: "ginkgo-staging-push",
+			id: "staging-push",
 			name: t("command.pushCurrentFile"),
 			editorCallback: (_editor, view) => {
 				if (view.file) this.stagingManager.stagingPushFile(view.file);
@@ -179,25 +178,25 @@ export default class GinkgoBackupPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "ginkgo-check-status",
+			id: "check-status",
 			name: t("command.checkStatus"),
 			callback: () => this.checkStatus(),
 		});
 
 		this.addCommand({
-			id: "ginkgo-setup-source",
+			id: "setup-source",
 			name: t("command.setupSource"),
 			callback: () => this.setupSource(),
 		});
 
 		this.addCommand({
-			id: "ginkgo-timeline",
+			id: "open-timeline",
 			name: t("command.openTimeline"),
 			callback: () => this.openTimeline(),
 		});
 
 		this.addCommand({
-			id: "ginkgo-file-history",
+			id: "file-history",
 			name: t("command.fileHistory"),
 			editorCallback: (_editor, view) => {
 				if (view.file) this.showFileHistory(view.file);
@@ -205,13 +204,13 @@ export default class GinkgoBackupPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "ginkgo-open-app",
+			id: "open-app",
 			name: t("command.openApp"),
 			callback: () => this.openGinkgoApp(),
 		});
 
 		this.addCommand({
-			id: "ginkgo-cancel-backup",
+			id: "cancel-backup",
 			name: t("command.cancelBackup"),
 			callback: () => this.cancelBackup(),
 		});

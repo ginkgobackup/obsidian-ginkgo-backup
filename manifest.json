@@ -1,9 +1,9 @@
 {
 	"id": "ginkgo-backup",
 	"name": "Ginkgo Backup",
-	"version": "0.5.0",
-	"minAppVersion": "1.0.0",
-	"description": "Time machine for your Obsidian vault — auto backup, version diff, one-click restore.",
+	"version": "0.5.1",
+	"minAppVersion": "1.5.0",
+	"description": "A time machine for your vault — auto backup, version diff, one-click restore.",
 	"author": "Ginkgo Backup",
 	"authorUrl": "https://github.com/ginkgobackup",
 	"isDesktopOnly": true

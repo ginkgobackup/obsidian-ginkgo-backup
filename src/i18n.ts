@@ -767,12 +767,14 @@ const translations: Record<Locale, Record<I18nKey, string>> = {
 
 let currentLocale: Locale | null = null;
 
+let storedLocale: Locale | "auto" = "auto";
+
 export function getStoredLocale(): Locale | "auto" {
-	return (localStorage.getItem("ginkgo-locale") as Locale | "auto" | null) ?? "auto";
+	return storedLocale;
 }
 
 export function setStoredLocale(locale: Locale | "auto") {
-	localStorage.setItem("ginkgo-locale", locale);
+	storedLocale = locale;
 	currentLocale = null;
 }
 
