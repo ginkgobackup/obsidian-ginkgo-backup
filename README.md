@@ -11,6 +11,20 @@
 
 ---
 
+## Screenshots
+
+| Timeline (calendar view) | File history & diff |
+|:---:|:---:|
+| ![Timeline calendar view](./docs/screenshots/timeline-calendar.png) | ![File history diff](./docs/screenshots/file-history-diff.png) |
+
+| Restore preview | Setup guide |
+|:---:|:---:|
+| ![Restore preview](./docs/screenshots/restore-preview.png) | ![Setup guide](./docs/screenshots/setup-guide.png) |
+
+| Settings | Status bar menu |
+|:---:|:---:|
+| ![Settings](./docs/screenshots/settings.png) | ![Status bar menu](./docs/screenshots/status-bar.png) |
+
 ## Overview
 
 **Ginkgo Backup for Obsidian** bridges your vault to the [Ginkgo Backup](https://ginkgobackup.com) desktop application, turning the local backup engine into a first-class Obsidian citizen. Every note you save is captured into a versioned timeline; any previous state can be diffed and restored in a single click — without leaving Obsidian.
@@ -34,7 +48,7 @@ The plugin runs a **two-track backup model**, so you never have to choose betwee
 
 - **Instant Push on Save** — Text notes are pushed to staging the moment you save, with SHA-256 content de-duplication.
 - **Scheduled Full Backup** — Optional time-triggered full vault backup for attachments and binary files.
-- **Visual Timeline** — A dedicated sidebar view lists up to 50 recent snapshots, grouped by date, with file counts, sizes, and delta badges (`+added`, `~modified`).
+- **Visual Timeline** — A dedicated sidebar view with a calendar date picker; select any day to browse that day's snapshots with file counts, sizes, and delta badges (`+added`, `~modified`).
 - **Version History & Diff** — Right-click any file to browse its full history. Two arbitrary versions can be diffed with an LCS-based line comparison (auto-degrades for very large files).
 - **One-Click Restore** — Preview a version before restoring; the current content is auto-pushed to staging first, so an accidental restore never destroys unsaved work.
 - **Connection Auto-Recovery** — Transient network drops are retried; pending pushes are flushed on reconnect.
@@ -105,9 +119,13 @@ The plugin communicates with the Ginkgo Backup local API on `127.0.0.1:9275` by 
 
 ## Timeline & History
 
-**Timeline view** — Open via the ribbon icon (hard-drive) or the `Ginkgo: Open timeline` command. Shows the 50 most recent snapshots grouped by date, with a summary header (snapshot count, total size, last backup time). Click any snapshot card to drill into its file list.
+**Timeline view** — Open via the ribbon icon (hard-drive) or the `Ginkgo: Open timeline` command. A calendar lets you pick any date; the list below shows that day's snapshots with a summary header (snapshot count, total new bytes, last backup time). Click any snapshot card to drill into its file list.
+
+![Timeline calendar view](./docs/screenshots/timeline-calendar.png)
 
 **File history modal** — Right-click any file in the file explorer or editor and choose *Ginkgo → File history*. Browse every version, diff any two (LCS line-level, with context-only mode for large files), or diff a version against the current content. Hit **Restore** to preview and confirm.
+
+![File history diff](./docs/screenshots/file-history-diff.png)
 
 ## Security
 
@@ -119,6 +137,24 @@ The plugin communicates with the Ginkgo Backup local API on `127.0.0.1:9275` by 
 ## Internationalization
 
 The UI ships with **English** and **简体中文**. Set *Language* to `auto` (default) to follow your browser/OS locale, or pin it explicitly. Missing keys fall back to English, then to the key itself.
+
+## Manual Installation
+
+If the plugin is not yet available in the community browser, or you want to test a pre-release build:
+
+1. Download `main.js`, `manifest.json`, and `styles.css` from the latest [GitHub Release](https://github.com/ginkgobackup/obsidian-ginkgo-backup/releases).
+2. In your vault, navigate to `.obsidian/plugins/` (create the `plugins` folder if it doesn't exist).
+3. Create a subfolder named `ginkgo-backup`.
+4. Copy the three downloaded files into `.obsidian/plugins/ginkgo-backup/`.
+5. In Obsidian, open *Settings → Community plugins*, click the **reload** icon, then enable **Ginkgo Backup**.
+
+## Known Limitations
+
+- **Desktop only** — The plugin requires a local Ginkgo Backup service and is not available on iOS / Android.
+- **Requires the Ginkgo Backup desktop app** — This plugin is a frontend; the actual backup engine runs as a separate application. Download it from [ginkgobackup.com](https://ginkgobackup.com/#download).
+- **Binary files are not diffed** — Instant Push covers text files (`md`, `canvas`, `base`, `json`, `css`); binary attachments are captured by full backups only.
+- **Timeline loads up to 500 snapshots** — For vaults with extremely long history, only the most recent 500 snapshots are loaded for calendar filtering.
+- **No mobile sync** — Since the plugin is desktop-only, vaults synced across desktop and mobile will only be backed up from desktop devices.
 
 ## Development
 
