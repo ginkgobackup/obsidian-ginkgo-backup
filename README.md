@@ -29,6 +29,8 @@
 
 **Ginkgo Backup for Obsidian** bridges your vault to the [Ginkgo Backup](https://ginkgobackup.com) desktop application, turning the local backup engine into a first-class Obsidian citizen. Every note you save is captured into a versioned timeline; any previous state can be diffed and restored in a single click — without leaving Obsidian.
 
+Unlike cloud-dependent backup plugins or Git-based version control, Ginkgo Backup runs entirely through a local desktop engine — no cloud subscription, no Git knowledge, just instant versioned backups with a visual timeline.
+
 The plugin is desktop-only (it talks to the local Ginkgo Backup service on port `9275`) and ships with bilingual UI (English / 简体中文).
 
 ## How It Works
