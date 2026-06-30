@@ -62,6 +62,20 @@ export function logError(context: string, err: unknown): void {
 }
 
 /**
+ * 判断是否为 ENOENT（文件/目录不存在）错误。
+ * 首次运行时缓存文件尚未创建，属预期情况，应静默处理。
+ */
+export function isENOENT(err: unknown): boolean {
+	if (err && typeof err === "object" && "code" in err) {
+		return (err as { code?: unknown }).code === "ENOENT";
+	}
+	if (err instanceof Error) {
+		return err.message.includes("ENOENT");
+	}
+	return false;
+}
+
+/**
  * 判断路径是否被排除规则命中。采用分段匹配，避免 "notes" 误排除 "notes-archive"。
  * pattern 既匹配路径段（如 ".obsidian"），也匹配文件名前缀（如 ".DS_Store"）。
  */

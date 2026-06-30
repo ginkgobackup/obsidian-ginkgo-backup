@@ -2,7 +2,7 @@ import { Notice, TFile, debounce, type EventRef } from "obsidian";
 import { GinkgoBackupClient } from "./api";
 import { encodeText, encodeBinary } from "./encoding";
 import { t } from "./i18n";
-import { formatBytes, logError, isPathExcluded } from "./utils";
+import { formatBytes, logError, isPathExcluded, isENOENT } from "./utils";
 import { handleError } from "./ui-utils";
 import type { GinkgoBackupSettings, FilePush } from "./types";
 
@@ -336,7 +336,7 @@ export class StagingManager {
 				}
 			}
 		} catch (err) {
-			logError("load pending cache failed", err);
+			if (!isENOENT(err)) logError("load pending cache failed", err);
 		}
 	}
 
@@ -344,7 +344,7 @@ export class StagingManager {
 		try {
 			await this.app.vault.adapter.remove(this.pendingCachePath);
 		} catch (err) {
-			logError("clear pending cache failed", err);
+			if (!isENOENT(err)) logError("clear pending cache failed", err);
 		}
 	}
 
@@ -372,7 +372,7 @@ export class StagingManager {
 				this.lastPushedHashes.set(path, hash);
 			}
 		} catch (err) {
-			logError("load hash cache failed", err);
+			if (!isENOENT(err)) logError("load hash cache failed", err);
 		}
 	}
 }
