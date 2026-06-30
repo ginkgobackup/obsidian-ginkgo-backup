@@ -2,7 +2,6 @@
 
 > A time machine for your Obsidian vault — instant push, version diff, and one-click restore, powered by the [Ginkgo Backup](https://ginkgobackup.com) desktop engine.
 
-[![Version](https://img.shields.io/badge/version-0.5.0-d4a056)](./manifest.json)
 [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-1.0%2B-7c3aed)](https://obsidian.md)
 [![Platform](https://img.shields.io/badge/platform-desktop-4a4a4a)](./manifest.json)
@@ -64,19 +63,6 @@ Ginkgo Backup captures every save into a versioned timeline, so any previous sta
 
 - [Obsidian](https://obsidian.md) **1.0+** (desktop)
 - [Ginkgo Backup](https://ginkgobackup.com/#download) desktop app (macOS / Windows / Linux) — the backup engine that powers this plugin
-
-## Commands
-
-| Command | Action |
-|---------|--------|
-| `Ginkgo: Backup now` | Trigger a full vault backup immediately |
-| `Ginkgo: Push current file` | Push the active file to staging on demand |
-| `Ginkgo: Check status` | Show a status notice (sources, snapshots, storage, state) |
-| `Ginkgo: Configure source` | Bind this vault to a Ginkgo Backup repository |
-| `Ginkgo: Open timeline` | Open the backup timeline sidebar |
-| `Ginkgo: File history` | Open the version history modal for the active file |
-| `Ginkgo: Open app` | Open the Ginkgo Backup web UI in your browser |
-| `Ginkgo: Cancel backup` | Cancel a running full backup |
 
 ## Settings
 
@@ -152,27 +138,6 @@ No — instant push covers text files (`md`, `canvas`, `base`, `json`, `css`). B
 
 **How far back can I go?**
 The timeline loads up to 500 recent snapshots for calendar browsing. Older snapshots remain accessible through the Ginkgo Backup app directly.
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Build for development (with watch)
-npm run dev
-
-# Build for production
-npm run build
-
-# Type-check
-npm run lint
-
-# Run unit tests (pure functions)
-npm test
-```
-
-Build output: `main.js`, `manifest.json`, `styles.css` — the three files Obsidian loads.
 
 ## Links
 
