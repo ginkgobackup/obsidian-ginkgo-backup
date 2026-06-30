@@ -17,13 +17,11 @@ Ginkgo Backup captures every save into a versioned timeline, so any previous sta
 
 ## Why Ginkgo Backup?
 
-| | Ginkgo Backup | obsidian-git | Archivist |
-|---|:---:|:---:|:---:|
-| No Git knowledge needed | ✅ | ❌ | ✅ |
-| No cloud subscription | ✅ | ✅ | ❌ (Dropbox) |
-| Diff between any two versions | ✅ | ✅ | ❌ |
-| Visual calendar timeline | ✅ | ❌ | ❌ |
-| Instant push on save | ✅ | ❌ (manual commit) | ❌ (scheduled) |
+- **No Git knowledge required** — No commits, branches, or push/pull. Just save, and it's backed up.
+- **No cloud subscription** — The backup engine runs locally on your machine. Your data never leaves your control.
+- **Diff any two versions** — Pick any two points in history and see exactly what changed, line by line.
+- **Visual calendar timeline** — Jump to any day with a date picker, not a scroll through commit logs.
+- **Instant push on save** — Every save is captured within seconds, not on a schedule.
 
 ## Quick Start
 
