@@ -1,7 +1,5 @@
 # Ginkgo Backup for Obsidian
 
-> 你的 Obsidian 知识库的时光机 — 自动备份、版本对比、一键恢复。
->
 > A time machine for your Obsidian vault — instant push, version diff, and one-click restore, powered by the [Ginkgo Backup](https://ginkgobackup.com) desktop engine.
 
 [![Version](https://img.shields.io/badge/version-0.5.0-d4a056)](./manifest.json)
