@@ -142,7 +142,7 @@ If the plugin is not yet available in the community browser, or you want to test
 ## FAQ
 
 **Does this work on mobile?**
-No — the plugin requires the Ginkgo Backup desktop engine, so it runs on desktop only (macOS / Windows / Linux).
+The plugin runs on desktop only — full backups require the desktop engine to scan your vault directory. If you sync your vault across devices (iCloud, Dropbox, Syncthing, etc.), mobile edits are automatically backed up once they sync to a desktop running Ginkgo Backup.
 
 **Why do I need a separate desktop app?**
 The plugin is a lightweight frontend; the actual backup engine (snapshot storage, deduplication, scheduling) runs as a standalone app. This keeps your vault history independent of Obsidian's lifecycle — your backups survive even if Obsidian is closed or the plugin is uninstalled.
@@ -152,9 +152,6 @@ No — instant push covers text files (`md`, `canvas`, `base`, `json`, `css`). B
 
 **How far back can I go?**
 The timeline loads up to 500 recent snapshots for calendar browsing. Older snapshots remain accessible through the Ginkgo Backup app directly.
-
-**My vault is synced across desktop and mobile. Will mobile changes be backed up?**
-Only desktop changes are backed up (the mobile app can't run the engine). Mobile edits will be captured once they sync to a desktop running Ginkgo Backup.
 
 ## Development
 
