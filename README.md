@@ -11,6 +11,8 @@
 
 Every note you save is captured into a versioned timeline; any previous state can be diffed and restored in a single click — without leaving Obsidian.
 
+![Version diff between any two snapshots](./docs/screenshots/file-history-diff.png)
+
 Unlike cloud-dependent backup plugins or Git-based version control, Ginkgo Backup runs entirely through a local desktop engine — no cloud subscription, no Git knowledge, just instant versioned backups with a visual timeline.
 
 The plugin is desktop-only (it talks to the local Ginkgo Backup service on port `9275`) and ships with bilingual UI (English / 简体中文).
@@ -64,8 +66,6 @@ The plugin runs a **two-track backup model**, so you never have to choose betwee
 ![Timeline calendar view](./docs/screenshots/timeline-calendar.png)
 
 **File history modal** — Right-click any file in the file explorer or editor and choose *Ginkgo → File history*. Browse every version, diff any two (LCS line-level, with context-only mode for large files), or diff a version against the current content. Hit **Restore** to preview and confirm.
-
-![File history diff](./docs/screenshots/file-history-diff.png)
 
 ## Requirements
 
